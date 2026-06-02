@@ -38,6 +38,7 @@ Retorne APENAS o array JSON de strings: ["ideia 1", "ideia 2", ...]`
         for (const title of parsed.slice(0, needed)) {
           const cleanTitle = (typeof title === "string" ? title : String(title || "")).trim()
           if (cleanTitle.length < 15 || cleanTitle.length > 100) continue
+          if (/nao consegui|dificuldades tecnicas/i.test(cleanTitle)) continue
 
           const exists = await prisma.task.findFirst({
             where: { organizationId, title: cleanTitle, createdAt: { gte: new Date(Date.now() - 86400000 * 7) } },

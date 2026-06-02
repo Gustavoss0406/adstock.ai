@@ -46,7 +46,7 @@ export async function runCalendarCheck(organizationId: string): Promise<{ create
         { temperature: 0.5, maxTokens: 30 }
       )
       const clean = reply.trim().replace(/^["']|["']$/g, "")
-      if (clean.length >= 15 && clean.length <= 80) title = clean
+      if (clean.length >= 15 && clean.length <= 80 && !/nao consegui|dificuldades tecnicas/i.test(clean)) title = clean
     } catch {}
 
     const assignee = event.type === "campaign"
