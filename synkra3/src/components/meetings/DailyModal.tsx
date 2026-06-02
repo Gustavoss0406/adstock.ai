@@ -79,7 +79,7 @@ export function DailyModal({ open, agents, orgId, onClose }: DailyModalProps) {
 
     const run = async () => {
       const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 60000) // 60s timeout
+      const timeoutId = setTimeout(() => controller.abort(), 360000) // 6min — sequential daily
       try {
         const res = await fetch("/api/routine", {
           method: "POST",
