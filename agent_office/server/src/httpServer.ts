@@ -103,6 +103,16 @@ function registerHealthRoute(app: FastifyInstance): void {
 let lastAgentPayload: Record<string, unknown> | null = null
 
 function registerAgentsRoute(app: FastifyInstance, options: HttpServerOptions): void {
+  // GET: Return stored agents (for polling)
+  app.get('/api/agents', async (_request, reply) => {
+    if (lastAgentPayload) {
+      reply.send(lastAgentPayload);
+    } else {
+      reply.code(404).send({ error: 'No agents stored yet' });
+    }
+  });
+
+  // POST: Receive agent data from adstock.ai
   app.post<{ Body: { agents: number[]; agentMeta?: Record<number, unknown>; folderNames?: Record<number, string> } }>(
     '/api/agents',
     async (request, reply) => {

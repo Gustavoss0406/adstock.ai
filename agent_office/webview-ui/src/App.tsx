@@ -36,6 +36,35 @@ function getOfficeState(): OfficeState {
 }
 
 function App() {
+  // Poll for external agents (from adstock.ai) on mount
+  useEffect(() => {
+    if (!isBrowserRuntime) return;
+
+    const pollAgents = async () => {
+      try {
+        const res = await fetch('/api/agents');
+        if (res.ok) {
+          const payload = await res.json();
+          if (payload.type === 'existingAgents' && payload.agents?.length > 0) {
+            // Forward to the transport handler chain by POSTing to self
+            // (triggers the same store.broadcast that WS clients receive)
+            await fetch('/api/agents', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(payload),
+            });
+          }
+        }
+      } catch {}
+    };
+
+    // Poll immediately and every 5s for the first 30s
+    pollAgents();
+    const iv = setInterval(pollAgents, 5000);
+    const timeout = setTimeout(() => clearInterval(iv), 30000);
+    return () => { clearInterval(iv); clearTimeout(timeout); };
+  }, []);
+
   // Browser runtime (dev or static dist): dispatch mock messages after the
   // useExtensionMessages listener has been registered.
   useEffect(() => {
