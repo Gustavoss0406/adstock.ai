@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn, getAgentGradient, getAgentInitials, getRoleLabel } from "@/lib/utils"
 import { Agent } from "@prisma/client"
-import { X, PhoneOff, Mic, MicOff, Users, MessageSquare, Send } from "lucide-react"
+import { X, PhoneOff, Mic, MicOff, Users, MessageSquare, Send, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 const AGENT_CHARS: Record<string, string> = {
@@ -29,6 +29,7 @@ interface DailyModalProps {
   agents: Agent[]
   orgId: string
   onClose: () => void
+  isFirstDaily?: boolean
 }
 
 function statusDot(status: string): string {
@@ -52,7 +53,7 @@ const LOADING_MESSAGES = [
   "Diego está verificando o SEO...",
 ]
 
-export function DailyModal({ open, agents, orgId, onClose }: DailyModalProps) {
+export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: DailyModalProps) {
   const [state, setState] = useState<"joining" | "running" | "completed" | "error">("joining")
   const [speakingIdx, setSpeakingIdx] = useState(-1)
   const [speeches, setSpeeches] = useState<Array<{ agent: string; content: string }>>([])
@@ -106,6 +107,7 @@ export function DailyModal({ open, agents, orgId, onClose }: DailyModalProps) {
                 previousSpeeches,
                 isFirst,
                 isLast,
+                isFirstDaily: isFirstDaily || false,
               }),
             })
             if (!res.ok) throw new Error("Failed")
@@ -229,6 +231,12 @@ export function DailyModal({ open, agents, orgId, onClose }: DailyModalProps) {
                 <span className="flex items-center gap-1 text-[10px] text-[#2bac76]/60">
                   <span className="w-1.5 h-1.5 rounded-full bg-[#2bac76] animate-pulse" />
                   Em reuniao
+                </span>
+              )}
+              {isFirstDaily && state === "joining" && (
+                <span className="flex items-center gap-1 text-[10px] text-[#ff385c]/60">
+                  <Sparkles className="w-3 h-3 text-[#ff385c]" />
+                  Primeira Daily
                 </span>
               )}
               {state === "completed" && (

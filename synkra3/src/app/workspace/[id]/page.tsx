@@ -52,6 +52,7 @@ export default function WorkspaceHub() {
   const [wData, setWData] = useState<{ name: string; role: string; agentId: string; gradient: string } | null>(null)
   const [messages, setMessages] = useState<Array<{ id: string; agentId?: string; agentName?: string; agentRole?: string; agentGradient?: string; content: string; time: string; metadata?: any }>>([])
   const [dailyOpen, setDailyOpen] = useState(false)
+  const [isFirstDaily, setIsFirstDaily] = useState(false)
   const [firstDailyOverlay, setFirstDailyOverlay] = useState(false)
   const [dailyApproved, setDailyApproved] = useState<Record<string, boolean>>({})
   const [showingCommentInput, setShowingCommentInput] = useState<Record<string, boolean>>({})
@@ -456,6 +457,7 @@ export default function WorkspaceHub() {
   }
 
   const runDaily = async () => {
+    setIsFirstDaily(false)
     setDailyOpen(true)
   }
 
@@ -891,6 +893,7 @@ export default function WorkspaceHub() {
           orgName={org.name || "sua agencia"}
           onAccept={() => {
             setFirstDailyOverlay(false)
+            setIsFirstDaily(true)
             setDailyOpen(true)
           }}
           onDismiss={() => setFirstDailyOverlay(false)}
@@ -900,8 +903,10 @@ export default function WorkspaceHub() {
         open={dailyOpen}
         agents={org?.agents?.filter(a => a.status !== "FIRED") || []}
         orgId={orgId}
+        isFirstDaily={isFirstDaily}
         onClose={() => {
           setDailyOpen(false)
+          setIsFirstDaily(false)
           queryClient.invalidateQueries({ queryKey: ["meetings"] })
           queryClient.invalidateQueries({ queryKey: ["organization", orgId] })
         }}

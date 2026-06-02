@@ -18,7 +18,7 @@ function isValidTaskTitle(title: string): boolean {
 
 export async function POST(request: NextRequest) {
   try {
-    const { organizationId, agentId, previousSpeeches = [], isFirst, isLast, isSummary } = await request.json()
+    const { organizationId, agentId, previousSpeeches = [], isFirst, isLast, isSummary, isFirstDaily } = await request.json()
     if (!organizationId || !agentId) {
       return NextResponse.json({ error: "organizationId and agentId required" }, { status: 400 })
     }
@@ -88,8 +88,40 @@ export async function POST(request: NextRequest) {
     }
     const personalityDesc = personalityNames[agent.personality] || "profissional"
 
+    // First daily: Maya's bootstrap prompt
+    const firstDailyBootstrap = isFirstDaily && isFirst
+      ? `Voce e a PRIMEIRA A FALAR na primeira daily da ${org.name}.
+
+Contexto do onboarding:
+${[
+  org.onboarding?.industry && `Setor: ${org.onboarding.industry}`,
+  org.onboarding?.targetAudience && `Publico: ${org.onboarding.targetAudience}`,
+  org.onboarding?.goals?.length && `Objetivos: ${org.onboarding.goals.join(", ")}`,
+  org.onboarding?.mainChallenges && `Desafio: ${org.onboarding.mainChallenges}`,
+].filter(Boolean).join(". ") || "Agencia de marketing"}
+
+Suas tarefas:
+${myTaskLines || "Nenhuma tarefa criada ainda."}
+
+Tarefas do time:
+${allTaskLines || "Nenhuma."}
+
+Seu papel: De bom dia, apresente as prioridades da semana baseadas no contexto. Liste 4-6 tarefas que voces vao comecar hoje. Pergunte ao CEO se ele aprova antes de criar os cards.
+
+Fale em 1a pessoa. ${personalityDesc}. Apenas FALE.`
+      : ""
+
+    // First daily: non-first agents acknowledge Maya's plan
+    const firstDailyFollowUp = isFirstDaily && !isFirst
+      ? `Voce esta na PRIMEIRA DAILY da ${org.name}. Maya acabou de apresentar as prioridades da semana (veja acima).
+
+Comente brevemente sobre o plano dela, confirme o que voce vai fazer HOJE, e se tiver alguma sugestao ou duvida, fale agora.
+
+Seja ${personalityDesc}. Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
+      : ""
+
     // Aligned with document: what to do today, dependencies, blockers, ETA
-    const userMessage = isFirst
+    const userMessage = firstDailyBootstrap || firstDailyFollowUp || (isFirst
       ? `Voce e a PRIMEIRA a falar. De bom dia, de o tom, compartilhe:
 1. O que vai fazer HOJE
 2. Precisa de algo de algum colega?
@@ -101,9 +133,11 @@ Inclua ETA. Seja ${personalityDesc}.`
 1. O que vai fazer HOJE
 2. Precisa de algo de algum colega?
 3. Algum bloqueio?
-Inclua ETA. Seja ${personalityDesc}.`
+Inclua ETA. Seja ${personalityDesc}.`)
 
-    const prompt = `${org.name} — Daily Standup
+    const prompt = isFirstDaily && isFirst
+      ? userMessage
+      : `${org.name} — Daily Standup
 ${companyCtx || "Agencia de marketing recem-criada."}
 ${dayContext}
 ${eventsText}
@@ -114,8 +148,8 @@ ${userMessage}
 
 Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
 
-    // Generate speech — more tokens for later agents (more context)
-    const maxTokens = isFirst ? 1500 : 2000
+    // Generate speech — more tokens for first daily bootstrap
+    const maxTokens = isFirstDaily && isFirst ? 2500 : isFirst ? 1500 : 2000
     const reply = await chatCompletion(prompt, {
       temperature: 0.9,
       maxTokens,
