@@ -96,6 +96,14 @@ export default function WorkspaceHub() {
     }, 500)
 
     // ── Pre-warm pixel office (Render free tier cold start) ──
+    const syncAgents = () => {
+      fetch("/api/office/sync", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ organizationId: orgId }),
+      }).catch(() => {})
+    }
+
     const warmPixelOffice = async () => {
       for (let attempt = 0; attempt < 10; attempt++) {
         try {
@@ -103,24 +111,21 @@ export default function WorkspaceHub() {
           const data = await res.json()
           if (data.status === "ok") {
             setOfficeReady(true)
+            // Sync agents with delays — the iframe needs time to initialize WebSocket
+            setTimeout(syncAgents, 3000)
+            setTimeout(syncAgents, 8000)
+            setTimeout(syncAgents, 15000)
             return
           }
         } catch {}
         await new Promise(r => setTimeout(r, 5000))
       }
-      // After all retries, show office anyway (may be loading)
       setOfficeReady(true)
     }
     warmPixelOffice()
 
-    // Sync agents to pixel office (cloud)
-    setTimeout(() => {
-      fetch("/api/office/sync", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ organizationId: orgId }),
-      }).catch(() => {})
-    }, 2000)
+    // Periodic agent sync — keeps agents in the office
+    const syncInterval = setInterval(syncAgents, 45000)
 
     // Warmup do Worker AI — esquenta o modelo pra respostas rapidas
     fetch("https://plain-hill-073a.gustavoss0406.workers.dev/", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ message: "oi", temperature: 0.3, maxTokens: 10, model: "glm-5.1" }) }).catch(() => {})
@@ -187,7 +192,7 @@ export default function WorkspaceHub() {
     setTimeout(() => fetch("/api/system/proactive", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId }) }).catch(() => {}), 15000)
     const hbIv = setInterval(heartbeat, 60000)
 
-    return () => { clearInterval(pulseIv); clearInterval(hbIv); clearInterval(dailyIv) }
+    return () => { clearInterval(pulseIv); clearInterval(hbIv); clearInterval(dailyIv); clearInterval(syncInterval) }
   }, [stage, org, orgId])
 
   const emitWelcome = (d: OrgData | undefined) => {
@@ -365,7 +370,7 @@ export default function WorkspaceHub() {
     return (
       <div className="h-screen bg-[#0a0a0b] flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.03]">
-          <iframe src={PIXEL_OFFICE_URL} className="w-full h-full border-0 pointer-events-none" />
+          <iframe src="https://adstock-ai.onrender.com" className="w-full h-full border-0 pointer-events-none" />
         </div>
         <div className="relative space-y-5">
           {ags.slice(0, arrivalIdx).map((a) => (
@@ -475,7 +480,7 @@ export default function WorkspaceHub() {
             <div className="relative bg-[#111118] flex-shrink-0 border-2 border-white/[0.04] rounded-lg overflow-hidden" style={{ height: officeFs ? "100%" : `${dividerY}%` }}>
           {officeReady ? (
             <iframe
-              src={PIXEL_OFFICE_URL}
+              src="https://adstock-ai.onrender.com"
               className="w-full h-full border-0"
               allow="clipboard-read; clipboard-write"
             />
