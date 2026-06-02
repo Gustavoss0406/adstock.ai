@@ -115,7 +115,7 @@ ${userMessage}
 Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
 
     // Generate speech — more tokens for later agents (more context)
-    const maxTokens = isFirst ? 2500 : 4000
+    const maxTokens = isFirst ? 1500 : 2000
     const reply = await chatCompletion(prompt, {
       temperature: 0.9,
       maxTokens,

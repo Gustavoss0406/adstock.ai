@@ -221,7 +221,7 @@ async function executeRespondToMention(
 Mensagem recebida: "${message}".
 Seja natural. Nao diga que e IA. Use o tom da sua personalidade.`
 
-  const reply = await chatCompletion(prompt, { maxTokens: 2000, temperature: 0.8 })
+  const reply = await chatCompletion(prompt, { maxTokens: 1500, temperature: 0.8 })
   const cleaned = reply.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "").trim()
 
   return postWithTurn(ctx, targetChannelId, cleaned, action.priority)
@@ -242,7 +242,7 @@ async function executeRespondToAgent(
 Mensagem recebida: "${message}".
 Seja colaborativo e natural. Nao diga que e IA.`
 
-  const reply = await chatCompletion(prompt, { maxTokens: 2000, temperature: 0.8 })
+  const reply = await chatCompletion(prompt, { maxTokens: 1500, temperature: 0.8 })
   const cleaned = reply.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "").trim()
 
   // Agent is communicating while working → WORKING_VISIBLE
@@ -269,7 +269,7 @@ async function executeRespondToCeo(
 Mensagem do CEO: "${message}".
 Seja profissional mas direto. Nao diga que e IA.`
 
-  const reply = await chatCompletion(prompt, { maxTokens: 2000, temperature: 0.7 })
+  const reply = await chatCompletion(prompt, { maxTokens: 1500, temperature: 0.7 })
   const cleaned = reply.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "").trim()
 
   return postWithTurn(ctx, targetChannelId, cleaned, 10)
@@ -290,7 +290,7 @@ async function executeJoinConversation(
 Contexto: "${conversationTopic}".
 Seja natural. Traga valor real para a discussao. Nao diga que e IA.`
 
-  const reply = await chatCompletion(prompt, { maxTokens: 2000, temperature: 0.8 })
+  const reply = await chatCompletion(prompt, { maxTokens: 1500, temperature: 0.8 })
   const cleaned = reply.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "").trim()
 
   return postWithTurn(ctx, targetChannelId, cleaned, action.priority)

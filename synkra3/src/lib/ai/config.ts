@@ -2,7 +2,7 @@ export const AGENT_WORKER_URL = "https://plain-hill-073a.gustavoss0406.workers.d
 
 export const DEFAULT_MODEL = "deepseek-v4-pro"
 export const DEFAULT_TEMPERATURE = 0.7
-export const DEFAULT_MAX_TOKENS = 2000
+export const DEFAULT_MAX_TOKENS = 1500
 
 // Pixel Office — hosted on Render (or localhost for dev)
 // Client-side: used for iframe src in workspace

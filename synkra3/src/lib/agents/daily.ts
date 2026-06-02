@@ -194,7 +194,7 @@ async function generateWithRetry(
       const temp = 0.9 - (attempt * 0.15)
       const reply = await chatCompletion(prompt, {
         temperature: temp,
-        maxTokens: 3000, // Later agents have more context (previous speeches) — need room
+        maxTokens: 1500,
       })
       return reply
     } catch (err) {
