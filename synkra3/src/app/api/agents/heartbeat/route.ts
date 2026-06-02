@@ -6,6 +6,8 @@ import { runBulkAwarenessCheck } from "@/lib/orchestrator/awareness"
 import { detectProactiveConflicts, handleConflict } from "@/lib/orchestrator/conflict"
 import { TIMING_CONFIG, getPersonalityModifiers, getTaskDurationMinutes } from "@/lib/orchestrator/config"
 import { canActAutonomously } from "@/lib/orchestrator/autonomy"
+import { processPendingMentions, processTimeBasedEvents, processApprovalCascade } from "@/lib/orchestrator/runtime"
+import { recordAgentMemory } from "@/lib/orchestrator/memory"
 
 const ROLE_MATCH: Record<string, string[]> = {
   STRATEGIST: ["content", "campaign"],
@@ -251,6 +253,31 @@ export async function POST(request: NextRequest) {
           })
           results.push({ agent: agent.name, action: "Sem tarefas" })
         }
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // 5. TWO-WAY CONVERSATION (respond to pending mentions)
+    // ─────────────────────────────────────────────────────────
+    if (channelId) {
+      const conversationResults = await processPendingMentions(organizationId, channelId)
+      for (const r of conversationResults) {
+        results.push({ agent: "Conversa", action: r })
+      }
+    }
+
+    // ─────────────────────────────────────────────────────────
+    // 6. TIME-BASED EVENTS (lunch, checkpoint, close)
+    // ─────────────────────────────────────────────────────────
+    if (channelId) {
+      const timeResults = await processTimeBasedEvents(organizationId, channelId)
+      for (const r of timeResults) {
+        results.push({ agent: "Sistema", action: r })
+      }
+
+      // If not working hours, skip the rest
+      if (timeResults.some(r => r.includes("fechou") || r.includes("pausaram"))) {
+        return NextResponse.json({ heartbeat: true, tasksProcessed: results.length, results })
       }
     }
 

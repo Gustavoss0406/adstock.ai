@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { learnFromFeedback } from "@/lib/autonomous/learning"
+import { processApprovalCascade } from "@/lib/orchestrator/runtime"
 
 export const maxDuration = 30
 
@@ -68,12 +69,16 @@ export async function POST(request: NextRequest) {
       note: feedback,
     })
 
-    // If approved, move task to next stage
+    // If approved, trigger cascade (notify next agent + auto-create next task)
     if (decision === "approved" && taskMeta.taskId) {
       await prisma.task.update({
         where: { id: taskMeta.taskId },
         data: { status: "DONE" },
       })
+      // Fire and forget cascade
+      setTimeout(() => {
+        processApprovalCascade(organizationId, taskMeta.taskId).catch(() => {})
+      }, 2000)
     }
 
     // If revision needed, re-open task
