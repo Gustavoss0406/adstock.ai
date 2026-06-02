@@ -55,13 +55,18 @@ async function parseTasksFromText(
   }
 
   // Pattern: "AgentName, [verb phrase]" → eg "Diego, voce mergulha na criacao dos 3 posts..."
-  // Capture: (agent name) followed by verb-like description
-  const actionVerbs = "criar|analisar|configurar|revisar|otimizar|planejar|escrever|produzir|executar|estruturar|finalizar|pesquisar|mapear|auditar|relatar|gerar|desenvolver|estudar|montar|preparar"
+  // Use stems that match common conjugations (remove -ar/-er/-ir/-r/-ndo prefix)
+  const verbStems = [
+    "cri", "analis", "configur", "revis", "otimiz", "planej",
+    "escrev", "produz", "execut", "estrutur", "finaliz",
+    "pesquis", "mape", "audit", "relat", "ger", "desenvolv",
+    "estud", "mont", "prepar", "mergulh", "assum", "entr", "faz", "defin",
+  ]
   const agentNames = agents.map(a => a.name.split(" ")[0]).join("|")
 
-  // Match: "Agent, [verbo] rest of sentence"
+  // Match: "Agent, [verb phrase]" — using verb stems
   const taskPattern = new RegExp(
-    `(${agentNames})[\\s,]*:?\\s*(?:voce\\s+)?(?:vai\\s+)?(?:sua\\s+missao\\s+e\\s+)?(?:e\\s+)?(${actionVerbs})[^.]*?\\.`,
+    `(${agentNames})[\\s,]*:?\\s*(?:voce\\s+)?(?:vai\\s+)?(?:sua\\s+missao\\s+e\\s+)?(?:e\\s+)?[^.]*?(?:${verbStems.join("|")})[^.]*?\\.`,
     "gi"
   )
 
