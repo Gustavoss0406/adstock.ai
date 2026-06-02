@@ -10,20 +10,31 @@ export async function GET(request: NextRequest) {
   }
 
   const orgId = request.nextUrl.searchParams.get("orgId")
+  const channelId = request.nextUrl.searchParams.get("channelId")
+  const since = request.nextUrl.searchParams.get("since")
+  const limit = parseInt(request.nextUrl.searchParams.get("limit") || "50")
+
   if (!orgId) {
     return NextResponse.json({ error: "orgId é obrigatório" }, { status: 400 })
   }
 
+  const where: any = {
+    channel: { organizationId: orgId },
+  }
+
+  if (channelId) {
+    where.channelId = channelId
+  }
+
+  if (since) {
+    where.createdAt = { gt: new Date(since) }
+  }
+
   const messages = await prisma.message.findMany({
-    where: {
-      OR: [
-        { channel: { organizationId: orgId } },
-        { agent: { organizationId: orgId } },
-      ],
-    },
+    where,
     include: { agent: true },
-    orderBy: { createdAt: "desc" },
-    take: 50,
+    orderBy: { createdAt: "asc" },
+    take: limit,
   })
 
   return NextResponse.json(messages)

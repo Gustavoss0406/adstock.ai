@@ -60,6 +60,8 @@ export default function WorkspaceHub() {
   const [officeReady, setOfficeReady] = useState(false)
   const officeIframeRef = useRef<HTMLIFrameElement | null>(null)
   const bridgeUrlRef = useRef("/api/agents/bridge") // local bridge if detected, else Vercel
+  const selChannelRef = useRef(selChannel)
+  selChannelRef.current = selChannel // always current
 
   // Push agents to pixel office via postMessage to iframe
   const pushAgentsToOffice = () => {
@@ -240,7 +242,66 @@ export default function WorkspaceHub() {
     setTimeout(() => fetch("/api/system/proactive", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId }) }).catch(() => {}), 15000)
     const hbIv = setInterval(heartbeat, 60000)
 
-    return () => { clearInterval(pulseIv); clearInterval(hbIv); clearInterval(dailyIv); clearInterval(syncInterval) }
+    // ── Real-time message polling ────────────────────────
+    let lastMsgTime = new Date().toISOString()
+    const pollMessages = async () => {
+      try {
+        const currentChannel = selChannelRef.current
+        const chId = org?.channels?.find((c: any) => c.name === currentChannel)?.id
+        const url = `/api/messages?orgId=${orgId}&limit=10&since=${encodeURIComponent(lastMsgTime)}${chId ? `&channelId=${chId}` : ""}`
+        const res = await fetch(url)
+        if (res.ok) {
+          const newMsgs = await res.json()
+          if (Array.isArray(newMsgs) && newMsgs.length > 0) {
+            setMessages(prev => {
+              const existingIds = new Set(prev.map(m => m.id))
+              const merged = [...prev]
+              for (const m of newMsgs) {
+                if (!existingIds.has(m.id)) {
+                  merged.push({
+                    id: m.id,
+                    agentId: m.agentId,
+                    agentName: m.agent?.name,
+                    agentRole: m.agent ? getRoleLabel(m.agent.role) : "",
+                    agentGradient: m.agent ? getAgentGradient(m.agent.role) : "",
+                    content: m.content,
+                    time: m.createdAt,
+                    metadata: m.metadata,
+                  })
+                }
+              }
+              return merged
+            })
+            lastMsgTime = newMsgs[newMsgs.length - 1].createdAt
+          }
+        }
+      } catch {}
+    }
+    pollMessages()
+    const msgIv = setInterval(pollMessages, 5000)
+
+    // ── SSE for typing indicators ─────────────────────────
+    const sseUrl = `/api/events/stream?orgId=${orgId}`
+    const sseSource = new EventSource(sseUrl)
+    sseSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data)
+        if (data.type === "update" && data.orchestration?.channels) {
+          const currentChannel = selChannelRef.current
+          const currentCh = data.orchestration.channels.find((c: any) => c.name === currentChannel)
+          if (currentCh?.typing) {
+            setTypingAgent(currentCh.typing.agentName)
+            setIsTyping(true)
+          } else if (!currentCh) {
+            // No typing in this channel
+            setIsTyping(false)
+            setTypingAgent("")
+          }
+        }
+      } catch {}
+    }
+
+    return () => { clearInterval(pulseIv); clearInterval(hbIv); clearInterval(dailyIv); clearInterval(syncInterval); clearInterval(msgIv); sseSource.close() }
   }, [stage, org, orgId])
 
   const emitWelcome = (d: OrgData | undefined) => {
