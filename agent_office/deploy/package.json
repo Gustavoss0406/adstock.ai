@@ -1,0 +1,19 @@
+{
+  "name": "pixel-office-server",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node cli.js --host 0.0.0.0 --port ${PORT:-10000}"
+  },
+  "dependencies": {
+    "fastify": "^5.0.0",
+    "@fastify/websocket": "^10.0.0",
+    "@fastify/static": "^7.0.0",
+    "@fastify/cors": "^10.0.0",
+    "better-sqlite3": "^11.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

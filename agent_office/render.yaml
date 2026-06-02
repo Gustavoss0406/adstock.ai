@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: pixel-office
+    env: node
+    plan: free
+    buildCommand: npm install && cd webview-ui && npm install && cd .. && npm run build
+    startCommand: node dist/cli.js --provider opencode --host 0.0.0.0 --port $PORT
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
