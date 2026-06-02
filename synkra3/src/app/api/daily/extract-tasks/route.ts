@@ -17,11 +17,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Try AI extraction first
-    let created = await extractTasksFromSpeeches(
-      organizationId,
-      speeches,
-      agents,
-    )
+    let created = await extractTasksFromSpeeches(organizationId, speeches, agents)
 
     // Fallback: regex parse Maya's speech for explicit task assignments
     if (created === 0 && speeches.length > 0) {
@@ -42,48 +38,92 @@ async function parseTasksFromText(
 ): Promise<number> {
   const allText = speeches.map(s => s.content).join("\n")
   let created = 0
+  const existingTitles = new Set<string>(
+    (await prisma.task.findMany({
+      where: { organizationId, status: { not: "DONE" } },
+      select: { title: true },
+    })).map(t => t.title.toLowerCase().slice(0, 30)),
+  )
 
-  // Regex patterns for task mentions
-  const patterns = [
-    // "Diego, voce mergulha na criacao dos 3 posts para Instagram"
-    /(\w+)[,:]?\s*(?:voce|sua missao|vai|fara?|criara?|assumira?|mergulha|entra|configura)[^.]*?(criar|analisar|configurar|revisar|otimizar|produzir|fazer|escrever|gerar|desenvolver|estudar|pesquisar|mapear|auditar|relatar|planejar|executar|estruturar|finalizar)[^.]*?\./gi,
-    // Numbered lists like "1. Diego - criar posts"
-    /(\d+)\.\s*(\w+)[^.]*?(?:criar|analisar|configurar|revisar|otimizar|produzir|fazer|escrever|gerar|desenvolver|estudar|pesquisar|mapear|auditar|relatar|planejar|executar|estruturar|finalizar)[^.]*?\./gi,
-  ]
+  // Build agent name map (lowercase first name -> id)
+  const agentByName: Record<string, string> = {}
+  for (const a of agents) {
+    const firstName = a.name.split(" ")[0].toLowerCase()
+    const fullName = a.name.toLowerCase()
+    agentByName[firstName] = a.id
+    agentByName[fullName] = a.id
+  }
 
-  const foundTasks = new Set<string>()
+  // Pattern: "AgentName, [verb phrase]" → eg "Diego, voce mergulha na criacao dos 3 posts..."
+  // Capture: (agent name) followed by verb-like description
+  const actionVerbs = "criar|analisar|configurar|revisar|otimizar|planejar|escrever|produzir|executar|estruturar|finalizar|pesquisar|mapear|auditar|relatar|gerar|desenvolver|estudar|montar|preparar"
+  const agentNames = agents.map(a => a.name.split(" ")[0]).join("|")
 
-  for (const pattern of patterns) {
-    let match
-    while ((match = pattern.exec(allText)) !== null) {
-      const fullMatch = match[0].trim()
-      if (fullMatch.length < 20) continue
-      if (foundTasks.has(fullMatch.slice(0, 40))) continue
-      foundTasks.add(fullMatch.slice(0, 40))
+  // Match: "Agent, [verbo] rest of sentence"
+  const taskPattern = new RegExp(
+    `(${agentNames})[\\s,]*:?\\s*(?:voce\\s+)?(?:vai\\s+)?(?:sua\\s+missao\\s+e\\s+)?(?:e\\s+)?(${actionVerbs})[^.]*?\\.`,
+    "gi"
+  )
 
-      // Try to find the agent name
-      const agentName = match[1] || match[2]
-      let assignee = agents.find(a =>
-        a.name.toLowerCase().includes((agentName || "").toLowerCase())
-      )
+  let match
+  while ((match = taskPattern.exec(allText)) !== null) {
+    const rawTitle = match[0].trim()
+    if (rawTitle.length < 20) continue
 
-      // Default to unassigned if not found
-      const title = fullMatch.slice(0, 120).trim()
-        .replace(/^\d+\.\s*/, "")
-        .replace(/^(\w+)[,:]?\s*/, "")
+    // Clean: remove agent prefix
+    const cleanTitle = rawTitle
+      .replace(new RegExp(`^(${agentNames})[\\s,]*:?\\s*(?:voce\\s+)?(?:vai\\s+)?(?:sua\\s+missao\\s+e\\s+)?`, "i"), "")
+      .trim()
 
-      if (title.length < 20) continue
+    if (cleanTitle.length < 20 || existingTitles.has(cleanTitle.toLowerCase().slice(0, 30))) continue
+
+    const agentName = match[1].toLowerCase()
+    const assigneeId = agentByName[agentName] || null
+
+    existingTitles.add(cleanTitle.toLowerCase().slice(0, 30))
+
+    await prisma.task.create({
+      data: {
+        organizationId,
+        title: cleanTitle.charAt(0).toUpperCase() + cleanTitle.slice(1),
+        type: "content",
+        priority: "MEDIUM",
+        status: "TODO",
+        assignedTo: assigneeId,
+        estimatedMinutes: 60,
+        description: "Extraído da primeira daily.",
+      },
+    } as any)
+    created++
+  }
+
+  // Fallback: numbered lists like "1. Criar calendario editorial para Instagram (Maya)"
+  if (created === 0) {
+    const listPattern = /(\d+)[\\.)]\s*((?:criar|analisar|configurar|revisar|otimizar|planejar|escrever|produzir|executar|estruturar|finalizar|pesquisar|mapear|auditar|relatar|gerar|desenvolver|estudar|montar|preparar)[^.]*?)\\./gi
+    while ((match = listPattern.exec(allText)) !== null) {
+      const title = match[2].trim()
+      if (title.length < 20 || existingTitles.has(title.toLowerCase().slice(0, 30))) continue
+      existingTitles.add(title.toLowerCase().slice(0, 30))
+
+      // Try to find agent name in the title
+      let assigneeId = null
+      for (const a of agents) {
+        if (title.toLowerCase().includes(a.name.split(" ")[0].toLowerCase())) {
+          assigneeId = a.id
+          break
+        }
+      }
 
       await prisma.task.create({
         data: {
           organizationId,
-          title,
+          title: title.charAt(0).toUpperCase() + title.slice(1),
           type: "content",
           priority: "MEDIUM",
           status: "TODO",
-          assignedTo: assignee?.id || null,
+          assignedTo: assigneeId,
           estimatedMinutes: 60,
-          description: `Extraído da primeira daily.`,
+          description: "Extraído da primeira daily.",
         },
       } as any)
       created++

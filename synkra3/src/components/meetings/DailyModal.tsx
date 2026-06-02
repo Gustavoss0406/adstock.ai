@@ -383,18 +383,11 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
 
   const handleClose = () => {
     setExitPhase("leaving")
-    // After exit animation, notify + close
     setTimeout(() => {
       const names = agentsActive.map(a => a.name.split(" ")[0])
-      toast.success(
-        <div className="space-y-1">
-          <p className="font-semibold">🎯 Time esta trabalhando!</p>
-          <div className="text-[10px] opacity-80 space-y-0.5">
-            {names.map((n, i) => <p key={i}>🟢 {n}: {["Criando conteudo...", "Analisando metricas...", "Configurando campanhas...", "Preparando briefings...", "Otimizando SEO..."][i] || "Trabalhando..."}</p>)}
-          </div>
-        </div>,
-        { duration: 6000 }
-      )
+      const tasks = ["Criando conteudo...", "Analisando metricas...", "Configurando campanhas...", "Preparando briefings...", "Otimizando SEO..."]
+      const lines = names.map((n, i) => `🟢 ${n}: ${tasks[i] || "Trabalhando..."}`).join("\n")
+      toast.success(`🎯 Time esta trabalhando!\n${lines}`, { duration: 6000 })
       onClose()
       setExitPhase("done")
     }, 800)
@@ -441,9 +434,8 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                   <p className="text-[11px] text-white/15 mt-1">A equipe ja esta te esperando</p>
                 </div>
               </motion.div>
-              </motion.div>
-            )}
-          </div>
+            </motion.div>
+          )}
 
           {/* Back-to-office exit transition */}
           {exitPhase === "leaving" && (
