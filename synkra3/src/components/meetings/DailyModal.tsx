@@ -70,6 +70,9 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
   const [quickReplies, setQuickReplies] = useState<string[]>([])
   const [quickReplyFor, setQuickReplyFor] = useState("")
   const [closing, setClosing] = useState(false)
+  const [exitPhase, setExitPhase] = useState<"idle" | "leaving" | "done">("idle")
+  const idleSince = useRef<number>(0)
+  const easterFired = useRef<Set<string>>(new Set())
   const chatRef = useRef<HTMLDivElement>(null)
   const agentsActive = agents.filter(a => a.status !== "FIRED")
   const runRef = useRef(false)
@@ -120,6 +123,24 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
     setQuickReplies([])
     setQuickReplyFor("")
   }, [speeches])
+
+  // Easter egg #2: Bruno "CEO sumiu?" after 60s idle in awaiting_approval
+  useEffect(() => {
+    if (phase !== "awaiting_approval") return
+    if (easterFired.current.has("ceo-sumiu")) return
+    idleSince.current = Date.now()
+    const timer = setTimeout(() => {
+      if (phase === "awaiting_approval" && !easterFired.current.has("ceo-sumiu")) {
+        easterFired.current.add("ceo-sumiu")
+        setSpeeches(s => [...s, { agent: "Bruno Costa", content: "CEO sumiu? 😅", agentId: agentsActive.find(a => a.name === "Bruno Costa")?.id }])
+        // Maya responds after 3s
+        setTimeout(() => {
+          setSpeeches(s => [...s, { agent: "Maya Ferreira", content: "Deve estar ocupado, vamos continuar. Ele(a) aprova quando puder.", agentId: agentsActive[0]?.id }])
+        }, 3000)
+      }
+    }, 60000)
+    return () => clearTimeout(timer)
+  }, [phase])
 
   // Main flow
   useEffect(() => {
@@ -319,9 +340,37 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
     }
   }, [phase])
 
+  // Easter egg detection: funny text → agents react, junior vs senior → Maya responds
+  const checkEasterEggs = (text: string) => {
+    // #3: Funny text → random agent reacts with emoji
+    if (/kkk|haha|rsrs|lol|engraçad|hilari/i.test(text) && !easterFired.current.has("funny")) {
+      easterFired.current.add("funny")
+      const reactors = agentsActive.filter(a => a.name !== "Maya Ferreira")
+      const reactor = reactors[Math.floor(Math.random() * reactors.length)]
+      if (reactor) {
+        const emojis = ["😂", "🤣", "💀", "😹"]
+        const emoji = emojis[Math.floor(Math.random() * emojis.length)]
+        setTimeout(() => {
+          setSpeeches(s => [...s, { agent: reactor.name, content: emoji, agentId: reactor.id }])
+        }, 1500)
+      }
+    }
+    // #4: CEO agrees with junior against senior → Maya "Interessante..."
+    const jrIds = agentsActive.filter(a => (a.level ?? 99) <= 2).map(a => a.name)
+    const srIds = agentsActive.filter(a => (a.level ?? 0) >= 3).map(a => a.name)
+    if (jrIds.some(n => text.toLowerCase().includes(n.toLowerCase().split(" ")[0])) &&
+        !easterFired.current.has("jr-sr")) {
+      easterFired.current.add("jr-sr")
+      setTimeout(() => {
+        setSpeeches(s => [...s, { agent: "Maya Ferreira", content: "Interessante... vou considerar isso.", agentId: agentsActive[0]?.id }])
+      }, 2000)
+    }
+  }
+
   const handleSendComment = async () => {
     if (!commentInput.trim() || sendingComment) return
     setSendingComment(true)
+    checkEasterEggs(commentInput)
     try {
       await fetch("/api/daily/comment", {
         method: "POST", headers: { "Content-Type": "application/json" },
@@ -333,8 +382,22 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
   }
 
   const handleClose = () => {
-    setClosing(true)
-    setTimeout(onClose, 600)
+    setExitPhase("leaving")
+    // After exit animation, notify + close
+    setTimeout(() => {
+      const names = agentsActive.map(a => a.name.split(" ")[0])
+      toast.success(
+        <div className="space-y-1">
+          <p className="font-semibold">🎯 Time esta trabalhando!</p>
+          <div className="text-[10px] opacity-80 space-y-0.5">
+            {names.map((n, i) => <p key={i}>🟢 {n}: {["Criando conteudo...", "Analisando metricas...", "Configurando campanhas...", "Preparando briefings...", "Otimizando SEO..."][i] || "Trabalhando..."}</p>)}
+          </div>
+        </div>,
+        { duration: 6000 }
+      )
+      onClose()
+      setExitPhase("done")
+    }, 800)
   }
 
   // Meeting room seats: Maya in front, others around table
@@ -354,9 +417,9 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
       {open && (
         <motion.div
           initial={isFirstDaily ? { opacity: 0, scale: 0.98 } : { opacity: 1 }}
-          animate={closing ? { opacity: 0, scale: 1.02 } : { opacity: 1, scale: 1 }}
+          animate={exitPhase === "leaving" ? { opacity: 0, scale: 1.03 } : { opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
+          transition={{ duration: 0.6 }}
           className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col"
         >
           {/* Cinematic entry */}
@@ -377,6 +440,29 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                   <p className="text-sm text-white/40">Entrando na sala de reuniao...</p>
                   <p className="text-[11px] text-white/15 mt-1">A equipe ja esta te esperando</p>
                 </div>
+              </motion.div>
+              </motion.div>
+            )}
+          </div>
+
+          {/* Back-to-office exit transition */}
+          {exitPhase === "leaving" && (
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 z-[102] bg-[#0a0a0b] flex items-center justify-center"
+            >
+              <motion.div
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="text-center space-y-4"
+              >
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  className="w-12 h-12 mx-auto rounded-full border-2 border-white/10 border-t-[#2bac76]/50"
+                />
+                <p className="text-sm text-white/30">Voltando ao escritorio...</p>
+                <p className="text-[11px] text-white/15">Agentes indo para suas mesas</p>
               </motion.div>
             </motion.div>
           )}
