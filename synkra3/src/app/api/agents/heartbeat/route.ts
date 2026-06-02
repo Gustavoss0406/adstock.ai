@@ -299,14 +299,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ── 10. AI Content creation for tasks in progress ──
+    // ── 10. AI Content creation for tasks in progress (limit: 1 per cycle) ──
+    const contentCreationDone = new Set<string>()
     for (const agent of agents) {
+      if (contentCreationDone.size >= 1) break // Limit: 1 agent per heartbeat
       const task = await prisma.task.findFirst({
         where: { assignedTo: agent.id, status: "IN_PROGRESS" },
       })
       if (!task || !channelId) continue
 
-      // Only create content once per task
       const alreadyCreated = await prisma.message.findFirst({
         where: {
           organizationId,
@@ -318,19 +319,29 @@ export async function POST(request: NextRequest) {
 
       const content = await aiCreateContent(agent.id, agent.name, task.type || "content", task.title, organizationId)
       if (content) {
-        // If content-related, trigger team vote
+        contentCreationDone.add(agent.id)
         if (task.type === "content" || task.type === "campaign") {
           const voteResult = await triggerTeamVote(organizationId, content, agent.id)
           if (voteResult && voteResult.consensus >= 0.6) {
-            // Post to #aprovacoes as "recommended by team"
-            const approvedChannel = await prisma.channel.findFirst({
-              where: { organizationId, name: "aprovacoes" },
-            })
-            if (!approvedChannel) {
-              await prisma.channel.create({
-                data: { organizationId, name: "aprovacoes", description: "Conteudo para aprovacao" },
-              })
+            let ch = await prisma.channel.findFirst({ where: { organizationId, name: "aprovacoes" } })
+            if (!ch) {
+              ch = await prisma.channel.create({ data: { organizationId, name: "aprovacoes" } })
             }
+            if (ch) {
+              await prisma.message.create({
+                data: {
+                  content: `${agent.name} completou "${task.title}"\nTime: ${voteResult.winner} (${Math.round(voteResult.consensus * 100)}%)\n${content.slice(0, 300)}`,
+                  metadata: { type: "content_completed", taskId: task.id, taskContentId: task.id, needsApproval: true },
+                  agentId: agent.id, channelId: ch.id,
+                },
+              } as any)
+            }
+          }
+        }
+        await recordAgentMemory(agent.id, "completed_task", task.title, organizationId)
+        results.push({ agent: agent.name, action: `Conteudo: ${task.title.slice(0, 30)}` })
+      }
+    }
             const ch = await prisma.channel.findFirst({ where: { organizationId, name: "aprovacoes" } })
             if (ch) {
               await prisma.message.create({
