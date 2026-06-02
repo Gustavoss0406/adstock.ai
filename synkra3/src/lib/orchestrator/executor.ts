@@ -400,26 +400,12 @@ async function executeStartTask(
     }
   }
 
-  // 4. Optionally communicate
+  // 4. Always communicate — user needs to see agents working
   const targetChannelId = (action.context.channelId as string) || ctx.channelId
   if (targetChannelId) {
-    const isImportant = task.priority === "HIGH" || task.priority === "CRITICAL"
-    const todayStart = new Date()
-    todayStart.setHours(0, 0, 0, 0)
-    const tasksToday = await prisma.task.count({
-      where: {
-        assignedTo: ctx.agent.id,
-        status: { in: ["IN_PROGRESS", "IN_REVIEW", "DONE"] },
-        updatedAt: { gte: todayStart },
-      },
-    })
-    const isFirstToday = tasksToday <= 1
-
-    if (isImportant || isFirstToday) {
-      const isUrgent = action.type === "start_unblocked_task"
-      const prefix = isUrgent ? "Desbloqueado! " : ""
-      await postWithTurn(ctx, targetChannelId, `${prefix}Comecando: "${task.title}".`, action.priority)
-    }
+    const isUrgent = action.type === "start_unblocked_task"
+    const prefix = isUrgent ? "Desbloqueado! " : ""
+    await postWithTurn(ctx, targetChannelId, `${prefix}Comecando: "${task.title}".`, action.priority)
   }
 
   await logOrchestration(ctx.organizationId, ctx.agent.id, ORCHESTRATION_EVENT_TYPES.TASK_STARTED, {
