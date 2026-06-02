@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma"
 import { buildCompanyContext } from "./context"
 import { chatCompletion } from "@/lib/ai/client"
 import { distributeTask } from "./distribute"
+import { loadAgentTemplate } from "@/lib/agents/templates/loader"
 
 /**
  * Autonomous daily — Maya analyzes context and creates a daily plan.
@@ -22,7 +23,12 @@ export async function runAutonomousDaily(organizationId: string): Promise<{
   if (!maya) throw new Error("No agents")
 
   // ── Maya creates the daily plan ──
-  const prompt = `Voce e Maya, Diretora de Conteudo. Hora da daily autonoma!
+  const mayaTemplate = loadAgentTemplate("Maya Ferreira")
+  const personalitySnippet = mayaTemplate.slice(0, 400)
+
+  const prompt = `${personalitySnippet}
+
+Voce e Maya, Diretora de Conteudo. Hora da daily autonoma de hoje!
 
 CONTEXTO DA AGENCIA:
 - Hoje: ${ctx.dayName}, ${ctx.today}
