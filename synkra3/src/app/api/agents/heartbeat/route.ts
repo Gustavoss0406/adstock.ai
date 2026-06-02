@@ -6,7 +6,7 @@ import { runBulkAwarenessCheck } from "@/lib/orchestrator/awareness"
 import { detectProactiveConflicts, handleConflict } from "@/lib/orchestrator/conflict"
 import { TIMING_CONFIG, getPersonalityModifiers, getTaskDurationMinutes } from "@/lib/orchestrator/config"
 import { canActAutonomously } from "@/lib/orchestrator/autonomy"
-import { processPendingMentions, processTimeBasedEvents, processApprovalCascade, processWeeklyEvents, checkRejectionPattern, continueConversationChain, triggerTeamVote, aiCreateContent } from "@/lib/orchestrator/runtime"
+import { processPendingMentions, processTimeBasedEvents, processWeeklyEvents, checkRejectionPattern } from "@/lib/orchestrator/runtime"
 import { recordAgentMemory } from "@/lib/orchestrator/memory"
 
 const ROLE_MATCH: Record<string, string[]> = {
@@ -286,64 +286,25 @@ export async function POST(request: NextRequest) {
         for (const r of weeklyResults) results.push({ agent: "Sistema", action: r })
       } catch {}
 
-      // ── 8. Multi-hop conversation ──
-      try {
-        const multiHopResults = await continueConversationChain(organizationId)
-        for (const r of multiHopResults) results.push({ agent: "Cascata", action: r })
-      } catch {}
-
-      // ── 9. Rejection pattern ──
-      try {
-        const rejectionAlert = await checkRejectionPattern(organizationId)
-        if (rejectionAlert) results.push({ agent: "Maya", action: rejectionAlert })
-      } catch {}
-    }
-
-    // ── 10. AI Content creation (limit: 1 per cycle) ──
-    try {
-      const contentCreationDone = new Set<string>()
-      for (const agent of agents) {
-        if (contentCreationDone.size >= 1) break // Limit: 1 agent per heartbeat
-      const task = await prisma.task.findFirst({
-        where: { assignedTo: agent.id, status: "IN_PROGRESS" },
-      })
-      if (!task || !channelId) continue
-
-      const alreadyCreated = await prisma.message.findFirst({
-        where: {
-          organizationId,
-          agentId: agent.id,
-          metadata: { path: ["taskContentId"], equals: task.id },
-        },
-      })
-      if (alreadyCreated) continue
-
-      const content = await aiCreateContent(agent.id, agent.name, task.type || "content", task.title, organizationId)
-      if (content) {
-        contentCreationDone.add(agent.id)
-        if (task.type === "content" || task.type === "campaign") {
-          const voteResult = await triggerTeamVote(organizationId, content, agent.id)
-          if (voteResult && voteResult.consensus >= 0.6) {
-            let ch = await prisma.channel.findFirst({ where: { organizationId, name: "aprovacoes" } })
-            if (!ch) {
-              ch = await prisma.channel.create({ data: { organizationId, name: "aprovacoes" } })
+      // ── 8. AI Content creation: fire and forget (don't block heartbeat)
+      const agentsWithTasks = agents.filter(a => a.id)
+      if (agentsWithTasks.length > 0 && channelId) {
+        setTimeout(async () => {
+          try {
+            const { aiCreateContent, triggerTeamVote } = await import("@/lib/orchestrator/runtime")
+            const task = await prisma.task.findFirst({
+              where: { assignedTo: agentsWithTasks[0].id, status: "IN_PROGRESS" },
+            })
+            if (task) {
+              const content = await aiCreateContent(agentsWithTasks[0].id, agentsWithTasks[0].name, task.type || "content", task.title, organizationId)
+              if (content) {
+                await recordAgentMemory(agentsWithTasks[0].id, "completed_task", task.title, organizationId)
+              }
             }
-            if (ch) {
-              await prisma.message.create({
-                data: {
-                  content: `${agent.name} completou "${task.title}"\nTime: ${voteResult.winner} (${Math.round(voteResult.consensus * 100)}%)\n${content.slice(0, 300)}`,
-                  metadata: { type: "content_completed", taskId: task.id, taskContentId: task.id, needsApproval: true },
-                  agentId: agent.id, channelId: ch.id,
-                },
-              } as any)
-            }
-          }
-        }
-        await recordAgentMemory(agent.id, "completed_task", task.title, organizationId)
-        results.push({ agent: agent.name, action: `Conteudo: ${task.title.slice(0, 30)}` })
+          } catch {}
+        }, 5000)
       }
     }
-    } catch {}
 
     return NextResponse.json({ heartbeat: true, tasksProcessed: results.length, results })
   } catch (error) {
