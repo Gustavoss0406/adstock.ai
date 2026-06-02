@@ -304,12 +304,13 @@ export async function extractTasksFromSpeeches(
 
   const taskSystem = `Extraia tarefas concretas e ESPECIFICAS das falas de reuniao.${contextStr}
 
-Regras:
+    Regras:
 - Titulos com pelo menos 20 caracteres, acionaveis
 - Nao crie tarefas duplicadas
 - Use verbos de acao: Criar, Analisar, Configurar, Otimizar, Revisar
 - Priorize tarefas MENCIONADAS nas falas (nao invente)
 - Max 8 tarefas
+- NUNCA crie tarefas com titulos como "Nao consegui processar", "dificuldades tecnicas", "aguardando", "me atualizar"
 
 Retorne APENAS JSON array: [{"title":"...","assignTo":"nome do agente","type":"content|analysis|technical|campaign","priority":"HIGH|MEDIUM|LOW"}]. Nada alem do JSON.`
 
@@ -343,23 +344,35 @@ Retorne APENAS JSON array: [{"title":"...","assignTo":"nome do agente","type":"c
       const assigned = agents.find(a =>
         a.name.toLowerCase().includes((et.assignTo || "").toLowerCase()),
       )
-      // Validate: title > 15 chars, not a duplicate
-      if (et.title?.length >= 15 && !existingTitles.has(et.title.toLowerCase().slice(0, 30))) {
-        existingTitles.add(et.title.toLowerCase().slice(0, 30))
-        await prisma.task.create({
-          data: {
-            organizationId,
-            title: et.title,
-            type: et.type || "content",
-            priority: et.priority || "MEDIUM",
-            status: "TODO",
-            assignedTo: assigned?.id || null,
-            estimatedMinutes: getTaskDurationMinutes(et.type || "content", et.priority || "MEDIUM"),
-            description: `Extraído da daily de ${new Date().toLocaleDateString("pt-BR")}.`,
-          },
-        } as any)
-        created++
-      }
+
+      const title = (et.title || "").trim()
+      const titleLower = title.toLowerCase()
+
+      // Blacklist: forbidden phrases
+      const forbidden = ["nao consegui", "dificuldades tecnicas", "aguardando", "me atualizar", "em breve", "sem tarefas"]
+      if (title.length < 20 || forbidden.some(f => titleLower.includes(f))) continue
+
+      // Whitelist: must contain at least 1 action verb
+      const actionVerbs = ["criar", "analisar", "configurar", "revisar", "otimizar", "planejar", "escrever", "produzir", "executar", "estruturar", "finalizar", "pesquisar", "mapear", "auditar", "relatar"]
+      if (!actionVerbs.some(v => titleLower.includes(v))) continue
+
+      // Duplicate check
+      if (existingTitles.has(titleLower.slice(0, 30))) continue
+
+      existingTitles.add(titleLower.slice(0, 30))
+      await prisma.task.create({
+        data: {
+          organizationId,
+          title: et.title,
+          type: et.type || "content",
+          priority: et.priority || "MEDIUM",
+          status: "TODO",
+          assignedTo: assigned?.id || null,
+          estimatedMinutes: getTaskDurationMinutes(et.type || "content", et.priority || "MEDIUM"),
+          description: `Extraído da daily de ${new Date().toLocaleDateString("pt-BR")}.`,
+        },
+      } as any)
+      created++
     }
 
     return created

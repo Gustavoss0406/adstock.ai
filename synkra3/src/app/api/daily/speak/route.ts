@@ -5,12 +5,17 @@ import { getUpcomingEvents, getDayContext, extractTasksFromSpeeches } from "@/li
 
 export const maxDuration = 60
 
-/**
- * POST /api/daily/speak
- * Body: { organizationId, agentId, previousSpeeches[], isFirst, isLast, isSummary? }
- *
- * Generates ONE agent speech. Called sequentially by the client.
- */
+const BAD_TASK_PATTERNS = [
+  "nao consegui processar", "dificuldades tecnicas", "me atualizar",
+  "vou me atualizar", "aguardando", "em breve", "trabalhando em",
+  "sem tarefas", "nenhuma tarefa",
+]
+
+function isValidTaskTitle(title: string): boolean {
+  return title.length >= 20
+    && !BAD_TASK_PATTERNS.some(p => title.toLowerCase().includes(p))
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { organizationId, agentId, previousSpeeches = [], isFirst, isLast, isSummary } = await request.json()
@@ -18,7 +23,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "organizationId and agentId required" }, { status: 400 })
     }
 
-    // Get full org context including onboarding
     const org = await prisma.organization.findUnique({
       where: { id: organizationId },
       include: {
@@ -28,7 +32,6 @@ export async function POST(request: NextRequest) {
     })
     if (!org) return NextResponse.json({ error: "Org not found" }, { status: 404 })
 
-    // Summary mode — just format the summary
     if (isSummary) {
       return generateSummary(organizationId, previousSpeeches, org)
     }
@@ -39,13 +42,16 @@ export async function POST(request: NextRequest) {
     })
     if (!agent) return NextResponse.json({ error: "Agent not found" }, { status: 404 })
 
-    // Get agent's tasks and all pending tasks for context
+    // Get tasks — filter out bad ones
     const [myTasks, allTasks] = await Promise.all([
       prisma.task.findMany({ where: { organizationId, assignedTo: agent.id, status: { not: "DONE" } }, orderBy: { priority: "desc" }, take: 5 }),
       prisma.task.findMany({ where: { organizationId, status: { not: "DONE" } }, include: { assignee: { select: { name: true } } }, orderBy: { priority: "desc" }, take: 10 }),
     ])
 
-    // Build rich company context
+    const validMyTasks = myTasks.filter(t => isValidTaskTitle(t.title))
+    const validAllTasks = allTasks.filter(t => isValidTaskTitle(t.title)).slice(0, 5)
+
+    // Build context
     const dayContext = getDayContext()
     const upcomingEvents = getUpcomingEvents(7)
     const eventsText = upcomingEvents.length > 0
@@ -62,16 +68,16 @@ export async function POST(request: NextRequest) {
       org.onboarding?.website && `Site: ${org.onboarding.website}`,
     ].filter(Boolean).join(". ")
 
-    const myTaskLines = myTasks.map(t => `- "${t.title}" (${t.priority})`).join("\n")
-    const allTaskLines = allTasks.map(t => `- [${t.status === "TODO" ? "A FAZER" : "ANDAMENTO"}] "${t.title}" — ${t.assignee?.name || "sem dono"}`).join("\n")
+    const myTaskLines = validMyTasks.map(t => `- "${t.title}" (${t.priority})`).join("\n")
+    const allTaskLines = validAllTasks.map(t => `- "${t.title}" — ${t.assignee?.name || "sem dono"}`).join("\n")
 
-    // Previous speeches — show relevant parts for cross-references
-    const prevLines = previousSpeeches.length > 0
-      ? `\nCOLEGAS JA FALARAM:\n${previousSpeeches.map((s: any) => `${s.agentName}: ${s.content.slice(0, 200)}`).join("\n\n")}`
+    // Previous speeches — last 2 only for focus
+    const recentSpeeches = previousSpeeches.slice(-2)
+    const prevLines = recentSpeeches.length > 0
+      ? `\nColegas ja falaram:\n${recentSpeeches.map((s: any) => `${s.agentName}: ${s.content.slice(0, 120)}`).join("\n\n")}`
       : ""
 
-    // Agent personality
-    const persona = agent.promptTemplate || `profissional de marketing da agencia ${org.name}`
+    // Personality
     const personalityNames: Record<string, string> = {
       VISIONARY: "visionaria, lider, entusiasmada",
       BOLD: "ousada, direta, pratica",
@@ -82,29 +88,37 @@ export async function POST(request: NextRequest) {
     }
     const personalityDesc = personalityNames[agent.personality] || "profissional"
 
-    // Build prompt with deep conversation context
+    // Aligned with document: what to do today, dependencies, blockers, ETA
     const userMessage = isFirst
-      ? `Voce e a PRIMEIRA a falar na daily de hoje. De bom dia, de o tom da reuniao, e compartilhe seu plano do dia. Seja ${personalityDesc}. Mencione colegas especificos se precisar de algo deles. Inclua ETA.`
+      ? `Voce e a PRIMEIRA a falar. De bom dia, de o tom, compartilhe:
+1. O que vai fazer HOJE
+2. Precisa de algo de algum colega?
+3. Algum bloqueio?
+Inclua ETA. Seja ${personalityDesc}.`
       : isLast
-        ? `Voce e a ULTIMA a falar. Recapitule o que cada colega disse, conecte os planos, identifique dependencias, e encerre a daily. Seja ${personalityDesc}.`
-        : `Sua vez de falar. Comente sobre o que os colegas disseram (concorda? precisa de algo deles? tem algo a complementar?). Depois compartilhe seu plano. Seja ${personalityDesc}. Inclua ETA.`
+        ? `Voce e a ULTIMA. Recapitule os planos, conecte dependencias, encerre a daily. Seja ${personalityDesc}.`
+        : `Sua vez. Comente sobre o que os colegas disseram, depois compartilhe:
+1. O que vai fazer HOJE
+2. Precisa de algo de algum colega?
+3. Algum bloqueio?
+Inclua ETA. Seja ${personalityDesc}.`
 
     const prompt = `${org.name} — Daily Standup
-Contexto da agencia: ${companyCtx || "Agencia de marketing recem-criada, comecando do zero."}
+${companyCtx || "Agencia de marketing recem-criada."}
 ${dayContext}
 ${eventsText}
-${allTaskLines ? `\nTODAS AS TAREFAS PENDENTES:\n${allTaskLines}` : "Nenhuma tarefa pendente no momento."}
-${myTaskLines ? `\nSUAS TAREFAS:\n${myTaskLines}` : "Voce nao tem tarefas atribuidas ainda."}
-${prevLines}
+${validAllTasks.length > 0 ? `Tarefas do time:\n${allTaskLines}` : "Nenhuma tarefa pendente."}
+${myTaskLines ? `\nSuas tarefas:\n${myTaskLines}` : ""}${prevLines}
 
 ${userMessage}
 
-Fale em primeira pessoa. 2-3 frases. Nao descreva seu raciocinio — apenas FALE.`
+Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
 
-    // Generate speech
+    // Generate speech — more tokens for later agents (more context)
+    const maxTokens = isFirst ? 2500 : 4000
     const reply = await chatCompletion(prompt, {
       temperature: 0.9,
-      maxTokens: 3000,
+      maxTokens,
       model: "deepseek-v4-pro",
     })
 
@@ -139,62 +153,79 @@ async function generateSummary(
   speeches: Array<{ agentName: string; content: string }>,
   org: any,
 ) {
-  const dayContext = getDayContext()
-  const speechesText = speeches.map(s => `${s.agentName}: ${s.content}`).join("\n\n")
+  // Filter out failed/error speeches
+  const validSpeeches = speeches.filter(s =>
+    s.content.length >= 30 &&
+    !s.content.includes("Nao consegui processar") &&
+    !s.content.includes("dificuldades tecnicas") &&
+    !s.content.includes("Vou me atualizar")
+  )
 
-  const prompt = `${org.name} — Resumo da Daily Standup
-${dayContext}
-
-FALAS DOS AGENTES:
-${speechesText || "Nenhum agente falou."}
-
-Preencha APENAS este formato (sem analise, sem introducao):
-RESUMO DO DIA:
-- NOME: o que vai fazer hoje
-
-DEPENDENCIAS:
-- quem depende de quem (ou "Nenhuma")
-
-ALERTAS:
-- problemas ou urgencias (ou "Nenhum")
-
-ACOES CEO:
-- decisoes que o CEO precisa tomar (ou "Nada necessario")`
-
-  try {
-    const reply = await chatCompletion(prompt, { temperature: 0.2, maxTokens: 500, model: "deepseek-v4-pro" })
-    const cleaned = reply?.trim() || "Daily concluida."
-
-    // Save summary message
-    const channel = await prisma.channel.findFirst({ where: { organizationId, name: "daily-standup" } })
-    if (channel) {
-      await prisma.message.create({
-        data: {
-          content: cleaned,
-          metadata: { type: "daily_summary", dailyDate: new Date().toISOString().slice(0, 10), agentCount: speeches.length },
-          channelId: channel.id,
-        },
-      })
-    }
-
-    // Extract tasks from speeches
-    const agents = await prisma.agent.findMany({ where: { organizationId }, select: { id: true, name: true } })
-    const tasksCreated = await extractTasksFromSpeeches(organizationId, speeches, agents)
-
-    // Create daily metrics
-    await prisma.dailyMetrics.create({
-      data: {
-        organizationId,
-        date: new Date(),
-        agentCount: speeches.length,
-        speechCount: speeches.length,
-        tasksExtracted: tasksCreated,
-        status: "completed",
-      },
-    } as any)
-
-    return NextResponse.json({ agent: "Sistema", content: cleaned, tasksCreated })
-  } catch {
-    return NextResponse.json({ agent: "Sistema", content: "Daily concluida.", tasksCreated: 0 })
+  // Build simple summary from template — no AI needed
+  const lines: string[] = []
+  lines.push("RESUMO DO DIA:")
+  for (const s of validSpeeches) {
+    const plan = s.content.split(/[.!?]/)[0]?.slice(0, 100) || s.content.slice(0, 80)
+    lines.push(`- ${s.agentName}: ${plan}`)
   }
+  if (validSpeeches.length === 0) lines.push("- Nenhum agente reportou atividades.")
+
+  lines.push("")
+  lines.push("DEPENDENCIAS:")
+  const deps = validSpeeches.filter(s =>
+    s.content.toLowerCase().includes("preciso") ||
+    s.content.toLowerCase().includes("aguardando") ||
+    s.content.toLowerCase().includes("depende")
+  )
+  if (deps.length > 0) {
+    for (const s of deps) {
+      lines.push(`- ${s.agentName} mencionou dependencias`)
+    }
+  } else {
+    lines.push("- Nenhuma dependencia reportada")
+  }
+
+  lines.push("")
+  lines.push("ALERTAS:")
+  lines.push("- Nenhum alerta")
+
+  lines.push("")
+  lines.push("ACOES CEO:")
+  lines.push("- Nada necessario agora")
+
+  const summary = lines.join("\n")
+
+  // Save summary
+  const channel = await prisma.channel.findFirst({ where: { organizationId, name: "daily-standup" } })
+  if (channel) {
+    await prisma.message.create({
+      data: {
+        content: summary,
+        metadata: { type: "daily_summary", dailyDate: new Date().toISOString().slice(0, 10), agentCount: speeches.length },
+        channelId: channel.id,
+      },
+    })
+  }
+
+  // Extract tasks from VALID speeches only
+  const agents = await prisma.agent.findMany({ where: { organizationId }, select: { id: true, name: true } })
+  const tasksCreated = await extractTasksFromSpeeches(
+    organizationId,
+    validSpeeches.length > 0 ? validSpeeches : speeches,
+    agents,
+  )
+
+  // Create daily metrics
+  await prisma.dailyMetrics.create({
+    data: {
+      organizationId,
+      date: new Date(),
+      agentCount: speeches.length,
+      speechCount: speeches.length,
+      tasksExtracted: tasksCreated,
+      status: "completed",
+    },
+  } as any)
+
+  return NextResponse.json({ agent: "Sistema", content: summary, tasksCreated })
 }

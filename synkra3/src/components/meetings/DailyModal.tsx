@@ -92,8 +92,9 @@ export function DailyModal({ open, agents, orgId, onClose }: DailyModalProps) {
           const isLast = i === activeAgents.length - 1
 
           setSpeakingIdx(i)
-          // Force React re-render so green glow appears DURING thinking
-          await new Promise(r => setTimeout(r, 100))
+          // Force browser to paint the "thinking" (blue) state before blocking on fetch
+          await new Promise(r => requestAnimationFrame(r))
+          await new Promise(r => setTimeout(r, 50))
 
           try {
             const res = await fetch("/api/daily/speak", {
