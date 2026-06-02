@@ -6,7 +6,7 @@ import { runBulkAwarenessCheck } from "@/lib/orchestrator/awareness"
 import { detectProactiveConflicts, handleConflict } from "@/lib/orchestrator/conflict"
 import { TIMING_CONFIG, getPersonalityModifiers, getTaskDurationMinutes } from "@/lib/orchestrator/config"
 import { canActAutonomously } from "@/lib/orchestrator/autonomy"
-import { processPendingMentions, processTimeBasedEvents, processApprovalCascade } from "@/lib/orchestrator/runtime"
+import { processPendingMentions, processTimeBasedEvents, processApprovalCascade, processWeeklyEvents, checkRejectionPattern, continueConversationChain, triggerTeamVote, aiCreateContent } from "@/lib/orchestrator/runtime"
 import { recordAgentMemory } from "@/lib/orchestrator/memory"
 
 const ROLE_MATCH: Record<string, string[]> = {
@@ -278,6 +278,76 @@ export async function POST(request: NextRequest) {
       // If not working hours, skip the rest
       if (timeResults.some(r => r.includes("fechou") || r.includes("pausaram"))) {
         return NextResponse.json({ heartbeat: true, tasksProcessed: results.length, results })
+      }
+
+      // ── 7. Weekly events (Mon 10h plan, Sun 20h report) ──
+      const weeklyResults = await processWeeklyEvents(organizationId, channelId)
+      for (const r of weeklyResults) {
+        results.push({ agent: "Sistema", action: r })
+      }
+
+      // ── 8. Multi-hop conversation ──
+      const multiHopResults = await continueConversationChain(organizationId)
+      for (const r of multiHopResults) {
+        results.push({ agent: "Cascata", action: r })
+      }
+
+      // ── 9. Rejection pattern ──
+      const rejectionAlert = await checkRejectionPattern(organizationId)
+      if (rejectionAlert) {
+        results.push({ agent: "Maya", action: rejectionAlert })
+      }
+    }
+
+    // ── 10. AI Content creation for tasks in progress ──
+    for (const agent of agents) {
+      const task = await prisma.task.findFirst({
+        where: { assignedTo: agent.id, status: "IN_PROGRESS" },
+      })
+      if (!task || !channelId) continue
+
+      // Only create content once per task
+      const alreadyCreated = await prisma.message.findFirst({
+        where: {
+          organizationId,
+          agentId: agent.id,
+          metadata: { path: ["taskContentId"], equals: task.id },
+        },
+      })
+      if (alreadyCreated) continue
+
+      const content = await aiCreateContent(agent.id, agent.name, task.type || "content", task.title, organizationId)
+      if (content) {
+        // If content-related, trigger team vote
+        if (task.type === "content" || task.type === "campaign") {
+          const voteResult = await triggerTeamVote(organizationId, content, agent.id)
+          if (voteResult && voteResult.consensus >= 0.6) {
+            // Post to #aprovacoes as "recommended by team"
+            const approvedChannel = await prisma.channel.findFirst({
+              where: { organizationId, name: "aprovacoes" },
+            })
+            if (!approvedChannel) {
+              await prisma.channel.create({
+                data: { organizationId, name: "aprovacoes", description: "Conteudo para aprovacao" },
+              })
+            }
+            const ch = await prisma.channel.findFirst({ where: { organizationId, name: "aprovacoes" } })
+            if (ch) {
+              await prisma.message.create({
+                data: {
+                  content: `🎨 ${agent.name} completou "${task.title}"\n\nTime recomenda: ${voteResult.winner} (${Math.round(voteResult.consensus * 100)}%)\n\n${content.slice(0, 500)}`,
+                  metadata: { type: "approval_needed", taskId: task.id, taskContentId: task.id, needsApproval: true, consensus: voteResult.consensus, winner: voteResult.winner },
+                  agentId: agent.id,
+                  channelId: ch.id,
+                },
+              } as any)
+            }
+          }
+        }
+
+        // Record in memory
+        await recordAgentMemory(agent.id, "completed_task", `Conteudo criado: ${task.title}`, organizationId)
+        results.push({ agent: agent.name, action: `Conteudo: ${task.title.slice(0, 40)}` })
       }
     }
 
