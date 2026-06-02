@@ -290,7 +290,6 @@ export async function extractTasksFromSpeeches(
 ): Promise<number> {
   if (speeches.length === 0) return 0
 
-  // Get org context for better task extraction
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
     include: { onboarding: { select: { industry: true, brandVoice: true, targetAudience: true, goals: true } } },
@@ -302,29 +301,29 @@ export async function extractTasksFromSpeeches(
   if (org?.onboarding?.goals?.length) contextParts.push(`Objetivos: ${org.onboarding.goals.join(", ")}`)
   const contextStr = contextParts.length > 0 ? `\nCONTEXTO DA AGENCIA: ${contextParts.join(". ")}.` : ""
 
-  const taskSystem = `Extraia tarefas concretas e ESPECIFICAS das falas de reuniao.${contextStr}
+  const prompt = `Extraia tarefas concretas e ESPECIFICAS das falas abaixo.${contextStr}
 
-    Regras:
+Agentes disponiveis: ${agents.map(a => a.name.split(" ")[0]).join(", ")}.
+
+Regras:
 - Titulos com pelo menos 20 caracteres, acionaveis
 - Nao crie tarefas duplicadas
-- Use verbos de acao: Criar, Analisar, Configurar, Otimizar, Revisar
+- Use verbos de acao (Criar, Analisar, Configurar, Otimizar, Revisar)
 - Priorize tarefas MENCIONADAS nas falas (nao invente)
 - Max 8 tarefas
-- NUNCA crie tarefas com titulos como "Nao consegui processar", "dificuldades tecnicas", "aguardando", "me atualizar"
+- Atribua cada tarefa ao agente mais adequado pelos nomes
 
-Retorne APENAS JSON array: [{"title":"...","assignTo":"nome do agente","type":"content|analysis|technical|campaign","priority":"HIGH|MEDIUM|LOW"}]. Nada alem do JSON.`
+FALAS:
+${speeches.map(s => `${s.agentName}: ${s.content.slice(0, 300)}`).join("\n\n")}
+
+Retorne APENAS JSON array, nada alem:
+[{"title":"tarefa especifica","assignTo":"nome do agente","type":"content|analysis|technical|campaign","priority":"HIGH|MEDIUM|LOW"}]`
 
   try {
-    const taskReply = await chatWithMessages(
-      [
-        { role: "system", content: taskSystem },
-        {
-          role: "user",
-          content: `FALAS:\n${speeches.map(s => `${s.agentName}: ${s.content}`).join("\n\n")}\n\nExtraia as tarefas.`,
-        },
-      ],
-      { temperature: 0.3, maxTokens: 2000 },
-    )
+    const taskReply = await chatCompletion(prompt, {
+      temperature: 0.2,
+      maxTokens: 1500,
+    })
 
     const jsonMatch = taskReply.match(/\[[\s\S]*\]/)
     if (!jsonMatch) return 0

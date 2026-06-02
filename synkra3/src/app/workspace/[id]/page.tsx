@@ -896,7 +896,22 @@ export default function WorkspaceHub() {
             setIsFirstDaily(true)
             setDailyOpen(true)
           }}
-          onDismiss={() => setFirstDailyOverlay(false)}
+          onDismiss={() => {
+            setFirstDailyOverlay(false)
+            // Maya sends a gentle follow-up
+            fetch("/api/chat", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                agentId: org?.agents?.find(a => a.name === "Maya Ferreira")?.id,
+                message: "",
+                channelId: "geral",
+                context: "voce e Maya. o CEO acabou de recusar a chamada da primeira daily. mande uma mensagem gentil: \"Ta tudo bem? Podemos fazer a daily daqui 5 minutos?\" mantenha o tom profissional e acolhedor.",
+              }),
+            }).catch(() => {})
+            // Refresh messages after a delay
+            setTimeout(() => queryClient.invalidateQueries({ queryKey: ["messages"] }), 3000)
+          }}
         />
       )}
       <DailyModal

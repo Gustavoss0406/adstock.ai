@@ -17,25 +17,6 @@ export default {
       return new Response(null, { headers: corsHeaders })
     }
 
-    if(request.method === "GET") {
-      return new Response("Worker is up", { status: 200, headers: corsHeaders },
-
-    if (request.method === "GET") {
-      return new Response("Worker is up", { status: 200, headers: corsHeaders })
-    }
-
-    if (!env.OPENCODE_API_URL || !env.OPENCODE_API_KEY) {
-      return new Response(
-        JSON.stringify({ error: "OPENCODE_API_URL or OPENCODE_API_KEY not set" }),
-        {
-          status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        },
-      )
-    }
-
-    
-
     if (request.method !== "POST") {
       return new Response("Method not allowed", { status: 405 })
     }

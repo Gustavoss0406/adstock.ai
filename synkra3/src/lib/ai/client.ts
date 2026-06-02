@@ -11,7 +11,7 @@ export async function chatWithMessages(messages: Array<{ role: "system" | "user"
   try {
     const response = await fetch(AGENT_WORKER_URL, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, temperature: options?.temperature ?? DEFAULT_TEMPERATURE, maxTokens: options?.maxTokens ?? DEFAULT_MAX_TOKENS }),
+      body: JSON.stringify({ messages, temperature: options?.temperature ?? DEFAULT_TEMPERATURE, maxTokens: options?.maxTokens ?? DEFAULT_MAX_TOKENS, model: options?.model || DEFAULT_MODEL }),
     })
     if (!response.ok) {
       const errBody = await response.text().catch(() => "")
@@ -26,7 +26,7 @@ export async function chatCompletion(message: string, options?: ChatOptions): Pr
   try {
     const response = await fetch(AGENT_WORKER_URL, {
       method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, temperature: options?.temperature ?? DEFAULT_TEMPERATURE, maxTokens: options?.maxTokens ?? DEFAULT_MAX_TOKENS }),
+      body: JSON.stringify({ message, temperature: options?.temperature ?? DEFAULT_TEMPERATURE, maxTokens: options?.maxTokens ?? DEFAULT_MAX_TOKENS, model: options?.model || DEFAULT_MODEL }),
     })
     if (!response.ok) {
       const errBody = await response.text().catch(() => "")
