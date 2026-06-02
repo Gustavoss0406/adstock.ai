@@ -194,7 +194,7 @@ async function generateWithRetry(
       const temp = 0.9 - (attempt * 0.15)
       const reply = await chatCompletion(prompt, {
         temperature: temp,
-        maxTokens: 1200, // deepseek reasoning (~1000) + short speech (~200)
+        maxTokens: 3000, // Later agents have more context (previous speeches) — need room
       })
       return reply
     } catch (err) {
@@ -515,9 +515,10 @@ export async function runDaily(
       .map(t => `- "${t.title}"${t.priority ? ` (${t.priority})` : ""}`)
       .join("\n")
 
-    // Real discussion context — what previous speakers actually said
-    const previousSpeeches = allSpeeches
-      .map((s, j) => `${dailyOrder[j]?.name || s.agentName}: ${s.content.slice(0, 150)}`)
+    // Real discussion context — only last 2 speakers (keeps prompt lean)
+    const recentSpeeches = allSpeeches.slice(-2)
+    const previousSpeeches = recentSpeeches
+      .map((s, j) => `${dailyOrder[allSpeeches.length - recentSpeeches.length + j]?.name || s.agentName}: ${s.content.slice(0, 100)}`)
       .join("\n\n")
     const discussionHint = previousSpeeches
       ? `\nColegas ja falaram:\n${previousSpeeches}\n\nComente brevemente e compartilhe seu plano.`
