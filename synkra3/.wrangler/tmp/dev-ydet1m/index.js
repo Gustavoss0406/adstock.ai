@@ -45,8 +45,10 @@ var worker_default = {
     try {
       const body = await request.json();
       const temperature = body.temperature ?? 0.7;
-      const maxTokens = body.maxTokens ?? 800;
-      const model = body.model || "deepseek-v4-pro";
+      const requestedMaxTokens = body.maxTokens ?? 800;
+      const requestedModel = body.model || "deepseek-v4-pro";
+      const model = requestedModel === "deepseek-v4-pro" && requestedMaxTokens < 1500 ? "glm-5.1" : requestedModel;
+      const maxTokens = Math.max(requestedMaxTokens, 200);
       let messages = [];
       if (body.messages && Array.isArray(body.messages) && body.messages.length > 0) {
         messages = body.messages.filter(function(m) {
