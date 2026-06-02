@@ -3,12 +3,24 @@ import { prisma } from "@/lib/prisma"
 import { PIXEL_OFFICE_API_URL } from "@/lib/ai/config"
 
 /**
- * POST /api/office/sync
- * Body: { organizationId }
- *
- * Sincroniza agentes de uma org com o Pixel Office (Render/cloud).
- * Envia dados dos agentes via POST para o servidor do pixel office.
+ * GET /api/office/sync?orgId=xxx — health check proxy for pixel office
+ * POST /api/office/sync — sync agents to pixel office
  */
+export async function GET(request: NextRequest) {
+  try {
+    const response = await fetch(`${PIXEL_OFFICE_API_URL}/api/health`, {
+      signal: AbortSignal.timeout(8000),
+    })
+    if (response.ok) {
+      const data = await response.json()
+      return NextResponse.json({ status: "ok", uptime: data.uptime })
+    }
+    return NextResponse.json({ status: "down" }, { status: 502 })
+  } catch {
+    return NextResponse.json({ status: "unreachable" }, { status: 502 })
+  }
+}
+
 export async function POST(request: NextRequest) {
   try {
     const { organizationId } = await request.json()

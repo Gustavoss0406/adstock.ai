@@ -97,16 +97,19 @@ export default function WorkspaceHub() {
 
     // ── Pre-warm pixel office (Render free tier cold start) ──
     const warmPixelOffice = async () => {
-      for (let attempt = 0; attempt < 8; attempt++) {
+      for (let attempt = 0; attempt < 10; attempt++) {
         try {
-          const res = await fetch(`${PIXEL_OFFICE_URL}/api/health`, { signal: AbortSignal.timeout(10000) })
-          if (res.ok) {
+          const res = await fetch("/api/office/sync", { signal: AbortSignal.timeout(10000) })
+          const data = await res.json()
+          if (data.status === "ok") {
             setOfficeReady(true)
             return
           }
         } catch {}
-        await new Promise(r => setTimeout(r, 4000))
+        await new Promise(r => setTimeout(r, 5000))
       }
+      // After all retries, show office anyway (may be loading)
+      setOfficeReady(true)
     }
     warmPixelOffice()
 
