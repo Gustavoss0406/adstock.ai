@@ -55,6 +55,7 @@ export default function WorkspaceHub() {
   const [showingCommentInput, setShowingCommentInput] = useState<Record<string, boolean>>({})
   const [commentText, setCommentText] = useState("")
   const [submittingComment, setSubmittingComment] = useState(false)
+  const [officeReady, setOfficeReady] = useState(false)
   const bridgeUrlRef = useRef("/api/agents/bridge") // local bridge if detected, else Vercel
   const divRef = useRef<HTMLDivElement>(null); const chatRef = useRef<HTMLDivElement>(null)
 
@@ -96,21 +97,18 @@ export default function WorkspaceHub() {
 
     // ── Pre-warm pixel office (Render free tier cold start) ──
     const warmPixelOffice = async () => {
-      for (let attempt = 0; attempt < 5; attempt++) {
+      for (let attempt = 0; attempt < 8; attempt++) {
         try {
           const res = await fetch(`${PIXEL_OFFICE_URL}/api/health`, { signal: AbortSignal.timeout(10000) })
           if (res.ok) {
-            console.log("[Pixel Office] Ready after", attempt + 1, "attempt(s)")
-            return true
+            setOfficeReady(true)
+            return
           }
         } catch {}
-        await new Promise(r => setTimeout(r, 3000 * (attempt + 1))) // exponential backoff
+        await new Promise(r => setTimeout(r, 4000))
       }
-      return false
     }
-    warmPixelOffice().then(ready => {
-      if (!ready) console.warn("[Pixel Office] Not reachable — may be hibernating")
-    })
+    warmPixelOffice()
 
     // Sync agents to pixel office (cloud)
     setTimeout(() => {
@@ -472,18 +470,20 @@ export default function WorkspaceHub() {
           <>
             {/* Office */}
             <div className="relative bg-[#111118] flex-shrink-0 border-2 border-white/[0.04] rounded-lg overflow-hidden" style={{ height: officeFs ? "100%" : `${dividerY}%` }}>
-          <iframe
-            src={PIXEL_OFFICE_URL}
-            className="w-full h-full border-0"
-            allow="clipboard-read; clipboard-write"
-            onError={(e) => {
-              // Render free tier cold start — retry after delay
-              const iframe = e.currentTarget
-              if (iframe.dataset.retries && parseInt(iframe.dataset.retries) >= 5) return
-              iframe.dataset.retries = String((parseInt(iframe.dataset.retries || "0") + 1))
-              setTimeout(() => { iframe.src = iframe.src }, 5000)
-            }}
-          />
+          {officeReady ? (
+            <iframe
+              src={PIXEL_OFFICE_URL}
+              className="w-full h-full border-0"
+              allow="clipboard-read; clipboard-write"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-[#0a0a0b]">
+              <div className="text-center space-y-3">
+                <div className="w-8 h-8 border-2 border-white/10 border-t-[#2bac76]/50 rounded-full animate-spin mx-auto" />
+                <p className="text-[11px] text-white/20">Acordando o escritorio...</p>
+              </div>
+            </div>
+          )}
           <button onClick={() => setOfficeFs(!officeFs)} className="absolute top-2 right-2 p-1 rounded bg-black/20 hover:bg-black/40 text-white/30 hover:text-white/60 transition-colors z-10">{officeFs ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}</button>
         </div>
         {/* Divider */}
