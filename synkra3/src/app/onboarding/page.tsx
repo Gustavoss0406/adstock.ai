@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { ArrowRight, ArrowLeft, Loader2, CheckCircle2, Search } from "lucide-react"
+import { ArrowRight, ArrowLeft, Loader2, CheckCircle2, Search, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 const TOTAL = 8
@@ -55,6 +55,9 @@ export default function OnboardingPage() {
   const [dailyTime, setDailyTime] = useState("09:00")
   const [weeklyDay, setWeeklyDay] = useState("monday")
   const [workMode, setWorkMode] = useState("KANBAN")
+  const [showFinal, setShowFinal] = useState(false)
+  const [finalLoading, setFinalLoading] = useState(false)
+  const [finalReady, setFinalReady] = useState(false)
 
   useEffect(() => { if (status === "unauthenticated") router.push("/login") }, [status, router])
 
@@ -82,20 +85,25 @@ export default function OnboardingPage() {
 
   const next = async () => {
     if (step === TOTAL - 1) {
+      setShowFinal(true)
       setLoading(true)
       await saveStep(step + 1)
-      // Save methodology preference to officeSettings
       if (orgId && workMode) {
         await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, workflowMethod: workMode, dailyTime }) })
       }
       await fetch("/api/onboarding", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, completed: true }) })
-      // Flag for first daily
       localStorage.setItem("onboarding_just_completed", orgId)
-      toast.success("Pronto!")
-      setTimeout(() => router.push(`/workspace/${orgId}`), 500)
+      setLoading(false)
+      setFinalLoading(true)
+      // Animate the "creating" steps
+      setTimeout(() => setFinalReady(true), 2500)
       return
     }
     await saveStep(step + 1); setStep(step + 1)
+  }
+
+  const enterOffice = () => {
+    router.push(`/workspace/${orgId}`)
   }
 
   const scanSite = async () => {
@@ -110,6 +118,84 @@ export default function OnboardingPage() {
   }
 
   const agent = getAgent(step)
+
+  // ── Final screen: "Sua agência está pronta!" ──
+  if (showFinal) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center p-4">
+        <AnimatePresence>
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.5 }}
+            className="text-center space-y-8 max-w-[380px]"
+          >
+            {!finalReady ? (
+              <div className="space-y-6">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                  className="w-14 h-14 mx-auto rounded-full border-2 border-white/10 border-t-[#ff385c]/50"
+                />
+                <div className="space-y-1">
+                  <p className="text-sm text-white/60">Criando sua agencia...</p>
+                  <p className="text-[11px] text-white/20">Contratando agentes, organizando escritorio, preparando a primeira daily</p>
+                </div>
+              </div>
+            ) : (
+              <motion.div
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6 }}
+                className="space-y-6"
+              >
+                <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#2bac76]/20 to-[#2563eb]/20 flex items-center justify-center ring-2 ring-[#2bac76]/10">
+                  <Sparkles className="w-8 h-8 text-[#2bac76]/60" />
+                </div>
+                <div className="space-y-3">
+                  <h2 className="text-xl font-bold text-white">
+                    ✨ Sua agencia esta pronta!
+                  </h2>
+                  <p className="text-[12px] text-white/30 max-w-[280px] mx-auto leading-relaxed">
+                    {companyName} foi criada com 5 agentes especializados.
+                    Eles ja estao no escritorio te esperando para a primeira daily.
+                  </p>
+                </div>
+
+                {/* Agent preview */}
+                <div className="grid grid-cols-5 gap-2 pt-2">
+                  {AGENTS.map((a) => (
+                    <div key={a.name} className="flex flex-col items-center gap-1">
+                      <div className="w-10 h-10 rounded-lg ring-1 ring-white/[0.04] overflow-hidden">
+                        {a.img ? <img src={a.img} className="w-full h-full object-cover" alt={a.name} /> :
+                        <div className="w-full h-full flex items-center justify-center text-white/60 text-[10px] font-bold" style={{ backgroundColor: a.color + "20" }}>{a.name[0]}</div>}
+                      </div>
+                      <span className="text-[8px] text-white/15">{a.name}</span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <p className="text-[12px] text-white/30">
+                    Vou reunir o time agora para a primeira daily.
+                  </p>
+                  <p className="text-[11px] text-white/20">
+                    Voce precisa estar presente para alinhar tudo com eles.
+                  </p>
+                  <button
+                    onClick={enterOffice}
+                    className="mt-3 px-8 py-2.5 rounded-xl bg-[#ff385c] hover:bg-[#ff385c]/80 text-white text-sm font-medium transition-all active:scale-95"
+                  >
+                    Entrar no escritorio →
+                  </button>
+                </div>
+              </motion.div>
+            )}
+          </motion.div>
+        </AnimatePresence>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center p-4">

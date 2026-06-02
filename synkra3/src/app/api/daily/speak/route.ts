@@ -89,6 +89,19 @@ export async function POST(request: NextRequest) {
     const personalityDesc = personalityNames[agent.personality] || "profissional"
 
     // First daily: Maya's bootstrap prompt
+    const connectedIntegrations = org.integrations?.length ?? 0
+    const neededIntegrations = [
+      !org.integrations?.some(i => i.platform.includes("Google") || i.platform.includes("Search")) ? "Google Search Console" : null,
+      !org.integrations?.some(i => i.platform.includes("Instagram")) ? "Instagram Business" : null,
+      !org.integrations?.some(i => i.platform.includes("LinkedIn")) ? "LinkedIn" : null,
+    ].filter(Boolean)
+
+    const integrationNote = neededIntegrations.length > 0
+      ? `\nIntegracoes que precisam ser conectadas pelo CEO: ${neededIntegrations.join(", ")}. Avise o CEO sobre isso se for relevante para suas tarefas.`
+      : connectedIntegrations > 0
+        ? `\nIntegracoes conectadas: ${org.integrations?.map(i => i.platform).join(", ")}.`
+        : ""
+
     const firstDailyBootstrap = isFirstDaily && isFirst
       ? `Voce e a PRIMEIRA A FALAR na primeira daily da ${org.name}.
 
@@ -99,6 +112,7 @@ ${[
   org.onboarding?.goals?.length && `Objetivos: ${org.onboarding.goals.join(", ")}`,
   org.onboarding?.mainChallenges && `Desafio: ${org.onboarding.mainChallenges}`,
 ].filter(Boolean).join(". ") || "Agencia de marketing"}
+${integrationNote}
 
 Suas tarefas:
 ${myTaskLines || "Nenhuma tarefa criada ainda."}
