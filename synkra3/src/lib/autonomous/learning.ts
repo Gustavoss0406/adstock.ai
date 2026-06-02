@@ -76,11 +76,43 @@ export async function analyzeApprovalPatterns(organizationId: string): Promise<A
     }
   }
 
+  // Detect patterns from rejections
+  const rejectionNotes = rejected.map(e => (e.metadata as any)?.note).filter(Boolean) as string[]
+  const commonRejects = rejectionNotes.length > 0
+    ? rejectionNotes.slice(0, 5)
+    : rejected.slice(0, 5).map(e => (e.metadata as any)?.content?.slice(0, 100))
+
+  // Update company onboarding with learned preferences
+  if (total >= 5) {
+    try {
+      const onboarding = await prisma.onboarding.findUnique({ where: { organizationId } })
+      if (onboarding && bestRate > 0.7 && bestAgent) {
+        const bestAgentData = await prisma.agent.findUnique({ where: { id: bestAgent } })
+        const existingMeta = (onboarding as any).metadata || {}
+        await prisma.onboarding.update({
+          where: { organizationId },
+          data: {
+            metadata: {
+              ...existingMeta,
+              learnedPreferences: {
+                approvalRate: approved.length / total,
+                bestAgent: bestAgentData?.name,
+                totalApprovals: approved.length,
+                totalRejections: rejected.length,
+                updatedAt: new Date().toISOString(),
+              },
+            },
+          },
+        } as any)
+      }
+    } catch {}
+  }
+
   return {
     approvalRate: total > 0 ? approved.length / total : 0,
     totalApprovals: approved.length,
     totalRejections: rejected.length,
-    commonRejects: rejected.slice(0, 5).map(e => (e.metadata as any)?.content?.slice(0, 100)),
+    commonRejects,
     bestAgent: bestAgent ? (await prisma.agent.findUnique({ where: { id: bestAgent } }))?.name || undefined : undefined,
   }
 }

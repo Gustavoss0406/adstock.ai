@@ -15,6 +15,7 @@ export { runMetricMonitor, type MetricAlert } from "./monitor"
 export { maintainBacklog } from "./backlog"
 export { learnFromFeedback, analyzeApprovalPatterns, type ApprovalPattern } from "./learning"
 export { distributeTask, type DistributableTask } from "./distribute"
+export { runAutonomousDaily } from "./daily"
 
 import { prisma } from "@/lib/prisma"
 import { runCalendarCheck } from "./calendar"
