@@ -1,0 +1,100 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: #ffffff;
+    --foreground: #222222;
+
+    --card: #ffffff;
+    --card-foreground: #222222;
+
+    --popover: #ffffff;
+    --popover-foreground: #222222;
+
+    --primary: #ff385c;
+    --primary-foreground: #ffffff;
+    --primary-active: #e00b41;
+    --primary-disabled: #ffd1da;
+
+    --secondary: #ffffff;
+    --secondary-foreground: #222222;
+
+    --muted: #f7f7f7;
+    --muted-foreground: #6a6a6a;
+
+    --accent: #ff385c;
+    --accent-foreground: #ffffff;
+    --accent-teal: #2bac76;
+    --accent-amber: #ecb22e;
+
+    --destructive: #c13515;
+    --destructive-foreground: #ffffff;
+
+    --border: #dddddd;
+    --input: #dddddd;
+    --ring: #222222;
+
+    --surface: #ffffff;
+    --surface-1: #f7f7f7;
+    --surface-2: #f2f2f2;
+
+    --ink: #222222;
+    --ink-body: #3f3f3f;
+    --ink-muted: #6a6a6a;
+
+    --sidebar: #f7f7f7;
+    --sidebar-text: #6a6a6a;
+    --sidebar-active: #222222;
+
+    --success: #2bac76;
+    --warning: #ecb22e;
+    --danger: #e00b41;
+    --info: #2563eb;
+
+    --radius: 8px;
+    --radius-card: 14px;
+    --radius-pill: 9999px;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+  }
+}
+
+@layer components {
+  .text-link {
+    @apply text-primary underline underline-offset-2 decoration-1 transition-colors font-medium;
+  }
+
+  .text-link:hover {
+    color: var(--primary-active);
+    text-decoration-color: var(--primary-active);
+  }
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #dddddd;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #c1c1c1;
+}

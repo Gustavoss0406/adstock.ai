@@ -1,0 +1,588 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum AgentRole {
+  STRATEGIST
+  DESIGNER
+  COPYWRITER
+  ANALYST
+  SOCIAL_MEDIA
+  SEO
+  MEDIA_BUYER
+  COMMUNITY_MANAGER
+  CREATIVE_DIRECTOR
+  TRAFFIC_MANAGER
+}
+
+enum AgentPersonality {
+  ANALYTICAL
+  CREATIVE
+  PRAGMATIC
+  VISIONARY
+  DETAILED
+  BOLD
+  DIPLOMATIC
+  DISRUPTIVE
+}
+
+enum AgentStatus {
+  ACTIVE
+  IDLE
+  WORKING
+  IN_MEETING
+  OFFLINE
+  FIRED
+}
+
+enum AgentWorkState {
+  IDLE
+  THINKING
+  WORKING_SILENT
+  WORKING_VISIBLE
+  WAITING
+  SPEAKING
+}
+
+enum MeetingType {
+  DAILY
+  WEEKLY
+  SPRINT_PLANNING
+  SPRINT_REVIEW
+  RETROSPECTIVE
+  BRAINSTORMING
+  EMERGENCY
+}
+
+enum MeetingStatus {
+  SCHEDULED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  CANCELLED
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum WorkflowMethod {
+  KANBAN
+  SPRINTS
+}
+
+enum VoteType {
+  HIRE
+  FIRE
+  PROMOTE
+  DEMOTE
+  RAISE
+  CUT
+  DECISION
+}
+
+enum VoteStatus {
+  OPEN
+  CLOSED
+  RESOLVED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  name          String?
+  email         String         @unique
+  emailVerified DateTime?
+  image         String?
+  passwordHash  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  metadata    Json?
+
+  organizations Organization[]
+  memberOf      OrganizationMember[]
+  sessions      Session[]
+  accounts      Account[]
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model Organization {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?  @db.Text
+  website     String?
+  industry    String?
+  size        String?
+  logo        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id])
+
+  members         OrganizationMember[]
+  agents          Agent[]
+  meetings        Meeting[]
+  projects        Project[]
+  integrations    Integration[]
+  tasks           Task[]
+  artworks        Artwork[]
+  channels        Channel[]
+  officeSettings  OfficeSettings?
+  onboarding      Onboarding?
+  sprints         Sprint[]
+  votes           Vote[]
+  events          AgencyEvent[]
+  actions         AgentAction[]
+  orchestrationLogs OrchestrationLog[]
+  dailyMetrics     DailyMetrics[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(cuid())
+  organizationId String
+  userId         String
+  role           String       @default("member")
+  joinedAt       DateTime     @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, userId])
+}
+
+model Onboarding {
+  id             String   @id @default(cuid())
+  organizationId String   @unique
+  step           Int      @default(0)
+  completed      Boolean  @default(false)
+
+  companyName    String?
+  industry       String?
+  companySize    String?
+  targetAudience String?  @db.Text
+  brandVoice     String?
+  goals          String[] 
+  competitors    String?  @db.Text
+  website        String?
+  currentTools   String[] 
+  marketingBudget String?
+  mainChallenges String?  @db.Text
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model OfficeSettings {
+  id             String   @id @default(cuid())
+  organizationId String   @unique
+
+  dailyTime      String   @default("09:00")
+  weeklyDay      String   @default("monday")
+  weeklyTime     String   @default("10:00")
+  workflowMethod WorkflowMethod @default(KANBAN)
+  sprintDuration Int      @default(14)
+  timezone       String   @default("America/Sao_Paulo")
+  dailyOrder     String[] 
+  dailyDays      String[] 
+  dailyEnabled   Boolean  @default(true)
+  checkIntervalSec Int    @default(45)
+  proactiveWorkEnabled Boolean @default(true)
+  lastDailyAt    DateTime?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model Agent {
+  id             String      @id @default(cuid())
+  organizationId String
+  name           String
+  role           AgentRole
+  personality    AgentPersonality
+  status         AgentStatus @default(OFFLINE)
+  avatar         String?
+  bio            String?     @db.Text
+  level          Int         @default(1)
+  salary         Float       @default(1000)
+  salaryCurrency String      @default("BRL")
+  performance    Float       @default(50)
+  morale         Int         @default(70)
+  skills         String[]   
+  traits         String[]   
+  promptTemplate String?     @db.Text
+
+  workState      AgentWorkState @default(IDLE)
+  lastCheckAt    DateTime?
+  lastMessageSeenId String?
+  lastDailySpokeAt  DateTime?
+
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages       Message[]
+  assignedTasks  Task[]              @relation("AssignedAgent")
+  createdArtworks Artwork[]
+  votes          Vote[]              @relation("InitiatedVotes")
+  targetedByVotes Vote[]             @relation("TargetedVotes")
+  voteDecisions  VoteDecision[]
+  meetingParticipants MeetingParticipant[]
+  agentMetrics   AgentMetric[]
+  actions        AgentAction[]
+  orchestrationLogs OrchestrationLog[]
+}
+
+model AgentMetric {
+  id        String   @id @default(cuid())
+  agentId   String
+  date      DateTime @default(now())
+
+  tasksCompleted  Int @default(0)
+  messagesSent    Int @default(0)
+  ideasGenerated  Int @default(0)
+  engagementRate  Float @default(0)
+  qualityScore    Float @default(0)
+  speedScore      Float @default(0)
+
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId, date])
+}
+
+model Meeting {
+  id             String        @id @default(cuid())
+  organizationId String
+  type           MeetingType
+  status         MeetingStatus @default(SCHEDULED)
+  title          String
+  topic          String?       @db.Text
+  scheduledAt    DateTime
+  startedAt      DateTime?
+  endedAt        DateTime?
+  summary        String?       @db.Text
+  decisions      String[]     
+
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  participants   MeetingParticipant[]
+  messages       Message[]
+}
+
+model MeetingParticipant {
+  id         String   @id @default(cuid())
+  meetingId  String
+  agentId    String
+  joinedAt   DateTime @default(now())
+  leftAt     DateTime?
+
+  meeting Meeting @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  agent   Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([meetingId, agentId])
+}
+
+model Message {
+  id          String   @id @default(cuid())
+  content     String   @db.Text
+  metadata    Json?
+  channelId   String?
+  meetingId   String?
+  agentId     String?
+  userId      String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  agent       Agent?    @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  channel     Channel?  @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  meeting     Meeting?  @relation(fields: [meetingId], references: [id], onDelete: Cascade)
+  reactions   MessageReaction[]
+}
+
+model MessageReaction {
+  id        String   @id @default(cuid())
+  messageId String
+  agentId   String
+  emoji     String
+  createdAt DateTime @default(now())
+
+  message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+}
+
+model Channel {
+  id             String    @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?
+  type           String    @default("text")
+  isDefault      Boolean   @default(false)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  messages     Message[]
+}
+
+model Project {
+  id             String     @id @default(cuid())
+  organizationId String
+  name           String
+  description    String?    @db.Text
+  status         TaskStatus @default(TODO)
+  startDate      DateTime?
+  endDate        DateTime?
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tasks        Task[]
+}
+
+model Task {
+  id             String       @id @default(cuid())
+  organizationId String
+  projectId      String?
+  title          String
+  description    String?      @db.Text
+  type           String?      @default("content")
+  status         TaskStatus   @default(TODO)
+  priority       TaskPriority @default(MEDIUM)
+  assignedTo     String?
+  createdBy      String?
+  sprintId       String?
+  dueDate        DateTime?
+  startedAt      DateTime?
+  completedAt    DateTime?
+  platform       String?
+  progress       Int          @default(0)
+  estimatedMinutes Int?
+  blocked        Boolean      @default(false)
+  blockedById    String?
+  blockedReason  String?
+  output         Json?
+  lastCommunicatedAt DateTime?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?      @relation(fields: [projectId], references: [id])
+  assignee     Agent?        @relation("AssignedAgent", fields: [assignedTo], references: [id])
+  sprint       Sprint?       @relation(fields: [sprintId], references: [id])
+  blockedBy    Task?         @relation("BlockedBy", fields: [blockedById], references: [id])
+  blocking     Task[]        @relation("BlockedBy")
+}
+
+model Sprint {
+  id             String     @id @default(cuid())
+  organizationId String
+  name           String
+  goal           String?    @db.Text
+  startDate      DateTime
+  endDate        DateTime
+  status         TaskStatus @default(TODO)
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tasks        Task[]
+}
+
+model Integration {
+  id             String   @id @default(cuid())
+  organizationId String
+  platform       String
+  name           String
+  accessToken    String?  @db.Text
+  refreshToken   String?  @db.Text
+  tokenExpiresAt DateTime?
+  metadata       Json?
+  status         String   @default("connected")
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, platform])
+}
+
+model Artwork {
+  id             String   @id @default(cuid())
+  organizationId String
+  agentId        String
+  title          String
+  description    String?  @db.Text
+  imageUrl       String
+  status         String   @default("draft")
+  platform       String?
+  metadata       Json?
+  approved       Boolean  @default(false)
+  approvedBy     String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        Agent        @relation(fields: [agentId], references: [id])
+}
+
+model Vote {
+  id             String    @id @default(cuid())
+  organizationId String
+  initiatorId    String
+  type           VoteType
+  targetAgentId  String?
+  title          String
+  description    String?   @db.Text
+  status         VoteStatus @default(OPEN)
+  options        String[] 
+  deadline       DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  initiator    Agent          @relation("InitiatedVotes", fields: [initiatorId], references: [id])
+  target       Agent?         @relation("TargetedVotes", fields: [targetAgentId], references: [id])
+  decisions    VoteDecision[]
+}
+
+model VoteDecision {
+  id        String   @id @default(cuid())
+  voteId    String
+  agentId   String
+  choice    String
+  reason    String?  @db.Text
+  createdAt DateTime @default(now())
+
+  vote  Vote  @relation(fields: [voteId], references: [id], onDelete: Cascade)
+  agent Agent @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@unique([voteId, agentId])
+}
+
+model AgencyEvent {
+  id             String   @id @default(cuid())
+  organizationId String
+  type           String
+  title          String
+  description    String?  @db.Text
+  metadata       Json?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model AgentAction {
+  id             String   @id @default(cuid())
+  organizationId String
+  agentId        String
+  type           String
+  priority       Int      @default(5)
+  status         String   @default("pending")
+  context        Json?
+  scheduledFor   DateTime
+  createdAt      DateTime @default(now())
+  executedAt     DateTime?
+  error          String?  @db.Text
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        Agent        @relation(fields: [agentId], references: [id], onDelete: Cascade)
+}
+
+model OrchestrationLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  agentId        String?
+  eventType      String
+  details        Json?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  agent        Agent?       @relation(fields: [agentId], references: [id], onDelete: SetNull)
+}
+
+model DailyMetrics {
+  id             String   @id @default(cuid())
+  organizationId String
+  date           DateTime
+
+  // Completion
+  agentCount     Int      @default(0)
+  speechCount    Int      @default(0)
+  tasksExtracted Int      @default(0)
+  durationMs     Int      @default(0)
+  status         String   @default("pending") // pending, completed, approved, skipped, errored
+
+  // Engagement
+  readAt         DateTime?
+  approvedAt     DateTime?
+  userCommented  Boolean  @default(false)
+  commentCount   Int      @default(0)
+
+  // Quality
+  hadAlerts      Boolean  @default(false)
+  hadConflicts   Boolean  @default(false)
+  agentFallbacks Int      @default(0) // how many agents used fallback speech
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId, date])
+  @@index([organizationId, status])
+}
