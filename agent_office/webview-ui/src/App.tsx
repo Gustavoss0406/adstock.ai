@@ -39,6 +39,26 @@ function App() {
   // Browser runtime (dev or static dist): dispatch mock messages after the
   // useExtensionMessages listener has been registered.
   useEffect(() => {
+    // In standalone mode, also listen for parent window postMessage
+    // (used by adstock.ai to inject agent data cross-origin into the iframe)
+    if (isBrowserRuntime) {
+      const onParentMessage = (e: MessageEvent) => {
+        if (e.data?.type && typeof e.data.type === 'string') {
+          // Forward to WebSocket — the server needs to receive this
+          // We send a special message that the server will re-broadcast
+          fetch('/api/agents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(e.data),
+          }).catch(() => {});
+        }
+      };
+      window.addEventListener('message', onParentMessage);
+      return () => window.removeEventListener('message', onParentMessage);
+    }
+  }, []);
+
+  useEffect(() => {
     // browserMock is for Vite dev mode only (UI prototyping without a server).
     // In standalone server mode, the server sends all state over WebSocket.
     // In VS Code mode, the extension sends all state via postMessage.

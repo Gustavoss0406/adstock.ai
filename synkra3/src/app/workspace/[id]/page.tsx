@@ -56,7 +56,42 @@ export default function WorkspaceHub() {
   const [commentText, setCommentText] = useState("")
   const [submittingComment, setSubmittingComment] = useState(false)
   const [officeReady, setOfficeReady] = useState(false)
+  const officeIframeRef = useRef<HTMLIFrameElement | null>(null)
   const bridgeUrlRef = useRef("/api/agents/bridge") // local bridge if detected, else Vercel
+
+  // Push agents to pixel office via postMessage to iframe
+  const pushAgentsToOffice = () => {
+    const iframe = officeIframeRef.current
+    const agents = org?.agents?.filter(a => a.status !== "FIRED") || []
+    if (!agents.length) return
+
+    const agentIds: number[] = []
+    const agentMeta: Record<number, { palette?: number; hueShift?: number }> = {}
+    const folderNames: Record<number, string> = {}
+
+    agents.forEach((a, i) => {
+      const id = i + 1
+      agentIds.push(id)
+      agentMeta[id] = { palette: i % 6, hueShift: i >= 6 ? ((i % 6) * 45 + 45) : 0 }
+      folderNames[id] = a.name
+    })
+
+    const msg = { type: "existingAgents", agents: agentIds, agentMeta, folderNames }
+
+    // Method 1: postMessage to iframe (iframe will self-POST to its own /api/agents)
+    if (iframe?.contentWindow) {
+      iframe.contentWindow.postMessage(msg, "*")
+    }
+
+    // Method 2: Direct POST to Render (backup)
+    fetch("https://adstock-ai.onrender.com/api/agents", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(msg),
+    }).then(r => r.json()).then(d => {
+      console.log("[Office] Agents pushed to Render:", d.count)
+    }).catch(() => {})
+  }
   const divRef = useRef<HTMLDivElement>(null); const chatRef = useRef<HTMLDivElement>(null)
 
   const { data: org } = useQuery<OrgData>({ queryKey: ["organization", orgId], queryFn: async () => { const r = await fetch(`/api/organizations/${orgId}`); return r.json() }, enabled: !!orgId })
@@ -96,12 +131,16 @@ export default function WorkspaceHub() {
     }, 500)
 
     // ── Pre-warm pixel office (Render free tier cold start) ──
+
     const syncAgents = () => {
+      // Also sync via server API (fallback)
       fetch("/api/office/sync", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ organizationId: orgId }),
       }).catch(() => {})
+      // Push directly to iframe (primary method)
+      pushAgentsToOffice()
     }
 
     const warmPixelOffice = async () => {
@@ -480,9 +519,15 @@ export default function WorkspaceHub() {
             <div className="relative bg-[#111118] flex-shrink-0 border-2 border-white/[0.04] rounded-lg overflow-hidden" style={{ height: officeFs ? "100%" : `${dividerY}%` }}>
           {officeReady ? (
             <iframe
+              ref={(el) => { officeIframeRef.current = el }}
               src="https://adstock-ai.onrender.com"
               className="w-full h-full border-0"
               allow="clipboard-read; clipboard-write"
+              onLoad={() => {
+                // Push agents as soon as iframe loads
+                setTimeout(() => pushAgentsToOffice(), 2000)
+                setTimeout(() => pushAgentsToOffice(), 5000)
+              }}
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-[#0a0a0b]">
