@@ -30,37 +30,37 @@ export async function processPendingMentions(organizationId: string, channelId: 
 
   const recentMessages = await prisma.message.findMany({
     where: {
-      channelId: channelId || undefined,
       organizationId,
-      metadata: { path: ["type"], equals: "task_cascade" },
+      agentId: { not: null },
       createdAt: { gte: fiveMinutesAgo },
     },
     include: { agent: { select: { name: true } } },
     orderBy: { createdAt: "desc" },
-    take: 5,
+    take: 10,
   })
 
   for (const msg of recentMessages) {
+    // Check if this message mentions another agent
+    if (!msg.content?.includes("@")) continue
     const meta = (msg.metadata as any) || {}
     const mentionedId = meta.notifyAgentId
     if (!mentionedId) continue
-
-    // Check if already responded
-    const responded = await prisma.message.findFirst({
-      where: {
-        organizationId,
-        agentId: mentionedId,
-        metadata: { path: ["replyTo"], equals: msg.id },
-        createdAt: { gte: fiveMinutesAgo },
-      },
-    })
-    if (responded) continue
 
     const mentionedAgent = await prisma.agent.findUnique({
       where: { id: mentionedId },
       select: { id: true, name: true },
     })
     if (!mentionedAgent) continue
+
+    // Check if already responded within last 10 minutes
+    const alreadyReplied = await prisma.message.findFirst({
+      where: {
+        organizationId,
+        agentId: mentionedAgent.id,
+        createdAt: { gte: new Date(Date.now() - 600000) },
+      },
+    })
+    if (alreadyReplied) continue
 
     const reply = await respondToMessage(
       mentionedAgent.id,
@@ -469,17 +469,17 @@ export async function checkRejectionPattern(organizationId: string): Promise<str
 // ── Multi-hop conversation ─────────────────────────────────
 export async function continueConversationChain(organizationId: string): Promise<string[]> {
   const results: string[] = []
-  const fiveMinutesAgo = new Date(Date.now() - 600000)
+  const fiveMinutes = new Date(Date.now() - 600000)
 
-  // Find recent cascade messages that haven't gotten a response yet
+  // Find recent messages mentioning agents (check for @mentions)
   const cascades = await prisma.message.findMany({
     where: {
       organizationId,
-      metadata: { path: ["type"], equals: "approval_cascade" },
-      createdAt: { gte: fiveMinutesAgo },
+      agentId: { not: null },
+      createdAt: { gte: fiveMinutes },
     },
     orderBy: { createdAt: "desc" },
-    take: 3,
+    take: 5,
   })
 
   for (const msg of cascades) {
@@ -487,16 +487,13 @@ export async function continueConversationChain(organizationId: string): Promise
     const notifiedId = meta.notifyAgentId
     if (!notifiedId) continue
 
-    // Check if this agent already responded
-    const responded = await prisma.message.findFirst({
-      where: {
-        organizationId,
-        agentId: notifiedId,
-        metadata: { path: ["replyToCascade"], equals: msg.id },
-        createdAt: { gte: fiveMinutesAgo },
-      },
-    })
-    if (responded) continue
+      const alreadyCreated = await prisma.message.findFirst({
+        where: {
+          organizationId,
+          agentId: notifiedId,
+          createdAt: { gte: fiveMinutesAgo },
+        },
+      })
 
     const agent = await prisma.agent.findUnique({ where: { id: notifiedId } })
     if (!agent) continue
