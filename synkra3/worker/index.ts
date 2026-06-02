@@ -31,8 +31,15 @@ export default {
       }
 
       const temperature = body.temperature ?? 0.7
-      const maxTokens = body.maxTokens ?? 800
-      const model = body.model || "deepseek-v4-pro"
+      const requestedMaxTokens = body.maxTokens ?? 800
+      const requestedModel = body.model || "deepseek-v4-pro"
+
+      // deepseek-v4-pro needs 1500+ tokens for visible output (tested: 100→null, 500→null, 1500→works).
+      // Auto-switch to glm-5.1 for short requests that deepseek would fail on.
+      const model = requestedModel === "deepseek-v4-pro" && requestedMaxTokens < 1500
+        ? "glm-5.1"
+        : requestedModel
+      const maxTokens = Math.max(requestedMaxTokens, 200) // minimum tokens for any model
 
       let messages: Array<{ role: string; content: string }> = []
 
