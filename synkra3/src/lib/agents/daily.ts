@@ -194,7 +194,7 @@ async function generateWithRetry(
       const temp = 0.9 - (attempt * 0.15)
       const reply = await chatCompletion(prompt, {
         temperature: temp,
-        maxTokens: 800, // Enough for reasoning + speech (tested: ~1300 reasoning + ~50 output)
+        maxTokens: 1200, // deepseek reasoning (~1000) + short speech (~200)
       })
       return reply
     } catch (err) {
@@ -500,16 +500,11 @@ export async function runDaily(
     dailyOrder = org.agents
   }
 
-  // ── PHASE 1: Generate all agent speeches in parallel ────
+  // ── Generate speeches SEQUENTIALLY (one agent at a time) ──
+  // Each agent thinks individually, speaks, then the next starts.
+  // This mirrors real human daily standup flow.
   const results: Array<{ agent: string; content: string }> = []
   const allSpeeches: Array<{ agentName: string; content: string }> = []
-
-  // Build prompts for all agents upfront
-  const agentPrompts: Array<{
-    agent: typeof dailyOrder[0]
-    index: number
-    prompt: string
-  }> = []
 
   for (let i = 0; i < dailyOrder.length; i++) {
     const agent = dailyOrder[i]
@@ -519,22 +514,17 @@ export async function runDaily(
     const myTaskLines = agentTasks
       .map(t => `- "${t.title}"${t.priority ? ` (${t.priority})` : ""}`)
       .join("\n")
-    const persona = agent.promptTemplate || `profissional de marketing da agencia ${org.name}`
 
-    // Discussion hint — generic for parallel generation
-    const discussionHint = isFirst
-      ? ""
-      : `\nColegas anteriores compartilharam seus planos. Comente brevemente antes de compartilhar o seu.`
-
-    const systemPrompt = `Daily standup da ${org.name}. ${dayContext}
-${eventsText}
-${myTaskLines ? `\nTarefas de ${agent.name}:\n${myTaskLines}` : ""}
-${discussionHint}
-${previousContext || ""}`
+    // Real discussion context — what previous speakers actually said
+    const previousSpeeches = allSpeeches
+      .map((s, j) => `${dailyOrder[j]?.name || s.agentName}: ${s.content.slice(0, 150)}`)
+      .join("\n\n")
+    const discussionHint = previousSpeeches
+      ? `\nColegas ja falaram:\n${previousSpeeches}\n\nComente brevemente e compartilhe seu plano.`
+      : ""
 
     const userMessage = `${agent.name}, ${isFirst ? "de bom dia e compartilhe seu plano do dia" : isLast ? "recapitule e encerre a daily" : "sua vez de falar"}. Inclua ETA. Responda em 1-2 frases curtas, primeira pessoa.`
 
-    // Flat message — NO [SYSTEM]/[USER] markers (triggers cleaner model responses)
     const prompt = `${dayContext}
 ${org.name} — agencia de marketing.
 ${myTaskLines ? `\nTarefas de ${agent.name}:\n${myTaskLines}` : ""}
@@ -544,51 +534,33 @@ ${previousContext || ""}
 
 ${userMessage}`
 
-    agentPrompts.push({ agent, index: i, prompt })
-  }
+    // Notify: agent about to speak
+    await prisma.agencyEvent.create({
+      data: {
+        organizationId,
+        type: "daily_agent_speaking",
+        title: `${agent.name} vai falar`,
+        description: `Ordem: ${i + 1}/${dailyOrder.length}`,
+        metadata: { agentId: agent.id, agentName: agent.name, order: i + 1, total: dailyOrder.length, dailyDate: new Date().toISOString().slice(0, 10) },
+      },
+    } as any)
 
-  // Generate all speeches in parallel
-  const agentReplies = await Promise.all(
-    agentPrompts.map(async ({ agent, index, prompt }) => {
-      try {
-        // Notify: agent about to speak
-        await prisma.agencyEvent.create({
-          data: {
-            organizationId,
-            type: "daily_agent_speaking",
-            title: `${agent.name} vai falar`,
-            description: `Ordem: ${index + 1}/${dailyOrder.length}`,
-            metadata: { agentId: agent.id, agentName: agent.name, order: index + 1, total: dailyOrder.length, dailyDate: new Date().toISOString().slice(0, 10) },
-          },
-        } as any)
+    // ── Generate speech (individual call per agent) ──
+    let cleaned: string
+    let success = true
+    try {
+      const reply = await generateWithRetry(prompt, agent.name)
+      cleaned = cleanAgentReply(reply)
+    } catch (err) {
+      console.error(`[Daily] Agent ${agent.name} failed:`, err instanceof Error ? err.message : String(err))
+      cleaned = "Estou com dificuldades tecnicas. Vou me atualizar e falar depois na daily."
+      success = false
+    }
 
-        const reply = await generateWithRetry(prompt, agent.name)
-        const cleaned = cleanAgentReply(reply)
-        return { agentName: agent.name, content: cleaned, index, success: true }
-      } catch (err) {
-        console.error(`[Daily] Agent ${agent.name} failed:`, err instanceof Error ? err.message : String(err))
-        return {
-          agentName: agent.name,
-          content: "Estou com dificuldades tecnicas. Vou me atualizar e falar depois na daily.",
-          index,
-          success: false,
-        }
-      }
-    }),
-  )
-
-  // Sort by original order
-  agentReplies.sort((a, b) => a.index - b.index)
-
-  // ── PHASE 2: Display each speech sequentially ───────────
-  for (const reply of agentReplies) {
-    const agent = dailyOrder.find(a => a.name === reply.agentName)
-    if (!agent) continue
-    const isLast = reply.index === dailyOrder.length - 1
-
-    // Acquire turn
-    const agTurn = requestTurn(channelName, agent.id, agent.name, 10)
+    // ── Display immediately after generation ──
+    // Acquire turn for this agent
     releaseTurn(channelName, "system")
+    const agTurn = requestTurn(channelName, agent.id, agent.name, 10)
     if (!agTurn.acquired) {
       await sleep(2000)
       const retry = requestTurn(channelName, agent.id, agent.name, 10)
@@ -599,23 +571,22 @@ ${userMessage}`
     }
 
     // Typing simulation
-    const content = reply.content
     setTypingIndicator(channelName, agent.id, agent.name)
-    const typingTime = calculateTypingTime(agent.name, content)
+    const typingTime = calculateTypingTime(agent.name, cleaned)
     await sleep(typingTime)
 
     // Save message
     await prisma.message.create({
       data: {
-        content,
-        metadata: { type: "daily_speech", agentName: agent.name, dailyDate: new Date().toISOString().slice(0, 10), fallback: !reply.success || undefined },
+        content: cleaned,
+        metadata: { type: "daily_speech", agentName: agent.name, dailyDate: new Date().toISOString().slice(0, 10), fallback: !success || undefined },
         agent: { connect: { id: agent.id } },
         channel: { connect: { id: channel.id } },
       },
     } as any)
 
     // Track per-agent participation
-    if (reply.success) {
+    if (success) {
       await prisma.agent.update({
         where: { id: agent.id },
         data: { lastDailySpokeAt: new Date() },
@@ -623,34 +594,15 @@ ${userMessage}`
     }
 
     clearTypingIndicator(channelName)
-    allSpeeches.push({ agentName: agent.name, content })
-    results.push({ agent: agent.name, content })
+    allSpeeches.push({ agentName: agent.name, content: cleaned })
+    results.push({ agent: agent.name, content: cleaned })
 
     // Release turn
     releaseTurn(channelName, agent.id)
 
-    // Conflict detection between speeches
-    try {
-      const conflicts = await detectProactiveConflicts(organizationId)
-      for (const conflict of conflicts) {
-        const existingConflict = await prisma.agencyEvent.findFirst({
-          where: {
-            organizationId,
-            type: "conflict_detected",
-            createdAt: { gte: new Date(Date.now() - 300000) },
-            description: { contains: conflict.topic },
-          },
-        })
-        if (!existingConflict) {
-          await handleConflict(organizationId, conflict, channel.id)
-        }
-      }
-    } catch {}
-
-    // Inter-speaker delay
+    // Inter-speaker delay (human pacing)
     if (!isLast) {
-      const interSpeakerDelay = TIMING_CONFIG.DAILY_POST_SPEECH_DELAY_MS + Math.random() * 5000
-      await sleep(interSpeakerDelay)
+      await sleep(TIMING_CONFIG.DAILY_POST_SPEECH_DELAY_MS + Math.random() * 5000)
     }
   }
 
