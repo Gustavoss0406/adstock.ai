@@ -213,21 +213,24 @@ export async function handleConflict(
   pausedActionCount: number
   messageId?: string
 }> {
-  // 1. Create conflict card message
+  // 1. Create conflict card message (JSON format for workspace renderer)
   let messageId: string | undefined
   if (channelId) {
-    const cardContent = `[CONFLICT_CARD] 🤔 **Conflito detectado!**
-
-**Tópico:** ${conflict.topic}
-**${conflict.agentA}:** ${conflict.positionA}
-**${conflict.agentB}:** ${conflict.positionB}
-
-Duas visões diferentes. CEO, pode decidir qual caminho seguir?`
+    const conflictJson = {
+      type: "conflict",
+      topic: conflict.topic,
+      agentA: conflict.agentA,
+      agentB: conflict.agentB,
+      positionA: conflict.positionA,
+      positionB: conflict.positionB,
+      agentAId: conflict.agentAId,
+      agentBId: conflict.agentBId,
+    }
 
     try {
       const msg = await prisma.message.create({
         data: {
-          content: cardContent,
+          content: JSON.stringify(conflictJson),
           channelId,
         },
       })

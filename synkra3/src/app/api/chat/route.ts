@@ -5,6 +5,7 @@ import { authOptions } from "@/lib/auth"
 import { chatCompletion } from "@/lib/ai/client"
 import { requestTurn, releaseTurn, calculateResponseDelay, calculateTypingTime, getPersonality } from "@/lib/orchestrator/turns"
 import { detectConflict } from "@/lib/orchestrator/conflict"
+import { postWithTurn } from "@/lib/orchestrator/executor"
 
 const AGENT_ROLES: Record<string, { name: string; specialty: string; style: string; color: string }> = {
   STRATEGIST: { name: "Maya Ferreira", specialty: "estrategia de conteudo e growth", style: "visionaria, entusiasmada, lider", color: "#ff385c" },
@@ -145,7 +146,15 @@ FALA: [Texto]`
         const directSystem = `VOCE E ${ri.name}. Especialista em ${ri.specialty}. ${ri.style}.\n\nTAREFAS REAIS DO SISTEMA:\n${taskContext}\n${actionContext}\n\nREGRA: Voce CONHECE essas tarefas. Responda com base nelas. JAMAIS invente. Mencione colegas naturalmente.`
         const directReply = await chatCompletion(`${directSystem}\n\n${message}`, { temperature: 0.7, maxTokens: 1500 })
         const cleaned = directReply.replace(/^(Claro|Certo|Com certeza|OK|Ok)[,!.]?\s*/i, "").trim()
-        const saved = await prisma.message.create({ data: { content: cleaned, channelId: resolvedChannelId, agentId: agent.id } })
+
+        // Post with proper turn management
+        const ctx = {
+          organizationId: org!.id,
+          agent: { id: agent.id, name: agent.name, role: agent.role, personality: agent.personality },
+          channelId: resolvedChannelId,
+        }
+        const postResult = await postWithTurn(ctx, resolvedChannelId || "geral", cleaned, 8)
+        const saved = { id: postResult.messageId || `msg-${Date.now()}`, content: cleaned }
 
         // Auto-chain followUp
         let followUp: any = null
@@ -162,17 +171,15 @@ FALA: [Texto]`
           try {
             const fReply = await chatCompletion(`${fSys}\n\nResponda a mencao.`, { temperature: 0.7, maxTokens: 1500 })
             const fClean = fReply.replace(/^(Claro|Certo|Com certeza|OK|Ok)[,!.]?\s*/i, "").trim()
-            const fSaved = await prisma.message.create({ data: { content: fClean, channelId: resolvedChannelId, agentId: next.id } })
-            followUp = { reply: fClean, messageId: fSaved.id, agentId: next.id, agentName: next.name }
+            const fCtx = { organizationId: org!.id, agent: { id: next.id, name: next.name, role: next.role, personality: next.personality }, channelId: resolvedChannelId }
+            const fPost = await postWithTurn(fCtx, resolvedChannelId || "geral", fClean, 7)
+            followUp = { reply: fClean, messageId: fPost.messageId || "", agentId: next.id, agentName: next.name }
           } catch {}
         }
 
-        const turn = requestTurn(channelId || "geral", agent.id, agent.name, 8)
-        const turnDelay = turn.acquired ? calculateResponseDelay(agent.name, 8) : (turn.position * 5000) + calculateResponseDelay(agent.name, 5)
+        // Turn is handled by postWithTurn internally — compute timing for frontend display
         const typingTime = calculateTypingTime(agent.name, cleaned)
         const personality = getPersonality(agent.name)
-
-        releaseTurn(channelId || "geral", agent.id)
 
         // Conflict detection
         let conflict = null
@@ -183,7 +190,7 @@ FALA: [Texto]`
         return NextResponse.json({
           reply: cleaned, messageId: saved.id, agentId: agent.id, agentName: agent.name,
           followUp, actionResult, conflict,
-          turn: { delay: turnDelay, typingTime, speaker: agent.name, personality },
+          turn: { delay: 0, typingTime, speaker: agent.name, personality },
         })
       }
     }
@@ -203,9 +210,13 @@ FALA: [Texto]`
       return NextResponse.json({ reply: "Deixa eu ver aqui... um momento!", agentId: respondingAgent?.id, agentName: respondingAgent?.name, messageId: "" })
     }
 
-    const saved = await prisma.message.create({
-      data: { content: cleaned, channelId: resolvedChannelId, agentId: respondingAgent?.id || agents[0].id },
-    })
+    const orcCtx = {
+      organizationId: org!.id,
+      agent: { id: respondingAgent?.id || agents[0].id, name: respondingAgent?.name || agentName, role: respondingAgent?.role || "STRATEGIST", personality: respondingAgent?.personality || "VISIONARY" },
+      channelId: resolvedChannelId,
+    }
+    const postResult = await postWithTurn(orcCtx, resolvedChannelId || "geral", cleaned, 5)
+    const saved = { id: postResult.messageId || `msg-${Date.now()}`, content: cleaned }
 
     // FollowUp for orchestrator
     let followUp: any = null
@@ -222,17 +233,15 @@ FALA: [Texto]`
       try {
         const fReply = await chatCompletion(`${fSys}\n\nResponda a mencao.`, { temperature: 0.7, maxTokens: 1500 })
         const fClean = fReply.replace(/^(Claro|Certo|Com certeza|OK|Ok)[,!.]?\s*/i, "").trim()
-        const fSaved = await prisma.message.create({ data: { content: fClean, channelId: resolvedChannelId, agentId: next.id } })
-        followUp = { reply: fClean, messageId: fSaved.id, agentId: next.id, agentName: next.name }
+        const fCtx = { organizationId: org!.id, agent: { id: next.id, name: next.name, role: next.role, personality: next.personality }, channelId: resolvedChannelId }
+        const fPost = await postWithTurn(fCtx, resolvedChannelId || "geral", fClean, 7)
+        followUp = { reply: fClean, messageId: fPost.messageId || "", agentId: next.id, agentName: next.name }
       } catch {}
     }
 
-    const turn = requestTurn(channelId || "geral", respondingAgent?.id || agents[0].id, respondingAgent?.name || agentName, 5)
-    const turnDelay = turn.acquired ? calculateResponseDelay(respondingAgent?.name || agentName, 5) : (turn.position * 5000) + calculateResponseDelay(respondingAgent?.name || agentName, 3)
+    // Turn handled by postWithTurn — compute timing for frontend display
     const typingTime = calculateTypingTime(respondingAgent?.name || agentName, cleaned)
     const personality = getPersonality(respondingAgent?.name || agentName)
-
-    releaseTurn(channelId || "geral", respondingAgent?.id || agents[0].id)
 
     // Conflict detection
     let conflict = null
@@ -244,7 +253,7 @@ FALA: [Texto]`
       reply: cleaned, messageId: saved.id,
       agentId: respondingAgent?.id || agents[0]?.id, agentName: respondingAgent?.name || agentName,
       followUp, actionResult, conflict,
-      turn: { delay: turnDelay, typingTime, speaker: respondingAgent?.name || agentName, personality },
+      turn: { delay: 0, typingTime, speaker: respondingAgent?.name || agentName, personality },
     })
   } catch (error) {
     console.error("[Chat Error]", error)

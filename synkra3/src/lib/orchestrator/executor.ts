@@ -852,7 +852,7 @@ async function executeRoutineCheck(
  * 5. Limpar indicador de digitação
  * 6. Liberar lock após tempo de respiro
  */
-async function postWithTurn(
+export async function postWithTurn(
   ctx: ExecutionContext,
   channelId: string,
   content: string,
