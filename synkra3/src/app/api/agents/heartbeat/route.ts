@@ -281,28 +281,29 @@ export async function POST(request: NextRequest) {
       }
 
       // ── 7. Weekly events (Mon 10h plan, Sun 20h report) ──
-      const weeklyResults = await processWeeklyEvents(organizationId, channelId)
-      for (const r of weeklyResults) {
-        results.push({ agent: "Sistema", action: r })
-      }
+      try {
+        const weeklyResults = await processWeeklyEvents(organizationId, channelId)
+        for (const r of weeklyResults) results.push({ agent: "Sistema", action: r })
+      } catch {}
 
       // ── 8. Multi-hop conversation ──
-      const multiHopResults = await continueConversationChain(organizationId)
-      for (const r of multiHopResults) {
-        results.push({ agent: "Cascata", action: r })
-      }
+      try {
+        const multiHopResults = await continueConversationChain(organizationId)
+        for (const r of multiHopResults) results.push({ agent: "Cascata", action: r })
+      } catch {}
 
       // ── 9. Rejection pattern ──
-      const rejectionAlert = await checkRejectionPattern(organizationId)
-      if (rejectionAlert) {
-        results.push({ agent: "Maya", action: rejectionAlert })
-      }
+      try {
+        const rejectionAlert = await checkRejectionPattern(organizationId)
+        if (rejectionAlert) results.push({ agent: "Maya", action: rejectionAlert })
+      } catch {}
     }
 
-    // ── 10. AI Content creation for tasks in progress (limit: 1 per cycle) ──
-    const contentCreationDone = new Set<string>()
-    for (const agent of agents) {
-      if (contentCreationDone.size >= 1) break // Limit: 1 agent per heartbeat
+    // ── 10. AI Content creation (limit: 1 per cycle) ──
+    try {
+      const contentCreationDone = new Set<string>()
+      for (const agent of agents) {
+        if (contentCreationDone.size >= 1) break // Limit: 1 agent per heartbeat
       const task = await prisma.task.findFirst({
         where: { assignedTo: agent.id, status: "IN_PROGRESS" },
       })
@@ -342,6 +343,7 @@ export async function POST(request: NextRequest) {
         results.push({ agent: agent.name, action: `Conteudo: ${task.title.slice(0, 30)}` })
       }
     }
+    } catch {}
 
     return NextResponse.json({ heartbeat: true, tasksProcessed: results.length, results })
   } catch (error) {
