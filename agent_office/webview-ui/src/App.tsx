@@ -46,13 +46,14 @@ function App() {
         if (res.ok) {
           const payload = await res.json();
           if (payload.type === 'existingAgents' && payload.agents?.length > 0) {
-            // Forward to the transport handler chain by POSTing to self
-            // (triggers the same store.broadcast that WS clients receive)
-            await fetch('/api/agents', {
+            // Dispatch directly — bypasses WS entirely
+            window.dispatchEvent(new MessageEvent('message', { data: payload }));
+            // Also POST to keep the broadcast for any other WS clients
+            fetch('/api/agents', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify(payload),
-            });
+            }).catch(() => {});
           }
         }
       } catch {}

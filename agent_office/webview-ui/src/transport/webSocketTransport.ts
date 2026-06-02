@@ -24,6 +24,20 @@ export class WebSocketTransport implements MessageTransport {
 
     this.ws = new WebSocket(this.url);
 
+    // Also listen for parent window postMessage (used by adstock.ai iframe)
+    const onMessageEvent = (e: MessageEvent) => {
+      if (e.data?.type && typeof e.data.type === 'string') {
+        for (const handler of this.handlers) handler(e.data as ServerMessage);
+      }
+    };
+    window.addEventListener('message', onMessageEvent);
+    // Clean up on dispose
+    const origDispose = this.dispose.bind(this);
+    this.dispose = () => {
+      window.removeEventListener('message', onMessageEvent);
+      origDispose();
+    };
+
     this.ws.onopen = () => {
       this.reconnectAttempts = 0;
       console.log('[Transport] WebSocket connected');
