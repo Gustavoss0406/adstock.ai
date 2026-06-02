@@ -6,6 +6,7 @@ interface Env {
 }
 
 export default {
+  // ── AI Chat Proxy ──
   async fetch(request: Request, env: Env): Promise<Response> {
     const corsHeaders = {
       "Access-Control-Allow-Origin": "*",
@@ -34,50 +35,54 @@ export default {
       const requestedMaxTokens = body.maxTokens ?? 800
       const requestedModel = body.model || "deepseek-v4-pro"
 
-      // deepseek-v4-pro needs 1500+ tokens for visible output (tested: 100→null, 500→null, 1500→works).
-      // Auto-switch to glm-5.1 for short requests that deepseek would fail on.
+      // ── AUTO-MODEL: deepseek-v4-pro precisa de 1500+ tokens ──
+      // Com menos de 1500 ele gasta tudo em reasoning e retorna null.
+      // Auto-switch para glm-5.1 (rápido, sem overhead de reasoning).
       const model = requestedModel === "deepseek-v4-pro" && requestedMaxTokens < 1500
         ? "glm-5.1"
         : requestedModel
-      const maxTokens = Math.max(requestedMaxTokens, 200) // minimum tokens for any model
+      const maxTokens = Math.max(requestedMaxTokens, 200)
 
       let messages: Array<{ role: string; content: string }> = []
 
       if (body.messages && Array.isArray(body.messages) && body.messages.length > 0) {
-        // Direct messages array — pass through as-is
         messages = body.messages
-          .filter((m) => ["system", "user", "assistant"].includes(m.role))
-          .map((m) => ({ role: m.role, content: m.content }))
+          .filter(function (m) { return ["system", "user", "assistant"].includes(m.role) })
+          .map(function (m) { return { role: m.role, content: m.content } })
       } else if (typeof body.message === "string") {
-        // CRITICAL: Send everything as user message.
-        // DO NOT split [SYSTEM]/[USER] — this triggers meta-analysis behavior.
-        // The old worker worked because it sent ALL content as user role.
+        // TUDO como user message — NUNCA fazer split [SYSTEM]/[USER]
+        // Isso evita meta-texto ("O usuário quer...") no deepseek-v4-pro
         messages = [{ role: "user", content: body.message }]
       }
 
       if (messages.length === 0) {
         return new Response(JSON.stringify({ error: "No valid messages" }), {
           status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders),
         })
       }
 
       const response = await fetch(env.OPENCODE_API_URL, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${env.OPENCODE_API_KEY}`,
+          "Authorization": "Bearer " + env.OPENCODE_API_KEY,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ model, messages, temperature, max_tokens: maxTokens }),
+        body: JSON.stringify({
+          model: model,
+          messages: messages,
+          temperature: temperature,
+          max_tokens: maxTokens,
+        }),
       })
 
       if (!response.ok) {
         const errText = await response.text()
         return new Response(
-          JSON.stringify({ error: `Upstream error ${response.status}: ${errText.slice(0, 200)}` }),
+          JSON.stringify({ error: "Upstream error " + response.status + ": " + errText.slice(0, 200) }),
           {
             status: 502,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
+            headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders),
           },
         )
       }
@@ -91,24 +96,25 @@ export default {
         JSON.stringify({
           reply: data.choices?.[0]?.message?.content || null,
           usage: data.usage,
-          model,
+          model: model,
         }),
         {
           status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
+          headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders),
         },
       )
-    } catch (error) {
+    } catch (error: any) {
       return new Response(
-        JSON.stringify({ error: error instanceof Error ? error.message : "Unknown" }),
+        JSON.stringify({ error: error.message || "Unknown error" }),
         {
           status: 500,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
+          headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders),
         },
       )
     }
   },
 
+  // ── Cron: Trigger dailies + heartbeat every 5 minutes ──
   async scheduled(_event: ScheduledEvent, env: Env, _ctx: ExecutionContext): Promise<void> {
     const url = env.SYNKRA_API_URL
     const secret = env.SYNKRA_API_SECRET
@@ -118,9 +124,9 @@ export default {
       return
     }
 
-    // ── 1. Daily check ──────────────────────────────────
+    // 1. Daily check
     try {
-      const dailyResp = await fetch(`${url}/api/routine/check`, {
+      const dailyResp = await fetch(url + "/api/routine/check", {
         method: "GET",
         headers: {
           "x-api-key": secret,
@@ -130,17 +136,17 @@ export default {
 
       if (dailyResp.ok) {
         const data = await dailyResp.json() as { ran: number; orgs?: Array<{ id: string; name: string }> }
-        console.log(`[Cron] Dailies triggered: ${data.ran} orgs`, data.orgs?.map(o => o.name).join(", ") || "")
+        console.log("[Cron] Dailies triggered: " + (data.ran || 0) + " orgs")
       } else {
-        console.log(`[Cron] Daily check failed: ${dailyResp.status}`)
+        console.log("[Cron] Daily check failed: " + dailyResp.status)
       }
-    } catch (error) {
-      console.log(`[Cron] Daily check error: ${error instanceof Error ? error.message : "Unknown"}`)
+    } catch (error: any) {
+      console.log("[Cron] Daily check error: " + (error.message || "Unknown"))
     }
 
-    // ── 2. Server-side heartbeat (agents work continuously) ──
+    // 2. Server heartbeat (agents work continuously)
     try {
-      const hbResp = await fetch(`${url}/api/system/heartbeat-cron`, {
+      const hbResp = await fetch(url + "/api/system/heartbeat-cron", {
         method: "GET",
         headers: {
           "x-api-key": secret,
@@ -150,12 +156,12 @@ export default {
 
       if (hbResp.ok) {
         const hbData = await hbResp.json() as { orgsProcessed: number; totalActions: number; totalAgents: number }
-        console.log(`[Cron] Heartbeat: ${hbData.orgsProcessed} orgs, ${hbData.totalActions} actions, ${hbData.totalAgents} agents`)
+        console.log("[Cron] Heartbeat: " + (hbData.orgsProcessed || 0) + " orgs, " + (hbData.totalActions || 0) + " actions")
       } else {
-        console.log(`[Cron] Heartbeat failed: ${hbResp.status}`)
+        console.log("[Cron] Heartbeat failed: " + hbResp.status)
       }
-    } catch (error) {
-      console.log(`[Cron] Heartbeat error: ${error instanceof Error ? error.message : "Unknown"}`)
+    } catch (error: any) {
+      console.log("[Cron] Heartbeat error: " + (error.message || "Unknown"))
     }
   },
 }
