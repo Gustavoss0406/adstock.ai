@@ -323,7 +323,7 @@ Retorne APENAS JSON array: [{"title":"...","assignTo":"nome do agente","type":"c
           content: `FALAS:\n${speeches.map(s => `${s.agentName}: ${s.content}`).join("\n\n")}\n\nExtraia as tarefas.`,
         },
       ],
-      { temperature: 0.3, maxTokens: 800 },
+      { temperature: 0.3, maxTokens: 2000 },
     )
 
     const jsonMatch = taskReply.match(/\[[\s\S]*\]/)

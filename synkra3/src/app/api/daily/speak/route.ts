@@ -193,9 +193,8 @@ async function generateSummary(
   lines.push("ACOES CEO:")
   lines.push("- Nada necessario agora")
 
+  // Save summary — respond immediately
   const summary = lines.join("\n")
-
-  // Save summary
   const channel = await prisma.channel.findFirst({ where: { organizationId, name: "daily-standup" } })
   if (channel) {
     await prisma.message.create({
@@ -207,25 +206,24 @@ async function generateSummary(
     })
   }
 
-  // Extract tasks from VALID speeches only
+  // Extract tasks in background (don't block response)
   const agents = await prisma.agent.findMany({ where: { organizationId }, select: { id: true, name: true } })
-  const tasksCreated = await extractTasksFromSpeeches(
+  extractTasksFromSpeeches(
     organizationId,
     validSpeeches.length > 0 ? validSpeeches : speeches,
     agents,
-  )
+  ).then(async (tasksCreated) => {
+    await prisma.dailyMetrics.create({
+      data: {
+        organizationId,
+        date: new Date(),
+        agentCount: speeches.length,
+        speechCount: speeches.length,
+        tasksExtracted: tasksCreated,
+        status: "completed",
+      },
+    } as any)
+  }).catch(() => {})
 
-  // Create daily metrics
-  await prisma.dailyMetrics.create({
-    data: {
-      organizationId,
-      date: new Date(),
-      agentCount: speeches.length,
-      speechCount: speeches.length,
-      tasksExtracted: tasksCreated,
-      status: "completed",
-    },
-  } as any)
-
-  return NextResponse.json({ agent: "Sistema", content: summary, tasksCreated })
+  return NextResponse.json({ agent: "Sistema", content: summary, tasksCreated: 0 })
 }
