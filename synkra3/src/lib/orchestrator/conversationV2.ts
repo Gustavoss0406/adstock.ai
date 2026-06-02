@@ -6,7 +6,6 @@
 import { prisma } from "@/lib/prisma"
 import { chatCompletion } from "@/lib/ai/client"
 import { requestTurn, releaseTurn, calculateTypingTime, setTypingIndicator, clearTypingIndicator } from "./turns"
-import { getPersonality } from "./config"
 
 export async function respondToMessage(
   agentId: string,
@@ -14,7 +13,6 @@ export async function respondToMessage(
   organizationId: string,
   context: { what: string; from: string; detail: string },
 ): Promise<string | null> {
-  const personality = getPersonality(agentName)
   const roleLabel = (await prisma.agent.findUnique({ where: { id: agentId }, select: { role: true } }))?.role || "agente"
 
   const prompt = `Voce e ${agentName} (${roleLabel}). Um colega do time interagiu com voce no chat.
@@ -22,8 +20,6 @@ export async function respondToMessage(
 O QUE ACONTECEU: ${context.what}
 QUEM FALOU: ${context.from}
 DETALHE: ${context.detail.slice(0, 300)}
-
-${personality ? `Personalidade: ${personality.type}, ${personality.description}` : ""}
 
 Se for uma pergunta direta ou um aviso importante, responda.
 Se for apenas informativo sem necessidade de resposta, nao responda.
