@@ -94,6 +94,24 @@ export default function WorkspaceHub() {
       }).catch(() => {})
     }, 500)
 
+    // ── Pre-warm pixel office (Render free tier cold start) ──
+    const warmPixelOffice = async () => {
+      for (let attempt = 0; attempt < 5; attempt++) {
+        try {
+          const res = await fetch(`${PIXEL_OFFICE_URL}/api/health`, { signal: AbortSignal.timeout(10000) })
+          if (res.ok) {
+            console.log("[Pixel Office] Ready after", attempt + 1, "attempt(s)")
+            return true
+          }
+        } catch {}
+        await new Promise(r => setTimeout(r, 3000 * (attempt + 1))) // exponential backoff
+      }
+      return false
+    }
+    warmPixelOffice().then(ready => {
+      if (!ready) console.warn("[Pixel Office] Not reachable — may be hibernating")
+    })
+
     // Sync agents to pixel office (cloud)
     setTimeout(() => {
       fetch("/api/office/sync", {
@@ -454,7 +472,18 @@ export default function WorkspaceHub() {
           <>
             {/* Office */}
             <div className="relative bg-[#111118] flex-shrink-0 border-2 border-white/[0.04] rounded-lg overflow-hidden" style={{ height: officeFs ? "100%" : `${dividerY}%` }}>
-          <iframe src={PIXEL_OFFICE_URL} className="w-full h-full border-0" allow="clipboard-read; clipboard-write" />
+          <iframe
+            src={PIXEL_OFFICE_URL}
+            className="w-full h-full border-0"
+            allow="clipboard-read; clipboard-write"
+            onError={(e) => {
+              // Render free tier cold start — retry after delay
+              const iframe = e.currentTarget
+              if (iframe.dataset.retries && parseInt(iframe.dataset.retries) >= 5) return
+              iframe.dataset.retries = String((parseInt(iframe.dataset.retries || "0") + 1))
+              setTimeout(() => { iframe.src = iframe.src }, 5000)
+            }}
+          />
           <button onClick={() => setOfficeFs(!officeFs)} className="absolute top-2 right-2 p-1 rounded bg-black/20 hover:bg-black/40 text-white/30 hover:text-white/60 transition-colors z-10">{officeFs ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}</button>
         </div>
         {/* Divider */}

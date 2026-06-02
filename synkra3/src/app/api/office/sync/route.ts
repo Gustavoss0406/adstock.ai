@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { PIXEL_OFFICE_URL } from "@/lib/ai/config"
+import { PIXEL_OFFICE_API_URL } from "@/lib/ai/config"
 
 /**
  * POST /api/office/sync
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Send to pixel office server
-    const response = await fetch(`${PIXEL_OFFICE_URL}/api/agents`, {
+    const response = await fetch(`${PIXEL_OFFICE_API_URL}/api/agents`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ agents: agentIds, agentMeta, folderNames }),
@@ -57,7 +57,8 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ synced: agents.length, agents: agents.map(a => a.name) })
   } catch (error) {
-    console.error("[Office Sync Error]", error)
-    return NextResponse.json({ synced: 0, error: "Sync failed" }, { status: 500 })
+    const msg = error instanceof Error ? error.message : String(error)
+    console.error("[Office Sync Error]", msg)
+    return NextResponse.json({ synced: 0, error: msg }, { status: 500 })
   }
 }

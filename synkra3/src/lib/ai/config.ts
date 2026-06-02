@@ -5,8 +5,11 @@ export const DEFAULT_TEMPERATURE = 0.7
 export const DEFAULT_MAX_TOKENS = 2000
 
 // Pixel Office — hosted on Render (or localhost for dev)
-// Change to your Render URL after deploy, e.g.: https://pixel-office.onrender.com
+// Client-side: used for iframe src in workspace
 export const PIXEL_OFFICE_URL = process.env.NEXT_PUBLIC_PIXEL_OFFICE_URL || "http://localhost:3100"
+
+// Server-side: used by API routes to sync agents
+export const PIXEL_OFFICE_API_URL = process.env.PIXEL_OFFICE_API_URL || PIXEL_OFFICE_URL
 
 export const RATE_LIMIT = {
   maxRequestsPerMinute: 30,
