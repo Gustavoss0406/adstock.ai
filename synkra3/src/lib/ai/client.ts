@@ -8,35 +8,99 @@ export type ConversationTurn = { agent: string; message: string }
 interface AIResponse { reply: string | null; usage?: { total_tokens: number } }
 
 export async function chatWithMessages(messages: Array<{ role: "system" | "user" | "assistant"; content: string }>, options?: ChatOptions): Promise<string> {
-  try {
-    const response = await fetch(AGENT_WORKER_URL, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, temperature: options?.temperature ?? DEFAULT_TEMPERATURE, maxTokens: options?.maxTokens ?? DEFAULT_MAX_TOKENS, model: options?.model || DEFAULT_MODEL }),
-    })
-    if (!response.ok) {
-      const errBody = await response.text().catch(() => "")
-      throw new Error(`Worker ${response.status}: ${errBody.slice(0, 300)}`)
+  const maxRetries = options?.model === "deepseek-v4-pro" ? 2 : 1
+  let lastReply = ""
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(AGENT_WORKER_URL, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages,
+          temperature: options?.temperature ?? DEFAULT_TEMPERATURE,
+          maxTokens: options?.maxTokens ?? DEFAULT_MAX_TOKENS,
+          model: options?.model || DEFAULT_MODEL,
+        }),
+      })
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => "")
+        if (attempt < maxRetries) {
+          console.warn(`[AI] Worker ${response.status} (attempt ${attempt + 1}/${maxRetries + 1})`)
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
+          continue
+        }
+        throw new Error(`Worker ${response.status}: ${errBody.slice(0, 300)}`)
+      }
+      const data: AIResponse = await response.json()
+      const reply = data.reply
+      if (reply && reply !== "null" && reply !== "NULL") {
+        return reply
+      }
+      if (attempt < maxRetries) {
+        console.warn(`[AI] Worker null reply (attempt ${attempt + 1}/${maxRetries + 1})`)
+        await new Promise(r => setTimeout(r, 3000 * (attempt + 1)))
+        continue
+      }
+      lastReply = reply || ""
+    } catch (error) {
+      if (attempt < maxRetries) {
+        console.warn(`[AI] Error (attempt ${attempt + 1}/${maxRetries + 1}):`, String(error).slice(0, 80))
+        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
+        continue
+      }
+      throw error
     }
-    const data: AIResponse = await response.json()
-    return data.reply || "Nao consegui processar."
-  } catch (error) { throw error }
+  }
+  return lastReply || "Nao consegui processar."
 }
 
 export async function chatCompletion(message: string, options?: ChatOptions): Promise<string> {
-  try {
-    const response = await fetch(AGENT_WORKER_URL, {
-      method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message, temperature: options?.temperature ?? DEFAULT_TEMPERATURE, maxTokens: options?.maxTokens ?? DEFAULT_MAX_TOKENS, model: options?.model || DEFAULT_MODEL }),
-    })
-    if (!response.ok) {
-      const errBody = await response.text().catch(() => "")
-      const detail = errBody.slice(0, 300)
-      console.error(`[AI] Worker returned ${response.status}: ${detail}`)
-      throw new Error(`Worker ${response.status}: ${detail || "no details"}`)
+  const maxRetries = options?.model === "deepseek-v4-pro" ? 2 : 1
+  let lastReply = ""
+
+  for (let attempt = 0; attempt <= maxRetries; attempt++) {
+    try {
+      const response = await fetch(AGENT_WORKER_URL, {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          message,
+          temperature: options?.temperature ?? DEFAULT_TEMPERATURE,
+          maxTokens: options?.maxTokens ?? DEFAULT_MAX_TOKENS,
+          model: options?.model || DEFAULT_MODEL,
+        }),
+      })
+      if (!response.ok) {
+        const errBody = await response.text().catch(() => "")
+        const detail = errBody.slice(0, 300)
+        if (attempt < maxRetries) {
+          console.warn(`[AI] Worker ${response.status} (attempt ${attempt + 1}/${maxRetries + 1}): ${detail}`)
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
+          continue
+        }
+        throw new Error(`Worker ${response.status}: ${detail || "no details"}`)
+      }
+      const data: AIResponse = await response.json()
+      const reply = data.reply
+      if (reply && reply !== "null" && reply !== "NULL") {
+        return reply
+      }
+      // null reply — retry with backoff
+      if (attempt < maxRetries) {
+        console.warn(`[AI] Worker returned null reply (attempt ${attempt + 1}/${maxRetries + 1})`)
+        await new Promise(r => setTimeout(r, 3000 * (attempt + 1)))
+        continue
+      }
+      lastReply = reply || ""
+    } catch (error) {
+      if (attempt < maxRetries) {
+        console.warn(`[AI] Error (attempt ${attempt + 1}/${maxRetries + 1}):`, String(error).slice(0, 80))
+        await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
+        continue
+      }
+      throw error
     }
-    const data: AIResponse = await response.json()
-    return data.reply || "Nao consegui processar."
-  } catch (error) { throw error }
+  }
+  return lastReply || "Nao consegui processar."
 }
 
 export async function chatWithSystem(systemPrompt: string, userMessage: string, options?: ChatOptions): Promise<string> {
