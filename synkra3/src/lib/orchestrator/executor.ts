@@ -26,6 +26,7 @@ import {
 } from "@/lib/orchestrator/config"
 import { resumeActionsOnUnblock } from "@/lib/orchestrator/conflict"
 import { writeBridgeWorkActivity, getToolForTask } from "@/lib/orchestrator/bridgeWork"
+import { notifyTaskChain } from "@/lib/orchestrator/conversation"
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -502,6 +503,11 @@ async function executeCompleteTask(
 
   // ── Post-completion: generate follow-up tasks ──────────
   await suggestNextTasks(ctx.organizationId, taskId, ctx.agent, action.context.taskTitle as string)
+
+  // ── Post-completion: notify next agent in chain ─────────
+  setTimeout(() => {
+    notifyTaskChain(ctx.organizationId, taskId).catch(() => {})
+  }, 2000)
 
   return { success: true, action: "complete_task", taskId }
 }

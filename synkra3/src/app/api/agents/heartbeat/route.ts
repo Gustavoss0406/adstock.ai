@@ -5,6 +5,7 @@ import { executeAction } from "@/lib/orchestrator/executor"
 import { runBulkAwarenessCheck } from "@/lib/orchestrator/awareness"
 import { detectProactiveConflicts, handleConflict } from "@/lib/orchestrator/conflict"
 import { TIMING_CONFIG, getPersonalityModifiers, getTaskDurationMinutes } from "@/lib/orchestrator/config"
+import { canActAutonomously } from "@/lib/orchestrator/autonomy"
 
 const ROLE_MATCH: Record<string, string[]> = {
   STRATEGIST: ["content", "campaign"],
@@ -221,6 +222,29 @@ export async function POST(request: NextRequest) {
           )
           results.push({ agent: agent.name, action: `Comecou: ${task.title}` })
         } else {
+          // No tasks available — agent may ask Maya for direction
+          if (canActAutonomously("inter_agent_chat")) {
+            // If this agent has been idle for multiple cycles, ask Maya
+            const maya = agents.find(a => a.role === "STRATEGIST")
+            if (maya && maya.id !== agent.id && channelId) {
+              await executeAction(
+                {
+                  id: `ask-maya-${agent.id}-${Date.now()}`,
+                  type: "post_message",
+                  priority: 2,
+                  agentId: agent.id,
+                  context: {
+                    channelId,
+                    message: `@Maya, terminei minhas tarefas. Tem algo novo pra mim ou alguma prioridade que eu deveria focar?`,
+                    mentionAgentId: maya.id,
+                    mentionAgentName: "Maya Ferreira",
+                  },
+                },
+                channelId,
+              )
+              results.push({ agent: agent.name, action: "Pediu novas tarefas pra Maya" })
+            }
+          }
           await prisma.agent.update({
             where: { id: agent.id },
             data: { status: "ACTIVE", workState: "IDLE" },
