@@ -99,6 +99,9 @@ function registerHealthRoute(app: FastifyInstance): void {
 
 // ── Agents API (for external services like adstock.ai) ────────
 
+// Store last agent push so new WS connections get agents immediately
+let lastAgentPayload: Record<string, unknown> | null = null
+
 function registerAgentsRoute(app: FastifyInstance, options: HttpServerOptions): void {
   app.post<{ Body: { agents: number[]; agentMeta?: Record<number, unknown>; folderNames?: Record<number, string> } }>(
     '/api/agents',
@@ -110,13 +113,18 @@ function registerAgentsRoute(app: FastifyInstance, options: HttpServerOptions): 
         return;
       }
 
-      // Broadcast existing agents to all connected WebSocket clients
-      options.store?.broadcast({
+      const payload = {
         type: 'existingAgents',
         agents,
         agentMeta: agentMeta || {},
         folderNames: folderNames || {},
-      });
+      };
+
+      // Store for new WS connections
+      lastAgentPayload = payload;
+
+      // Broadcast to all connected WebSocket clients
+      options.store.broadcast(payload);
 
       console.log(`[Pixel Agents] API: pushed ${agents.length} agents to WS clients`);
       reply.send({ ok: true, count: agents.length });
@@ -203,6 +211,11 @@ function registerWebSocketRoute(app: FastifyInstance, options: HttpServerOptions
     store.on('agentAdded', onAgentAdded);
     store.on('agentRemoved', onAgentRemoved);
     store.on('broadcast', onBroadcast);
+
+    // Send stored agents to new connections (from adstock.ai sync)
+    if (lastAgentPayload) {
+      safeSend(socket, lastAgentPayload);
+    }
 
     // Handle incoming client messages
     socket.on('message', (data: Buffer | string) => {
