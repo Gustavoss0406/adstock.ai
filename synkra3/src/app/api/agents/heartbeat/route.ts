@@ -342,25 +342,6 @@ export async function POST(request: NextRequest) {
         results.push({ agent: agent.name, action: `Conteudo: ${task.title.slice(0, 30)}` })
       }
     }
-            const ch = await prisma.channel.findFirst({ where: { organizationId, name: "aprovacoes" } })
-            if (ch) {
-              await prisma.message.create({
-                data: {
-                  content: `🎨 ${agent.name} completou "${task.title}"\n\nTime recomenda: ${voteResult.winner} (${Math.round(voteResult.consensus * 100)}%)\n\n${content.slice(0, 500)}`,
-                  metadata: { type: "approval_needed", taskId: task.id, taskContentId: task.id, needsApproval: true, consensus: voteResult.consensus, winner: voteResult.winner },
-                  agentId: agent.id,
-                  channelId: ch.id,
-                },
-              } as any)
-            }
-          }
-        }
-
-        // Record in memory
-        await recordAgentMemory(agent.id, "completed_task", `Conteudo criado: ${task.title}`, organizationId)
-        results.push({ agent: agent.name, action: `Conteudo: ${task.title.slice(0, 40)}` })
-      }
-    }
 
     return NextResponse.json({ heartbeat: true, tasksProcessed: results.length, results })
   } catch (error) {
