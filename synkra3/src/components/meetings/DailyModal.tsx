@@ -78,31 +78,71 @@ export function DailyModal({ open, agents, orgId, onClose }: DailyModalProps) {
     setLoadingStep(0)
 
     const run = async () => {
-      const controller = new AbortController()
-      const timeoutId = setTimeout(() => controller.abort(), 360000) // 6min — sequential daily
       try {
-        const res = await fetch("/api/routine", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ organizationId: orgId, event: "daily_standup" }),
-          signal: controller.signal,
-        })
-        clearTimeout(timeoutId)
-        if (!res.ok) throw new Error("API failed")
+        // Post system announcement
+        setState("running")
 
-        const data = await res.json()
-        const results: Array<{ agent: string; content: string }> = data.results || []
+        // Get agents in order
+        const activeAgents = agentsActive
+        const previousSpeeches: Array<{ agentName: string; content: string }> = []
 
-        if (results.length > 0) {
-          setState("running")
-          for (let i = 0; i < results.length; i++) {
-            setSpeakingIdx(i)
-            setSpeeches(prev => [...prev, results[i]])
-            await new Promise(r => setTimeout(r, 800 + Math.random() * 700))
+        for (let i = 0; i < activeAgents.length; i++) {
+          const agent = activeAgents[i]
+          const isFirst = i === 0
+          const isLast = i === activeAgents.length - 1
+
+          setSpeakingIdx(i)
+
+          try {
+            const res = await fetch("/api/daily/speak", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                organizationId: orgId,
+                agentId: agent.id,
+                previousSpeeches,
+                isFirst,
+                isLast,
+              }),
+            })
+            if (!res.ok) throw new Error("Failed")
+            const data = await res.json()
+
+            const speech = { agent: data.agent, content: data.content }
+            setSpeeches(prev => [...prev, speech])
+            previousSpeeches.push({ agentName: data.agent, content: data.content })
+          } catch {
+            const fallback = { agent: agent.name, content: "Estou com dificuldades tecnicas. Vou me atualizar depois." }
+            setSpeeches(prev => [...prev, fallback])
+            previousSpeeches.push({ agentName: agent.name, content: fallback.content })
+          }
+
+          // Brief pause between agents (typing indicator time)
+          if (!isLast) {
+            await new Promise(r => setTimeout(r, 2000))
           }
         }
 
-        setSummary(data.summary || "")
+        // Generate summary
+        try {
+          const summaryRes = await fetch("/api/daily/speak", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              organizationId: orgId,
+              agentId: activeAgents[0]?.id || "",
+              previousSpeeches,
+              isFirst: false,
+              isLast: true,
+              isSummary: true,
+            }),
+          })
+          if (summaryRes.ok) {
+            const sData = await summaryRes.json()
+            setSummary(sData.content || "Daily concluida.")
+          }
+        } catch {}
+
         setState("completed")
         toast.success("Daily concluida!")
 
@@ -122,13 +162,8 @@ export function DailyModal({ open, agents, orgId, onClose }: DailyModalProps) {
             setMessages(newMsgs)
           }
         } catch {}
-      } catch (err) {
-        clearTimeout(timeoutId)
-        if ((err as Error)?.name === "AbortError") {
-          toast.error("A daily demorou demais. Tente novamente.")
-        } else {
-          toast.error("Erro ao iniciar a daily")
-        }
+      } catch {
+        toast.error("Erro ao iniciar a daily")
         setState("error")
       }
     }
