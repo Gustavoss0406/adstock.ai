@@ -290,7 +290,28 @@ export async function extractTasksFromSpeeches(
 ): Promise<number> {
   if (speeches.length === 0) return 0
 
-  const taskSystem = `Extraia tarefas concretas de falas de reuniao. Ignore genericidades. Retorne APENAS JSON array: [{"title":"...","assignTo":"nome do agente","type":"content|analysis|technical|campaign","priority":"HIGH|MEDIUM|LOW"}]. Max 5 tarefas. Nada alem do JSON.`
+  // Get org context for better task extraction
+  const org = await prisma.organization.findUnique({
+    where: { id: organizationId },
+    include: { onboarding: { select: { industry: true, brandVoice: true, targetAudience: true, goals: true } } },
+  })
+
+  const contextParts: string[] = []
+  if (org?.onboarding?.industry) contextParts.push(`Setor: ${org.onboarding.industry}`)
+  if (org?.onboarding?.targetAudience) contextParts.push(`Publico: ${org.onboarding.targetAudience}`)
+  if (org?.onboarding?.goals?.length) contextParts.push(`Objetivos: ${org.onboarding.goals.join(", ")}`)
+  const contextStr = contextParts.length > 0 ? `\nCONTEXTO DA AGENCIA: ${contextParts.join(". ")}.` : ""
+
+  const taskSystem = `Extraia tarefas concretas e ESPECIFICAS das falas de reuniao.${contextStr}
+
+Regras:
+- Titulos com pelo menos 20 caracteres, acionaveis
+- Nao crie tarefas duplicadas
+- Use verbos de acao: Criar, Analisar, Configurar, Otimizar, Revisar
+- Priorize tarefas MENCIONADAS nas falas (nao invente)
+- Max 8 tarefas
+
+Retorne APENAS JSON array: [{"title":"...","assignTo":"nome do agente","type":"content|analysis|technical|campaign","priority":"HIGH|MEDIUM|LOW"}]. Nada alem do JSON.`
 
   try {
     const taskReply = await chatWithMessages(
@@ -310,11 +331,21 @@ export async function extractTasksFromSpeeches(
     const extracted = JSON.parse(jsonMatch[0])
     let created = 0
 
+    // Check for duplicates
+    const existingTitles = new Set(
+      (await prisma.task.findMany({
+        where: { organizationId, status: { not: "DONE" } },
+        select: { title: true },
+      })).map(t => t.title.toLowerCase().slice(0, 30)),
+    )
+
     for (const et of extracted) {
       const assigned = agents.find(a =>
         a.name.toLowerCase().includes((et.assignTo || "").toLowerCase()),
       )
-      if (et.title?.length > 3) {
+      // Validate: title > 15 chars, not a duplicate
+      if (et.title?.length >= 15 && !existingTitles.has(et.title.toLowerCase().slice(0, 30))) {
+        existingTitles.add(et.title.toLowerCase().slice(0, 30))
         await prisma.task.create({
           data: {
             organizationId,

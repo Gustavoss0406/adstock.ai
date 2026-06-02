@@ -267,22 +267,38 @@ export function DailyModal({ open, agents, orgId, onClose }: DailyModalProps) {
                 {agentsActive.map((agent, idx) => {
                   const isSpeaking = state === "running" && speakIdx === idx
                   const hasSpoken = speeches.some(s => s.agent === agent.name)
+                  const isThinking = isSpeaking && !hasSpoken // AI call in progress
                   const img = getAgentImage(agent.name)
                   const initials = getAgentInitials(agent.name)
                   const gradient = getAgentGradient(agent.role)
                   return (
-                    <motion.div key={agent.id} layout animate={{ scale: isSpeaking ? 1.02 : 1, opacity: state === "joining" ? 0.5 : hasSpoken ? 1 : 0.6 }} transition={{ type: "spring", stiffness: 200, damping: 20 }} className={cn("relative flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-500", isSpeaking ? "border-2 border-[#2bac76] bg-[#2bac76]/[0.05] shadow-[0_0_30px_rgba(43,172,118,0.15)]" : hasSpoken ? "border border-white/[0.04] bg-white/[0.02]" : "border border-white/[0.02] bg-white/[0.01]")}>
-                      {isSpeaking && <motion.div className="absolute inset-0 rounded-2xl" animate={{ boxShadow: ["0 0 20px rgba(43,172,118,0.1)", "0 0 40px rgba(43,172,118,0.2)", "0 0 20px rgba(43,172,118,0.1)"] }} transition={{ duration: 2, repeat: Infinity }} />}
+                    <motion.div key={agent.id} layout animate={{ scale: isSpeaking ? 1.02 : 1, opacity: state === "joining" ? 0.5 : hasSpoken ? 1 : 0.6 }} transition={{ type: "spring", stiffness: 200, damping: 20 }} className={cn(
+                      "relative flex flex-col items-center gap-3 p-4 rounded-2xl transition-all duration-500",
+                      isThinking ? "border-2 border-[#2563eb] bg-[#2563eb]/[0.05] shadow-[0_0_30px_rgba(37,99,235,0.15)]" :
+                      isSpeaking ? "border-2 border-[#2bac76] bg-[#2bac76]/[0.05] shadow-[0_0_30px_rgba(43,172,118,0.15)]" :
+                      hasSpoken ? "border border-white/[0.04] bg-white/[0.02]" :
+                      "border border-white/[0.02] bg-white/[0.01]"
+                    )}>
+                      {isThinking && <motion.div className="absolute inset-0 rounded-2xl" animate={{ boxShadow: ["0 0 20px rgba(37,99,235,0.1)", "0 0 40px rgba(37,99,235,0.2)", "0 0 20px rgba(37,99,235,0.1)"] }} transition={{ duration: 2, repeat: Infinity }} />}
+                      {isSpeaking && !isThinking && <motion.div className="absolute inset-0 rounded-2xl" animate={{ boxShadow: ["0 0 20px rgba(43,172,118,0.1)", "0 0 40px rgba(43,172,118,0.2)", "0 0 20px rgba(43,172,118,0.1)"] }} transition={{ duration: 2, repeat: Infinity }} />}
                       <div className="relative flex-shrink-0">
-                        {img ? <img src={img} className={cn("w-20 h-20 rounded-2xl object-cover transition-all duration-500", isSpeaking && "ring-2 ring-[#2bac76] ring-offset-2 ring-offset-[#0a0a0a]")} alt={agent.name} /> :
-                        <div className={cn("w-20 h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-2xl transition-all duration-500", gradient, isSpeaking && "ring-2 ring-[#2bac76] ring-offset-2 ring-offset-[#0a0a0a]")}>{initials}</div>}
-                        <span className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0a0a0a]", isSpeaking ? "bg-[#2bac76] animate-pulse" : hasSpoken ? "bg-[#2bac76]" : "bg-white/15")} />
+                        {img ? <img src={img} className={cn("w-20 h-20 rounded-2xl object-cover transition-all duration-500", isThinking && "ring-2 ring-[#2563eb] ring-offset-2 ring-offset-[#0a0a0a]", isSpeaking && !isThinking && "ring-2 ring-[#2bac76] ring-offset-2 ring-offset-[#0a0a0a]")} alt={agent.name} /> :
+                        <div className={cn("w-20 h-20 rounded-2xl bg-gradient-to-br flex items-center justify-center text-white font-bold text-2xl transition-all duration-500", gradient, isThinking && "ring-2 ring-[#2563eb] ring-offset-2 ring-offset-[#0a0a0a]", isSpeaking && !isThinking && "ring-2 ring-[#2bac76] ring-offset-2 ring-offset-[#0a0a0a]")}>{initials}</div>}
+                        <span className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-[#0a0a0a]", isThinking ? "bg-[#2563eb] animate-pulse" : isSpeaking ? "bg-[#2bac76] animate-pulse" : hasSpoken ? "bg-[#2bac76]" : "bg-white/15")} />
                       </div>
                       <div className="text-center">
                         <p className="text-sm font-semibold text-white/70 truncate max-w-[140px]">{agent.name}</p>
                         <p className="text-[10px] text-white/25 mt-0.5">{getRoleLabel(agent.role)}</p>
                       </div>
-                      {isSpeaking && (
+                      {isThinking && (
+                        <motion.div className="flex flex-col items-center gap-1 mt-0.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+                          <div className="flex items-center gap-1.5">
+                            {[0, 1, 2].map(i => <motion.span key={i} className="w-1 h-1 rounded-full bg-[#2563eb]" animate={{ opacity: [0.3, 1, 0.3], scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />)}
+                          </div>
+                          <span className="text-[9px] text-[#2563eb]/60 font-medium">Pensando...</span>
+                        </motion.div>
+                      )}
+                      {isSpeaking && !isThinking && (
                         <motion.div className="flex items-center gap-1.5 mt-0.5" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
                           {[0, 1, 2].map(i => <motion.span key={i} className="w-1 h-1 rounded-full bg-[#2bac76]" animate={{ opacity: [0.3, 1, 0.3], scale: [1, 1.3, 1] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />)}
                         </motion.div>

@@ -47,6 +47,8 @@ export default function OnboardingPage() {
   const [idealCustomer, setIdealCustomer] = useState("")
   const [brandTone, setBrandTone] = useState("")
   const [website, setWebsite] = useState("")
+  const [goals, setGoals] = useState("")
+  const [competitors, setCompetitors] = useState("")
   const [scanning, setScanning] = useState(false)
   const [scanSteps, setScanSteps] = useState<number[]>([])
   const [scanDone, setScanDone] = useState(false)
@@ -73,8 +75,8 @@ export default function OnboardingPage() {
     if (ns >= 2) data.industry = industry
     if (ns >= 3) data.mainChallenges = challenge
     if (ns >= 4) data.currentTools = networks
-    if (ns >= 5) { data.brandVoice = brandTone; data.targetAudience = idealCustomer }
-    if (ns >= 6) data.website = website
+    if (ns >= 5) { data.brandVoice = brandTone; data.targetAudience = idealCustomer; data.goals = goals ? goals.split(",").map((g: string) => g.trim()) : [] }
+    if (ns >= 6) { data.website = website; data.competitors = competitors }
     await fetch("/api/onboarding", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, ...data }) })
   }
 
@@ -189,6 +191,12 @@ export default function OnboardingPage() {
                     <input className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-xs text-white/60 placeholder-white/10 focus:outline-none focus:border-white/15" placeholder='Ex: "descontraido e proximo"' value={brandTone} onChange={e => setBrandTone(e.target.value)} />
                   </motion.div>
                 )}
+                {brandTone && (
+                  <motion.div initial={{ opacity: 0, y: 12, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }} exit={{ opacity: 0, y: -8, height: 0 }} transition={{ duration: 0.25 }}>
+                    <label className="text-[10px] text-white/20 block mb-1">Objetivos (separados por virgula)</label>
+                    <input className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-xs text-white/60 placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: aumentar vendas, fidelizar clientes, lancar produto" value={goals} onChange={e => setGoals(e.target.value)} />
+                  </motion.div>
+                )}
               </AnimatePresence>
             </div>
           )}
@@ -209,6 +217,10 @@ export default function OnboardingPage() {
                 </div>
               )}
               <button onClick={() => { setScanDone(true); next() }} className="text-white/10 text-[10px] hover:text-white/25">Nao tenho site — pular</button>
+              <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
+                <label className="text-[10px] text-white/20 block mb-1 mt-3">Concorrentes (opcional)</label>
+                <input className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-xs text-white/60 placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: concorrente1.com.br, concorrente2.com.br" value={competitors} onChange={e => setCompetitors(e.target.value)} />
+              </motion.div>
             </div>
           )}
 
