@@ -89,6 +89,8 @@ export default function OnboardingPage() {
         await fetch("/api/settings", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, workflowMethod: workMode, dailyTime }) })
       }
       await fetch("/api/onboarding", { method: "PUT", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, completed: true }) })
+      // Flag for first daily
+      localStorage.setItem("onboarding_just_completed", orgId)
       toast.success("Pronto!")
       setTimeout(() => router.push(`/workspace/${orgId}`), 500)
       return

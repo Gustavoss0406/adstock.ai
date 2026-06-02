@@ -17,6 +17,7 @@ import { AgentProfile } from "@/components/agents/AgentProfile"
 import { KanbanBoard } from "@/components/kanban/KanbanBoard"
 import { SprintBoard } from "@/components/kanban/SprintBoard"
 import { DailyModal } from "@/components/meetings/DailyModal"
+import { FirstDailyOverlay } from "@/components/meetings/FirstDailyOverlay"
 
 type OrgData = { id: string; name: string; agents: Agent[]; channels: Array<{ id: string; name: string }>; officeSettings?: { workflowMethod: string; dailyTime: string } }
 
@@ -51,6 +52,7 @@ export default function WorkspaceHub() {
   const [wData, setWData] = useState<{ name: string; role: string; agentId: string; gradient: string } | null>(null)
   const [messages, setMessages] = useState<Array<{ id: string; agentId?: string; agentName?: string; agentRole?: string; agentGradient?: string; content: string; time: string; metadata?: any }>>([])
   const [dailyOpen, setDailyOpen] = useState(false)
+  const [firstDailyOverlay, setFirstDailyOverlay] = useState(false)
   const [dailyApproved, setDailyApproved] = useState<Record<string, boolean>>({})
   const [showingCommentInput, setShowingCommentInput] = useState<Record<string, boolean>>({})
   const [commentText, setCommentText] = useState("")
@@ -109,6 +111,13 @@ export default function WorkspaceHub() {
   // Bridge init, autonomous loop, and auto-daily
   useEffect(() => {
     if (stage !== "ready") return
+
+    // ── First daily detection (post-onboarding) ──────
+    const onboardingFlag = localStorage.getItem("onboarding_just_completed")
+    if (onboardingFlag === orgId) {
+      localStorage.removeItem("onboarding_just_completed")
+      setFirstDailyOverlay(true)
+    }
 
     // Detect local pixel bridge server
     fetch("http://localhost:3101/health", { signal: AbortSignal.timeout(2000) })
@@ -486,6 +495,15 @@ export default function WorkspaceHub() {
           </div>
           <button onClick={runDaily} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/[0.04] hover:bg-white/[0.06] text-white/40 hover:text-white/60 text-[11px] font-medium transition-all"><Zap className="w-3 h-3" />Daily</button>
           <button onClick={() => fetch("/api/agents/heartbeat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId }) }).then(() => toast.success("Agentes trabalhando!"))} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/[0.02] hover:bg-white/[0.04] text-white/25 hover:text-white/40 text-[10px] font-medium transition-all">Executar tarefas</button>
+          <button onClick={async () => {
+            if (!confirm("Limpar TODAS as tarefas do board?")) return
+            const res = await fetch(`/api/tasks/clear?orgId=${orgId}`, { method: "DELETE" })
+            if (res.ok) {
+              const d = await res.json()
+              toast.success(d.message)
+              queryClient.invalidateQueries({ queryKey: ["tasks", orgId] })
+            }
+          }} className="w-full text-center text-white/10 hover:text-[#ff385c]/40 text-[10px] transition-colors">Limpar board</button>
           <button onClick={() => signOut()} className="w-full text-center text-white/10 hover:text-white/25 text-[10px] transition-colors">Sair</button>
         </div>
       </div>
@@ -805,6 +823,17 @@ export default function WorkspaceHub() {
         <AgentProfile agent={selectedAgent} orgId={orgId} onClose={() => setSelectedAgent(null)}
           onPromote={() => queryClient.invalidateQueries({ queryKey: ["organization", orgId] })}
           onFire={() => { setSelectedAgent(null); queryClient.invalidateQueries({ queryKey: ["organization", orgId] }) }} />
+      )}
+      {firstDailyOverlay && org && (
+        <FirstDailyOverlay
+          orgId={orgId}
+          orgName={org.name || "sua agencia"}
+          onAccept={() => {
+            setFirstDailyOverlay(false)
+            setDailyOpen(true)
+          }}
+          onDismiss={() => setFirstDailyOverlay(false)}
+        />
       )}
       <DailyModal
         open={dailyOpen}
