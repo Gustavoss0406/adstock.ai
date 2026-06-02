@@ -637,7 +637,7 @@ Responda APENAS com JSON (sem markdown):
   try {
     const reply = await chatCompletion(`[SYSTEM]\n${prompt}\n\n[USER]\nAnalise.`, {
       temperature: 0.3,
-      maxTokens: 200,
+      maxTokens: 2000,
     })
 
     const jsonMatch = reply.match(/\{[\s\S]*\}/)

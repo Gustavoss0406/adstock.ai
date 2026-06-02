@@ -87,7 +87,7 @@ So retorne conflito se for uma discordancia real, nao apenas opinioes diferentes
   try {
     const reply = await chatCompletion(
       `${system}\n\nAnalise.`,
-      { temperature: 0.3, maxTokens: 200 },
+      { temperature: 0.3, maxTokens: 2000 },
     )
     const jsonMatch = reply.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
@@ -168,7 +168,7 @@ Responda APENAS com JSON (ou {"conflict":false} se nao houver conflito):
     try {
       const reply = await chatCompletion(
         `${system}\n\nAnalise.`,
-        { temperature: 0.3, maxTokens: 200 },
+        { temperature: 0.3, maxTokens: 2000 },
       )
       const jsonMatch = reply.match(/\{[\s\S]*\}/)
       if (jsonMatch) {
