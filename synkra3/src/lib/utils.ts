@@ -103,7 +103,7 @@ export function getPersonalityColor(personality: string): string {
     PRAGMATIC: "text-[#ECB22E]",
     VISIONARY: "text-[#4A154B]",
     DETAILED: "text-[#616061]",
-    BOLD: "text-[#E01E5A]",
+    BOLD: "text-black",
     DIPLOMATIC: "text-[#2BAC76]",
     DISRUPTIVE: "text-[#4A154B]",
   }

@@ -24,7 +24,7 @@ const statusConfig: Record<AgentStatus, { label: string; color: string; dot: str
   WORKING: { label: "Trabalhando", color: "text-[#2BAC76]", dot: "bg-[#2BAC76] animate-pulse" },
   IN_MEETING: { label: "Em reunião", color: "text-[#4A154B]", dot: "bg-[#4A154B] animate-pulse" },
   OFFLINE: { label: "Offline", color: "text-[#616061]", dot: "bg-[#616061]" },
-  FIRED: { label: "Demitido", color: "text-[#E01E5A]", dot: "bg-[#E01E5A]" },
+  FIRED: { label: "Demitido", color: "text-black", dot: "bg-black" },
 }
 
 export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact = false }: AgentCardProps) {
@@ -141,7 +141,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
             <Button
               size="sm"
               variant="ghost"
-              className="text-xs h-8 px-2 text-[#E01E5A] hover:text-[#E01E5A]"
+              className="text-xs h-8 px-2 text-black hover:text-black"
               onClick={(e) => { e.stopPropagation(); onFire?.(agent) }}
             >
               <MoreHorizontal className="w-3.5 h-3.5" />

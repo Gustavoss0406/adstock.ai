@@ -54,7 +54,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
               </div>
               <p className="text-2xl font-bold text-[#1D1C1D]">{kpi.value}</p>
               {kpi.change && (
-                <span className={cn("text-[11px] font-bold", kpi.up ? "text-[#059669]" : "text-[#E01E5A]")}>{kpi.change}</span>
+                <span className={cn("text-[11px] font-bold", kpi.up ? "text-black" : "text-black")}>{kpi.change}</span>
               )}
             </Card>
           ))}
@@ -127,18 +127,18 @@ export function Dashboard({ data }: { data: DashboardData }) {
               <div key={s.label}>
                 <p className="text-xl font-bold text-[#1D1C1D]">{s.value}</p>
                 <p className="text-[11px] text-[#616061]">{s.label}</p>
-                {s.change && <p className="text-[10px] text-[#059669] font-bold">{s.change}</p>}
+                {s.change && <p className="text-[10px] text-black font-bold">{s.change}</p>}
               </div>
             ))}
           </div>
         </Card>
 
         {/* Lena Analysis */}
-        <Card className="p-5 border-l-4 border-l-[#059669]">
+        <Card className="p-5 border-l-4 border-l-black">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-md bg-gradient-to-br from-[#059669] to-[#047857] flex items-center justify-center text-white font-bold text-xs flex-shrink-0">LS</div>
+            <div className="w-8 h-8 rounded-md bg-gradient-to-br bg-black flex items-center justify-center text-white font-bold text-xs flex-shrink-0">LS</div>
             <div>
-              <p className="text-xs font-bold text-[#059669] mb-1">🟢 Lena Souza · Análise de Performance</p>
+              <p className="text-xs font-bold text-black mb-1">🟢 Lena Souza · Análise de Performance</p>
               <p className="text-sm text-[#616061] leading-relaxed mb-2">{data.lenaAnalysis.text}</p>
               {data.lenaAnalysis.recommendations.map((r, i) => (
                 <p key={i} className="text-xs text-[#1D1C1D] font-bold">{i + 1}. {r}</p>

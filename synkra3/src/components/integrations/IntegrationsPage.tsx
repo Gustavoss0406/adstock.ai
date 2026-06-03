@@ -99,7 +99,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
             <div className="space-y-3">
               {connected.map(int => (
                 <motion.div key={int.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
-                  <Card className="p-5 border-[#059669]/20">
+                  <Card className="p-5 border-black/10">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className={cn("w-12 h-12  bg-gradient-to-br flex items-center justify-center text-2xl", int.color)}>
@@ -115,7 +115,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
                       </div>
                       <div className="flex gap-2">
                         <Button variant="ghost" size="sm" className="text-xs"><Settings className="w-3 h-3 mr-1" />Configurar</Button>
-                        <Button variant="ghost" size="sm" className="text-xs text-[#E01E5A]"><Unlink className="w-3 h-3 mr-1" />Desconectar</Button>
+                        <Button variant="ghost" size="sm" className="text-xs text-black"><Unlink className="w-3 h-3 mr-1" />Desconectar</Button>
                       </div>
                     </div>
                   </Card>

@@ -76,10 +76,10 @@ export function MeetingRoom({ meeting, onRun, isRunning = false }: MeetingRoomPr
           <div className="flex items-center gap-3">
             <div className={cn(
               "w-10 h-10 rounded-md flex items-center justify-center",
-              isActive ? "bg-[#E01E5A]/10" : isCompleted ? "bg-[#2BAC76]/10" : "bg-[#1264A3]/10"
+              isActive ? "bg-black/5" : isCompleted ? "bg-black/5" : "bg-black/5"
             )}>
               {isActive ? (
-                <Video className="w-5 h-5 text-[#E01E5A]" />
+                <Video className="w-5 h-5 text-black" />
               ) : isCompleted ? (
                 <CheckCircle2 className="w-5 h-5 text-[#2BAC76]" />
               ) : (

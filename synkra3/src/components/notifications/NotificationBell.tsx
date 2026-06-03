@@ -27,9 +27,9 @@ const TYPE_ICONS: Record<string, string> = {
 }
 
 const TYPE_COLORS: Record<string, string> = {
-  approval: "text-[#059669]",
+  approval: "text-black",
   conflict: "text-[#ECB22E]",
-  report: "text-[#2563EB]",
+  report: "text-black",
   seo: "text-[#DC2626]",
   hire: "text-[#000000]",
   system: "text-[#CFC3CF]",
@@ -80,7 +80,7 @@ export function NotificationBell({ orgId }: { orgId: string }) {
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-pill bg-[#E01E5A] text-white text-[10px] font-bold flex items-center justify-center"
+            className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-pill bg-black text-white text-[10px] font-bold flex items-center justify-center"
           >
             {unreadCount}
           </motion.span>

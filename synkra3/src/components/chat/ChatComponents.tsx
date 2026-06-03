@@ -196,7 +196,7 @@ function ConflictCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
       <p className="text-xs font-bold text-[#1D1C1D] mb-2">Com quem você concorda?</p>
       <div className="flex gap-2">
         <button className="flex-1 py-2  text-xs font-bold border border-[#000000] text-[#000000] hover:bg-[#000000]/5">🟣 {agentA.name} está certa</button>
-        <button className="flex-1 py-2  text-xs font-bold border border-[#059669] text-black hover:bg-black/5">🟢 {agentB.name} está certa</button>
+        <button className="flex-1 py-2  text-xs font-bold border border-black text-black hover:bg-black/5">🟢 {agentB.name} está certa</button>
         <button className="flex-1 py-2  text-xs font-bold border border-[#DDDDDD] text-[#616061] hover:bg-[#F8F8F8]">🤝 Meio a meio</button>
       </div>
     </div>
@@ -219,7 +219,7 @@ function AlertCard({ msg }: { msg: AgentMessage }) {
           <span className="text-[11px] text-[#CFC3CF]">{formatDate(msg.timestamp, "relative")}</span>
         </div>
 
-        <div className="p-3  border border-[#E01E5A]/10 bg-black/5">
+        <div className="p-3  border border-black/10 bg-black/5">
           <p className="text-sm font-bold text-black mb-1">⚠️ Alerta de Métricas</p>
           <p className="text-xs text-[#616061]">{msg.alertData.metric}</p>
           <p className="text-xs text-[#616061] mt-1">{msg.alertData.impact}</p>
