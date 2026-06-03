@@ -1,10 +1,15 @@
 import { NextRequest } from "next/server"
-import { generateSingleSlide } from "@/lib/images/carousel"
+import { InstagramSlide, BRANDS } from "@/lib/images/carousel"
 import type { ImageFormat } from "@/lib/images/carousel"
+import { ImageResponse } from "next/og"
 
-export const runtime = "nodejs"
+const SIZE: Record<ImageFormat, { w: number; h: number }> = {
+  instagram_carousel: { w: 1080, h: 1350 },
+  instagram_feed: { w: 1080, h: 1080 },
+  instagram_story: { w: 1080, h: 1920 },
+}
 
-const SLIDES: Record<string, Array<{ type: "hero" | "content" | "cta"; bg: "gradient" | "dark" | "light"; title: string; subtitle?: string }>> = {
+const SLIDES = {
   "treino": [
     { type: "hero", bg: "gradient", title: "5 Mitos Sobre\nTreino de Perna", subtitle: "O que realmente funciona" },
     { type: "content", bg: "dark", title: "Mito #1", subtitle: "Agachar pesado todo dia constrói mais músculo" },
@@ -24,18 +29,21 @@ export async function GET(request: NextRequest) {
   const format = (searchParams.get("format") || "instagram_carousel") as ImageFormat
 
   const slides = SLIDES[theme] || SLIDES.treino
-  const slideData = slides[Math.min(slide - 1, slides.length - 1)]
+  const s = slides[Math.min(slide - 1, slides.length - 1)]
+  const colors = BRANDS[brand] || BRANDS.default
+  const { w, h } = SIZE[format]
 
-  const data = {
-    number: slide,
-    total: slides.length,
-    title: slideData.title,
-    subtitle: slideData.subtitle,
-    type: slideData.type,
-    bg: slideData.bg,
-  }
-
-  return generateSingleSlide(data, brand, format)
+  return new ImageResponse(
+    InstagramSlide({
+      slide: {
+        number: slide, total: slides.length,
+        title: s.title, subtitle: s.subtitle,
+        type: s.type, bg: s.bg,
+      },
+      brand: colors,
+    }),
+    { width: w, height: h }
+  )
 }
 
 export async function POST(request: NextRequest) {
