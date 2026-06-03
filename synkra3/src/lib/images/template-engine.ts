@@ -77,14 +77,14 @@ function adjustHex(hex: string, p: number): string {
 }
 
 // ── Template engine: apply brand to HTML ──────────────────
-export function applyBrandToTemplate(html: string, brand: BrandIdentity): string {
+export function applyBrandToTemplate(html: string, brand: BrandIdentity, content?: { title?: string; subtitle?: string; tagline?: string }): string {
   const palette = derivePalette(brand.colors[0])
   const secondary = brand.colors[1] || palette.light
   const fonts = FONT_PAIRS[brand.fontStyle]
   const initial = brand.name.charAt(0).toUpperCase()
   const gradient = `linear-gradient(135deg, ${palette.dark}, ${brand.colors[0]}, ${secondary})`
 
-  return html
+  let result = html
     .replace(/\{brand_name\}/g, brand.name)
     .replace(/\{brand_handle\}/g, brand.handle)
     .replace(/\{brand_primary\}/g, brand.colors[0])
@@ -100,6 +100,13 @@ export function applyBrandToTemplate(html: string, brand: BrandIdentity): string
     .replace(/\{google_fonts_url\}/g, `https://${fonts.googleFontsUrl}`)
     .replace(/\{heading_font\}/g, fonts.heading)
     .replace(/\{body_font\}/g, fonts.body)
+
+  // Replace content placeholders if provided
+  if (content?.title) result = result.replace(/\{content_title\}/g, content.title)
+  if (content?.subtitle) result = result.replace(/\{content_subtitle\}/g, content.subtitle)  
+  if (content?.tagline) result = result.replace(/\{content_tagline\}/g, content.tagline)
+
+  return result
 }
 
 export async function loadBrandFromDb(organizationId: string): Promise<BrandIdentity> {
