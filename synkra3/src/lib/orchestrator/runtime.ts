@@ -238,43 +238,41 @@ export async function processTimeBasedEvents(organizationId: string, channelId: 
         },
       } as any)
 
-      // Each agent posts their summary
+      // Each agent posts simple summary (no AI blocking)
       for (const agent of agents.slice(0, 5)) {
-        const summary = await summarizeAgentDay(agent.id, agent.name)
-        if (summary) {
-          await prisma.message.create({
-            data: {
-              content: summary,
-              metadata: { type: "daily_checkpoint", agentId: agent.id },
-              agentId: agent.id,
-              channelId: channelId,
-            },
-          } as any)
-        }
+        const taskCount = await prisma.task.count({
+          where: { assignedTo: agent.id, createdAt: { gte: new Date(today) } },
+        })
+        const done = await prisma.task.count({
+          where: { assignedTo: agent.id, status: "DONE", createdAt: { gte: new Date(today) } },
+        })
+        const summary = `${agent.name}: ${done} concluidas, ${taskCount} criadas hoje.`
+        await prisma.message.create({
+          data: {
+            content: summary,
+            metadata: { type: "daily_checkpoint", agentId: agent.id },
+            agentId: agent.id,
+            channelId: channelId,
+          },
+        } as any)
       }
       results.push("Checkpoint: agentes resumiram o dia")
     }
 
-    // Maya plans tomorrow
+    // Maya plans tomorrow (no AI blocking)
     const maya = agents.find(a => a.role === "STRATEGIST")
     if (maya && channelId) {
       const backlogCount = await prisma.task.count({ where: { organizationId, status: "TODO" } })
       if (backlogCount < 5) {
-        const reply = await chatCompletion(
-          `Voce e Maya. O backlog so tem ${backlogCount} tarefas. Planeje o amanha: crie 5 ideias.`,
-          { temperature: 0.8, maxTokens: 150 }
-        )
-        if (reply && reply.length > 15 && !reply.includes("Nao consegui")) {
-          await prisma.message.create({
-            data: {
-              content: reply,
-              metadata: { type: "next_day_planning" },
-              agentId: maya.id,
-              channelId: channelId,
-            },
-          } as any)
-          results.push("Planejamento: Maya planejou amanha")
-        }
+        await prisma.message.create({
+          data: {
+            content: `Backlog com ${backlogCount} tarefas. Vou planejar novas ideias para amanha!`,
+            metadata: { type: "next_day_planning" },
+            agentId: maya.id,
+            channelId: channelId,
+          },
+        } as any)
+        results.push("Planejamento: Maya planejou amanha")
       }
     }
   }
