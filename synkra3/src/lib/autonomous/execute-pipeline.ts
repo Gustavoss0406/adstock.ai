@@ -140,17 +140,7 @@ ${ctx.approvalHistory.rejected.length > 0 ? `EVITE (CEO rejeitou): ${ctx.approva
   const { outputSchema } = getTaskSchema(task.taskType)
   const taskRules = getTaskRules(task.taskType, ctx)
 
-  return { systemPrompt, userPrompt, outputSchema }
-}
-
-export async function executeWithRetry(
-  taskInput: TaskExecutionInput,
-): Promise<{ success: boolean; output: any; attempts: number; error?: string }> {
-  const ctx = await buildExecutionContext(taskInput)
-  const { systemPrompt, userPrompt, outputSchema } = buildSpecificPrompt(taskInput, ctx)
-  const { validator } = getTaskSchema(taskInput.taskType)
-
-  let fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\nFORMATO DE SAIDA OBRIGATORIO (JSON):\n${outputSchema}\n\nREGRAS: RETORNE APENAS JSON, sem explicacoes, sem markdown.`
+  const fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\n${taskRules}\n\nFORMATO DE SAIDA OBRIGATORIO (JSON):\n${outputSchema}\n\nRETORNE APENAS o JSON, sem explicacoes, sem markdown. Comece com { e termine com }`
 
   let result: any = null
   let errorMsg = ""
@@ -227,67 +217,32 @@ function getTaskRules(taskType: string, ctx: ExecutionContext): string {
 
 // ── PILLAR 4: Task pipeline — break complex tasks ──────────
 export async function executeCalendarPipeline(organizationId: string, agentId: string, agentName: string): Promise<{ created: number; posts: any[] }> {
-  // Try AI pipeline first
-  let result = null
-  try {
-    result = await executeWithRetry({
-      organizationId, agentId, agentName,
-      taskTitle: "Criar calendario editorial da proxima semana",
-      taskDescription: "Planejar posts para a semana incluindo datas comemorativas e baseado em performance recente",
-      taskType: "create_calendar",
-    })
-  } catch {}
+  const result = await executeWithRetry({
+    organizationId, agentId, agentName,
+    taskTitle: "Criar calendario editorial da proxima semana",
+    taskDescription: "Planejar posts para a semana incluindo datas comemorativas e baseado em performance recente",
+    taskType: "create_calendar",
+  })
 
-  // Fallback: create tasks directly without AI if pipeline fails or returns no posts
-  if (!result?.success || !result?.output?.posts || result.output.posts.length < 1) {
-    const ctx = await (await import("./context")).buildCompanyContext(organizationId)
-    const agents = await prisma.agent.findMany({ where: { organizationId, status: { not: "FIRED" } }, select: { id: true, name: true, role: true } })
-
-    // Generate generic calendar from template
-    const days = ["Segunda", "Terca", "Quarta", "Quinta", "Sexta"]
-    const themes = ["Post motivacional", "Dica pratica", "Bastidores", "Depoimento de cliente", "Pergunta interativa"]
-    const roles = { DESIGNER: null, ANALYST: null, SOCIAL_MEDIA: null, SEO: null, STRATEGIST: null }
-    for (const a of agents) { if (a.role in roles) (roles as any)[a.role] = a }
-
-    const weekRange = `${new Date().toISOString().slice(5,10).replace("-","/")} a ${new Date(Date.now()+7*86400000).toISOString().slice(5,10).replace("-","/")}`
-    const posts = []
-    let assigned: any[] = [roles.DESIGNER, roles.DESIGNER, roles.ANALYST, roles.SOCIAL_MEDIA].filter(Boolean)
-    if (assigned.length === 0) assigned = agents.slice(0, 4)
-
-    for (let i = 0; i < Math.min(4, assigned.length); i++) {
-      const assignee = assigned[i]
-      if (!assignee) continue
-      posts.push({
-        date: new Date(Date.now() + (i+1)*86400000).toISOString().slice(0,10),
-        platform: "instagram",
-        type: i === 2 ? "carrossel" : "reel",
-        theme: themes[i] || `Post da semana`,
-        objective: i === 0 ? "engajar" : i === 2 ? "educar" : "vender",
-        copyBrief: `Copy de 100 caracteres sobre ${themes[i]} com tom profissional.`,
-        visualBrief: `Arte limpa com cores da marca, texto centralizado.`,
-        assignTo: assignee.name || agents[0].name,
-        priority: i === 1 ? "HIGH" : "MEDIUM",
-        reasoning: `${days[i] || `Dia ${i+1}`}: ${i === 0 ? "Comeco da semana" : i === 2 ? "Conteudo educativo" : "Engajamento"}`,
-      })
-    }
-
-    return await createTasksFromPosts(organizationId, agentId, { week: weekRange, posts, weekStrategy: "Foco em engajamento e relevancia." })
+  if (!result.success || !result.output) {
+    // Fallback: template-based calendar without AI
+    return await createFallbackCalendar(organizationId, agentId)
   }
 
-  return await createTasksFromPosts(organizationId, agentId, result.output)
-}
-
-async function createTasksFromPosts(organizationId: string, agentId: string, output: any): Promise<{ created: number; posts: any[] }> {
   let created = 0
-  for (const post of output.posts || []) {
+  for (const post of result.output.posts || []) {
     const agent = await prisma.agent.findFirst({
       where: { organizationId, name: { contains: post.assignTo || "" }, status: { not: "FIRED" } },
     })
+
     await prisma.task.create({
       data: {
-        organizationId, title: post.theme || "Post da semana",
+        organizationId,
+        title: post.theme || "Post da semana",
         description: `Copy: ${post.copyBrief || ""}\nVisual: ${post.visualBrief || ""}\nReasoning: ${post.reasoning || ""}`,
-        type: "content", priority: post.priority || "MEDIUM", status: "TODO",
+        type: "content",
+        priority: post.priority || "MEDIUM",
+        status: "TODO",
         assignedTo: agent?.id || null,
         dueDate: post.date ? new Date(post.date) : null,
         estimatedMinutes: post.type === "carrossel" ? 120 : 60,
@@ -295,19 +250,6 @@ async function createTasksFromPosts(organizationId: string, agentId: string, out
     } as any)
     created++
   }
-
-  // Post + notify
-  const channel = await prisma.channel.findFirst({ where: { organizationId, name: "geral" } })
-  if (channel) {
-    await prisma.message.create({
-      data: {
-        content: `📅 Calendario criado! ${created} posts.\n\n${(output.posts || []).map((p: any) => `• ${p.date || "?"}: ${p.theme} → ${p.assignTo || "?"}`).join("\n")}\n\nEstrategia: ${output.weekStrategy || "Foco em engajamento."}`,
-        metadata: { type: "calendar_created" }, agentId, channelId: channel.id,
-      },
-    } as any)
-  }
-  return { created, posts: output.posts || [] }
-}
 
   // Post summary to chat + notify assigned agents
   const channel = await prisma.channel.findFirst({ where: { organizationId, name: "geral" } })
@@ -340,6 +282,8 @@ async function createTasksFromPosts(organizationId: string, agentId: string, out
       }
     }
   }
+
+  return { created, posts: result.output.posts || [] }
 }
 
 export async function executeCopyPipeline(organizationId: string, agentId: string, agentName: string, brief: string): Promise<{ variants: any[] } | null> {
@@ -390,4 +334,46 @@ export async function executeCarouselPipeline(organizationId: string, agentId: s
   } as any)
 
   return result.output
+}
+
+// ── Fallback Calendar (no AI required) ──────────────────────
+async function createFallbackCalendar(organizationId: string, agentId: string): Promise<{ created: number; posts: any[] }> {
+  const agents = await prisma.agent.findMany({
+    where: { organizationId, status: { not: "FIRED" } },
+    select: { id: true, name: true, role: true },
+  })
+
+  const posts = [
+    { theme: "Post motivacional da semana", assignTo: agents.find(a => a.role === "DESIGNER")?.name || agents[1]?.name || "", priority: "MEDIUM", type: "reel", objective: "engajar" },
+    { theme: "Dica pratica - conteudo educativo", assignTo: agents.find(a => a.role === "DESIGNER")?.name || agents[1]?.name || "", priority: "HIGH", type: "carrossel", objective: "educar" },
+    { theme: "Bastidores do time", assignTo: agents.find(a => a.role === "SOCIAL_MEDIA")?.name || agents[2]?.name || "", priority: "LOW", type: "feed", objective: "humanizar" },
+    { theme: "Relatorio semanal de metricas", assignTo: agents.find(a => a.role === "ANALYST")?.name || agents[3]?.name || "", priority: "LOW", type: "analysis", objective: "analisar" },
+  ].filter(p => p.assignTo)
+
+  let created = 0
+  for (const post of posts) {
+    const ag = agents.find(a => a.name === post.assignTo)
+    await prisma.task.create({
+      data: {
+        organizationId, title: post.theme, type: "content",
+        priority: post.priority, status: "TODO",
+        assignedTo: ag?.id || null,
+        estimatedMinutes: post.type === "carrossel" ? 120 : 60,
+      },
+    } as any)
+    created++
+  }
+
+  const channel = await prisma.channel.findFirst({ where: { organizationId, name: "geral" } })
+  if (channel) {
+    await prisma.message.create({
+      data: {
+        content: `📅 Calendario criado! ${created} posts.\n\n${posts.map((p: any) => `• ${p.theme} → ${p.assignTo}`).join("\n")}`,
+        metadata: { type: "calendar_created", fallback: true },
+        agentId, channelId: channel.id,
+      },
+    } as any)
+  }
+
+  return { created, posts }
 }
