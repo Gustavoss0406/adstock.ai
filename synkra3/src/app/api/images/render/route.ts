@@ -118,7 +118,7 @@ export async function GET(request: NextRequest) {
     })
   }
 
-  return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } })
+  return new Response(rendered, { headers: { "Content-Type": "text/html; charset=utf-8" } })
 }
 
 export async function POST(request: NextRequest) {
