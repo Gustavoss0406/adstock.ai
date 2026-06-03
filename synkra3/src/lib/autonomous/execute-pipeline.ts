@@ -25,7 +25,7 @@ interface AgentTools {
   getCompanyInfo: () => Promise<{ name: string; industry: string | undefined }>
 }
 
-export async function getAgentTools(organizationId: string, agentRole?: string): Promise<AgentTools> {
+export async function getAgentTools(organizationId: string): Promise<AgentTools> {
   const ctx = await buildCompanyContext(organizationId)
   const patterns = await analyzeApprovalPatterns(organizationId)
   const onboarding = await prisma.onboarding.findUnique({ where: { organizationId } })
@@ -33,27 +33,21 @@ export async function getAgentTools(organizationId: string, agentRole?: string):
 
   return {
     getCalendar: async () => ctx.upcomingDates || [],
-    getApprovalHistory: async () => {
-      // Get real approval messages from DB (last 20 content_completed or approved messages)
-      const events = await prisma.agencyEvent.findMany({
-        where: { organizationId, type: { in: ["content_approved", "content_rejected"] } },
-        orderBy: { createdAt: "desc" }, take: 20, select: { type: true, description: true, metadata: true },
-      })
-      const approved = events.filter(e => e.type === "content_approved").map(e => e.description || "")
-      const rejected = events.filter(e => e.type === "content_rejected").map(e => e.description || "")
-      return { approved: approved.slice(0, 5), rejected: rejected.length > 0 ? rejected.slice(0, 5) : (patterns.commonRejects || []).slice(0, 5), rate: patterns.approvalRate }
-    },
+    getApprovalHistory: async () => ({
+      approved: [],
+      rejected: (patterns.commonRejects || []).slice(0, 5),
+      rate: patterns.approvalRate,
+    }),
     getRecentPerformance: async () => {
       const tasks = await prisma.task.findMany({
         where: { organizationId, status: "DONE", completedAt: { not: null } },
-        orderBy: { completedAt: "desc" }, take: 20, select: { title: true, type: true, output: true },
+        orderBy: { completedAt: "desc" }, take: 20, select: { title: true, type: true },
       })
       if (tasks.length === 0) return { best: null, worst: null }
-      const contentTasks = tasks.filter(t => t.type === "content" || t.type === "campaign")
-      const analysisTasks = tasks.filter(t => t.type === "analysis")
+      const contentTasks = tasks.filter(t => t.type === "content")
       return {
-        best: contentTasks[0] ? { type: contentTasks[0].title, why: "Conteudo concluido recentemente com output registrado" } : analysisTasks[0] ? { type: analysisTasks[0].title, why: "Analise concluida recentemente" } : null,
-        worst: contentTasks.length > 3 ? { type: contentTasks[contentTasks.length - 1].title, why: "Ultimo concluido da lista" } : null,
+        best: contentTasks[0] ? { type: contentTasks[0].title, why: "Tarefa concluída recentemente" } : null,
+        worst: null,
       }
     },
     getBrandKit: async () => ({
@@ -138,9 +132,90 @@ ${ctx.performance.best ? `MELHOR PERFORMANCE RECENTE: ${ctx.performance.best.typ
 ${ctx.approvalHistory.rejected.length > 0 ? `EVITE (CEO rejeitou): ${ctx.approvalHistory.rejected.slice(0, 3).join(" | ")}` : ""}`
 
   const { outputSchema } = getTaskSchema(task.taskType)
-  const taskRules = getTaskRules(task.taskType, ctx)
+  return { systemPrompt, userPrompt, outputSchema }
+}
 
-  const fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\n${taskRules}\n\nFORMATO DE SAIDA OBRIGATORIO (JSON):\n${outputSchema}\n\nRETORNE APENAS o JSON, sem explicacoes, sem markdown. Comece com { e termine com }`
+// ── PILLAR 2: Forced JSON + validation + retry ─────────────
+function getTaskSchema(taskType: string): { outputSchema: string; validator: (data: any) => string | null } {
+  const schemas: Record<string, { schema: string; validate: (d: any) => string | null }> = {
+    create_calendar: {
+      schema: `{"week":"dd/mm a dd/mm","posts":[{"date":"YYYY-MM-DD","platform":"instagram|linkedin","type":"reel|feed|carrossel","theme":"titulo","objective":"engajar|educar|vender","copyBrief":"80-150 palavras","visualBrief":"60-120 palavras","assignTo":"carlos|bruno|lena|diego","priority":"high|medium|low","reasoning":"30-60 palavras"}],"weekStrategy":"2-3 frases"}`,
+      validate: (d: any) => {
+        if (!d.posts || d.posts.length < 2) return "Precisa de pelo menos 2 posts"
+        for (const p of d.posts) {
+          if (!p.copyBrief || p.copyBrief.length < 30) return `copyBrief muito curto em "${p.theme}"`
+          if (!p.visualBrief || p.visualBrief.length < 20) return `visualBrief muito curto em "${p.theme}"`
+        }
+        return null
+      },
+    },
+    create_copy: {
+      schema: `{"variants":[{"name":"Variação A - Emocional","copy":"texto da copy","tone":"emocional|direto|interativo","expectedEngagement":"alto|medio|baixo"}],"recommendation":"recomendo X porque..."}`,
+      validate: (d: any) => {
+        if (!d.variants || d.variants.length < 2) return "Precisa de pelo menos 2 variacoes"
+        for (const v of d.variants) {
+          if (!v.copy || v.copy.length < 30) return `copy muito curta em "${v.name}"`
+        }
+        return null
+      },
+    },
+    create_carousel: {
+      schema: `{"totalSlides":7,"theme":"tema","brandColors":{"primary":"#hex","light":"#hex","dark":"#hex"},"slides":[{"number":1,"type":"hero|problem|solution|feature|detail|howto|cta","background":"light|dark|gradient","content":"titulo e descricao","hasArrow":true}],"notes":"notas de design"}`,
+      validate: (d: any) => {
+        if (!d.slides || d.slides.length < 5) return "Precisa de pelo menos 5 slides"
+        if (!d.brandColors?.primary) return "brandColors.primary obrigatorio"
+        return null
+      },
+    },
+    analyze_metrics: {
+      schema: `{"summary":{"status":"crescimento|estavel|declinio","highlight":"destaque","concern":"preocupacao"},"recommendations":[{"priority":"high|medium|low","action":"o que fazer","reasoning":"por que","expectedImpact":"resultado esperado"}],"alerts":[{"type":"warning|critical|success","message":"texto do alerta"}]}`,
+      validate: (d: any) => {
+        if (!d.recommendations || d.recommendations.length < 1) return "Precisa de pelo menos 1 recomendacao"
+        if (!d.summary?.status) return "summary.status obrigatorio"
+        return null
+      },
+    },
+    create_blog_post: {
+      schema: `{"title":"titulo SEO","slug":"url-amigavel","metaDescription":"155 caracteres","wordCount":0,"content":"markdown completo","seoChecklist":{"titleHasKeyword":true,"hasMetaDescription":true,"internalLinks":3}}`,
+      validate: (d: any) => {
+        if (!d.content || d.content.length < 200) return "Conteudo muito curto (< 200 caracteres)"
+        if (!d.title || d.title.length < 10) return "Titulo ausente ou curto"
+        return null
+      },
+    },
+    research_keywords: {
+      schema: `{"priorityKeywords":[{"keyword":"palavra","volume":0,"difficulty":"low|medium|high","priority":1,"action":"o que fazer","eta":"prazo"}],"totalOpportunities":0}`,
+      validate: (d: any) => {
+        if (!d.priorityKeywords || d.priorityKeywords.length < 1) return "Precisa de pelo menos 1 keyword"
+        return null
+      },
+    },
+    optimize_seo: {
+      schema: `{"page":"url","targetKeyword":"keyword","optimizations":[{"element":"title_tag|meta_description|h1|url|internal_links|images","current":"atual","optimized":"otimizado","reason":"por que"}],"estimatedImpact":"resultado esperado"}`,
+      validate: (d: any) => {
+        if (!d.optimizations || d.optimizations.length < 1) return "Precisa de pelo menos 1 otimizacao"
+        return null
+      },
+    },
+  }
+
+  const task = schemas[taskType] || {
+    schema: "{}",
+    validate: () => null,
+  }
+
+  return { outputSchema: task.schema, validator: task.validate }
+}
+
+// ── Execute with retry ─────────────────────────────────────
+export async function executeWithRetry(
+  taskInput: TaskExecutionInput,
+): Promise<{ success: boolean; output: any; attempts: number; error?: string }> {
+  const ctx = await buildExecutionContext(taskInput)
+  const { systemPrompt, userPrompt, outputSchema } = buildSpecificPrompt(taskInput, ctx)
+  const { validator } = getTaskSchema(taskInput.taskType)
+
+  const fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\nFORMATO DE SAIDA OBRIGATORIO (JSON):\n${outputSchema}\n\nREGRAS:\n- RETORNE APENAS o JSON, sem explicacoes\n- Nao use markdown (\`\`\`json)\n- Comece com { e termine com }`
 
   let result: any = null
   let errorMsg = ""
@@ -174,47 +249,6 @@ ${ctx.approvalHistory.rejected.length > 0 ? `EVITE (CEO rejeitou): ${ctx.approva
   return { success: false, output: null, attempts: 3, error: errorMsg }
 }
 
-// ── Task-specific rules injection ───────────────────────────
-function getTaskRules(taskType: string, ctx: ExecutionContext): string {
-  const rules: Record<string, string> = {
-    create_calendar: `REGRAS DA TAREFA:
-- Incluir OBRIGATORIAMENTE posts para datas comemorativas: ${ctx.calendar.map(c => `${c.name} em ${c.daysUntil}d`).join(", ") || "nenhuma"}.
-- Priorizar formatos que performaram melhor.
-- Copies devem ter max 200 caracteres.
-- Cada post precisa do campo "reasoning" explicando a escolha do dia/formato.`,
-    create_copy: `REGRAS DA TAREFA:
-- Criar EXATAMENTE 3 variacoes: A (emocional), B (direta), C (interativa).
-- Copies devem ter max 200 caracteres.
-- Tom de voz: ${ctx.brandKit.voice || "profissional"}.
-- EVITE estilos rejeitados: ${ctx.approvalHistory.rejected.slice(0, 3).join(" | ") || "nenhum historico"}.`,
-    create_carousel: `REGRAS DA TAREFA:
-- EXATAMENTE 7 slides: Hero → Problem → Solution → Features → Details → HowTo → CTA.
-- Slide 1 DEVE ser hook que para o scroll.
-- Ultimo slide DEVE ter CTA, SEM seta de swipe.
-- Alternar backgrounds light/dark.
-- Cores derivadas da primaria (light + dark).`,
-    analyze_metrics: `REGRAS DA TAREFA:
-- Identificar 1-3 recomendacoes acionaveis com prioridade.
-- Incluir highlight positivo E concern negativo.
-- Comparar sempre com periodo anterior.`,
-    create_blog_post: `REGRAS DA TAREFA:
-- Minimo 2000 palavras.
-- H1 com keyword exata.
-- 3-5 H2, 8-12 H3.
-- Meta description max 155 caracteres.
-- 3-5 links internos.`,
-    research_keywords: `REGRAS DA TAREFA:
-- Priorizar long-tail com baixa dificuldade.
-- Listar pelo menos 3 keywords com volume estimado.
-- Incluir acao sugerida para cada keyword.`,
-    optimize_seo: `REGRAS DA TAREFA:
-- Verificar: title tag, meta description, H1, URL, internal links, images alt.
-- Para cada elemento, mostrar "atual" e "otimizado".
-- Explicar o motivo da otimizacao.`,
-  }
-  return rules[taskType] || "Execute a tarefa seguindo as melhores praticas da sua especialidade."
-}
-
 // ── PILLAR 4: Task pipeline — break complex tasks ──────────
 export async function executeCalendarPipeline(organizationId: string, agentId: string, agentName: string): Promise<{ created: number; posts: any[] }> {
   const result = await executeWithRetry({
@@ -225,7 +259,6 @@ export async function executeCalendarPipeline(organizationId: string, agentId: s
   })
 
   if (!result.success || !result.output) {
-    // Fallback: template-based calendar without AI
     return await createFallbackCalendar(organizationId, agentId)
   }
 
@@ -251,36 +284,17 @@ export async function executeCalendarPipeline(organizationId: string, agentId: s
     created++
   }
 
-  // Post summary to chat + notify assigned agents
+  // Post summary to chat
   const channel = await prisma.channel.findFirst({ where: { organizationId, name: "geral" } })
   if (channel) {
     await prisma.message.create({
       data: {
-        content: `📅 Calendario criado! ${created} posts planejados.\n\n${(result.output.posts || []).map((p: any) => `• ${p.date || "?"}: ${p.theme} → ${p.assignTo || "?"}`).join("\n")}\n\nEstrategia: ${result.output.weekStrategy || "Foco em engajamento."}`,
+        content: `📅 Calendario da semana criado! ${created} posts planejados.\n\n${(result.output.posts || []).map((p: any) => `• ${p.date || "?"}: ${p.theme} (${p.platform || "instagram"})`).join("\n")}\n\nEstrategia: ${result.output.weekStrategy || "Foco em engajamento e relevancia."}`,
         metadata: { type: "calendar_created", posts: result.output.posts },
         agentId,
         channelId: channel.id,
       },
     } as any)
-
-    // Notify each assigned agent
-    const assignedAgentIds = [...new Set((result.output.posts || []).map((p: any) => p.assignTo))]
-    for (const name of assignedAgentIds) {
-      const ag = await prisma.agent.findFirst({
-        where: { organizationId, name: { contains: name || "" }, status: { not: "FIRED" } },
-      })
-      if (ag && ag.id !== agentId) {
-        const count = (result.output.posts || []).filter((p: any) => p.assignTo === name).length
-        await prisma.message.create({
-          data: {
-            content: `@${name.split(" ")[0]}, voce tem ${count} nova(s) tarefa(s) no Kanban! Da uma olhada.`,
-            metadata: { type: "task_assigned", agentAssigned: ag.id, count },
-            agentId,
-            channelId: channel.id,
-          },
-        } as any)
-      }
-    }
   }
 
   return { created, posts: result.output.posts || [] }
@@ -336,44 +350,31 @@ export async function executeCarouselPipeline(organizationId: string, agentId: s
   return result.output
 }
 
-// ── Fallback Calendar (no AI required) ──────────────────────
 async function createFallbackCalendar(organizationId: string, agentId: string): Promise<{ created: number; posts: any[] }> {
   const agents = await prisma.agent.findMany({
     where: { organizationId, status: { not: "FIRED" } },
     select: { id: true, name: true, role: true },
   })
-
+  const designer = agents.find(a => a.role === "DESIGNER") || agents[1] || agents[0]
+  const analyst = agents.find(a => a.role === "ANALYST") || agents[2] || agents[0]
+  const social = agents.find(a => a.role === "SOCIAL_MEDIA") || agents[3] || agents[0]
   const posts = [
-    { theme: "Post motivacional da semana", assignTo: agents.find(a => a.role === "DESIGNER")?.name || agents[1]?.name || "", priority: "MEDIUM", type: "reel", objective: "engajar" },
-    { theme: "Dica pratica - conteudo educativo", assignTo: agents.find(a => a.role === "DESIGNER")?.name || agents[1]?.name || "", priority: "HIGH", type: "carrossel", objective: "educar" },
-    { theme: "Bastidores do time", assignTo: agents.find(a => a.role === "SOCIAL_MEDIA")?.name || agents[2]?.name || "", priority: "LOW", type: "feed", objective: "humanizar" },
-    { theme: "Relatorio semanal de metricas", assignTo: agents.find(a => a.role === "ANALYST")?.name || agents[3]?.name || "", priority: "LOW", type: "analysis", objective: "analisar" },
-  ].filter(p => p.assignTo)
-
+    { theme: "Post motivacional da semana", assignTo: designer.name || "", priority: "MEDIUM" },
+    { theme: "Dica pratica - conteudo educativo", assignTo: designer.name || "", priority: "HIGH" },
+    { theme: "Bastidores do time", assignTo: social.name || "", priority: "LOW" },
+    { theme: "Relatorio semanal de metricas", assignTo: analyst.name || "", priority: "LOW" },
+  ]
   let created = 0
-  for (const post of posts) {
-    const ag = agents.find(a => a.name === post.assignTo)
-    await prisma.task.create({
-      data: {
-        organizationId, title: post.theme, type: "content",
-        priority: post.priority, status: "TODO",
-        assignedTo: ag?.id || null,
-        estimatedMinutes: post.type === "carrossel" ? 120 : 60,
-      },
-    } as any)
-    created++
+  for (const p of posts) {
+    const ag = agents.find(a => a.name === p.assignTo)
+    if (ag) {
+      await prisma.task.create({ data: { organizationId, title: p.theme, type: "content", priority: p.priority, status: "TODO", assignedTo: ag.id, estimatedMinutes: 60 } } as any)
+      created++
+    }
   }
-
   const channel = await prisma.channel.findFirst({ where: { organizationId, name: "geral" } })
   if (channel) {
-    await prisma.message.create({
-      data: {
-        content: `📅 Calendario criado! ${created} posts.\n\n${posts.map((p: any) => `• ${p.theme} → ${p.assignTo}`).join("\n")}`,
-        metadata: { type: "calendar_created", fallback: true },
-        agentId, channelId: channel.id,
-      },
-    } as any)
+    await prisma.message.create({ data: { content: `📅 Calendario criado! ${created} posts.\\n\\n${posts.map((p: any) => `• ${p.theme} → ${p.assignTo}`).join("\\n")}`, metadata: { type: "calendar_created", fallback: true }, agentId, channelId: channel.id } } as any)
   }
-
   return { created, posts }
 }
