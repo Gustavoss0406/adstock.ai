@@ -102,9 +102,6 @@ export function applyBrandToTemplate(html: string, brand: BrandIdentity): string
     .replace(/\{body_font\}/g, fonts.body)
 }
 
-// ── Save/load brand from DB ──────────────────────────────
-import { prisma } from "@/lib/prisma"
-
 export async function loadBrandFromDb(organizationId: string): Promise<BrandIdentity> {
   try {
     const onboarding = await prisma.onboarding.findUnique({ where: { organizationId } })
