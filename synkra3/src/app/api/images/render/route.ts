@@ -1,5 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
-import { loadAndApplyTemplate, loadBrandFromDb, DEFAULT_BRAND, derivePalette, FONT_PAIRS, type BrandIdentity, type TemplateId } from "@/lib/images/template-engine"
+import { loadBrandFromDb, DEFAULT_BRAND, derivePalette, FONT_PAIRS, applyBrandToTemplate, type BrandIdentity, type TemplateId } from "@/lib/images/template-engine"
+
+export const runtime = "nodejs"
+
+// Dynamic import for fs (Node.js only)
+async function loadTemplateHtml(templateId: TemplateId): Promise<string> {
+  const { readFileSync } = await import("fs")
+  const { join } = await import("path")
+  const files: Record<string, string> = {
+    "template-1": "editorial.html", "template-2": "bold-zine.html",
+    "template-3": "tech-cyber.html", "template-4": "luxe-minimal.html",
+  }
+  const filename = files[templateId] || "luxe-minimal.html"
+  try {
+    return readFileSync(join(process.cwd(), "src/lib/images/templates", filename), "utf-8")
+  } catch {
+    return ""
+  }
+}
 
 // ── Generate carousel HTML (7 slides, 4:5, with progress bar) ──
 function generateCarouselHtml(brand: BrandIdentity, slides: Array<{ title: string; subtitle: string; type: string }>): string {
@@ -86,8 +104,9 @@ export async function GET(request: NextRequest) {
     return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } })
   }
 
-  const html = loadAndApplyTemplate(templateId, brand)
+  const html = await loadTemplateHtml(templateId)
   if (!html) return NextResponse.json({ error: "Template not found" }, { status: 404 })
+  const rendered = applyBrandToTemplate(html, brand)
 
   // Return HTML for preview, JSON for metadata
   if (format === "json") {

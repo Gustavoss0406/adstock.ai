@@ -1,7 +1,4 @@
-import fs from "fs"
-import path from "path"
-
-const TEMPLATES_DIR = path.join(process.cwd(), "src/lib/images/templates")
+import { prisma } from "@/lib/prisma"
 
 export interface BrandIdentity {
   name: string
@@ -79,21 +76,7 @@ function adjustHex(hex: string, p: number): string {
   return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`
 }
 
-// ── Template engine: load + replace ──────────────────────
-export function loadAndApplyTemplate(templateId: TemplateId, brand: BrandIdentity): string {
-  const filename = TEMPLATE_FILES[templateId] || TEMPLATE_FILES["template-4"]
-  const filepath = path.join(TEMPLATES_DIR, filename)
-
-  let html = ""
-  try {
-    html = fs.readFileSync(filepath, "utf-8")
-  } catch {
-    return ""
-  }
-
-  return applyBrandToTemplate(html, brand)
-}
-
+// ── Template engine: apply brand to HTML ──────────────────
 export function applyBrandToTemplate(html: string, brand: BrandIdentity): string {
   const palette = derivePalette(brand.colors[0])
   const secondary = brand.colors[1] || palette.light
