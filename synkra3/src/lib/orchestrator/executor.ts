@@ -27,6 +27,7 @@ import {
 import { resumeActionsOnUnblock } from "@/lib/orchestrator/conflict"
 import { writeBridgeWorkActivity, getToolForTask } from "@/lib/orchestrator/bridgeWork"
 import { notifyTaskChain } from "@/lib/orchestrator/conversation"
+import { executeFullCascade } from "@/lib/autonomous/agent-engine"
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -504,9 +505,12 @@ async function executeCompleteTask(
   // ── Post-completion: generate follow-up tasks ──────────
   await suggestNextTasks(ctx.organizationId, taskId, ctx.agent, action.context.taskTitle as string)
 
-  // ── Post-completion: notify next agent in chain ─────────
+  // ── Post-completion: full cascade (notify + create tasks for next agents) ──
   setTimeout(() => {
-    notifyTaskChain(ctx.organizationId, taskId).catch(() => {})
+    const targetChannelId = (action.context.channelId as string) || ctx.channelId
+    if (targetChannelId) {
+      executeFullCascade(ctx.organizationId, taskId, targetChannelId).catch(() => {})
+    }
   }, 2000)
 
   return { success: true, action: "complete_task", taskId }

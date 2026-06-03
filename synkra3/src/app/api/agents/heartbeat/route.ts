@@ -8,6 +8,7 @@ import { TIMING_CONFIG, getPersonalityModifiers, getTaskDurationMinutes } from "
 import { canActAutonomously } from "@/lib/orchestrator/autonomy"
 import { processPendingMentions, processTimeBasedEvents, processWeeklyEvents, checkRejectionPattern } from "@/lib/orchestrator/runtime"
 import { recordAgentMemory } from "@/lib/orchestrator/memory"
+import { runPreDaily, runBlockedTaskCheck } from "@/lib/autonomous/agent-engine"
 
 const ROLE_MATCH: Record<string, string[]> = {
   STRATEGIST: ["content", "campaign"],
@@ -280,25 +281,37 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ heartbeat: true, tasksProcessed: results.length, results })
       }
 
-      // ── 7. Weekly events (Mon 10h plan, Sun 20h report) ──
+      // ── 7. Weekly events ──
       try {
         const weeklyResults = await processWeeklyEvents(organizationId, channelId)
         for (const r of weeklyResults) results.push({ agent: "Sistema", action: r })
       } catch {}
 
-      // ── 8. AI Content creation: fire and forget (don't block heartbeat)
-      const agentsWithTasks = agents.filter(a => a.id)
-      if (agentsWithTasks.length > 0 && channelId) {
+      // ── 8. Pre-daily (08:55) ──
+      try {
+        const preDailyResults = await runPreDaily(organizationId, channelId)
+        for (const r of preDailyResults) results.push({ agent: "Maya", action: r })
+      } catch {}
+
+      // ── 9. Blocked task check ──
+      try {
+        const blockedCount = await runBlockedTaskCheck(organizationId, channelId)
+        if (blockedCount > 0) results.push({ agent: "Sistema", action: `${blockedCount} tarefas bloqueadas alertadas` })
+      } catch {}
+
+      // ── 10. AI Content fire-and-forget ──
+      if (agents.length > 0 && channelId) {
         setTimeout(async () => {
           try {
-            const { aiCreateContent, triggerTeamVote } = await import("@/lib/orchestrator/runtime")
+            const { generateCreativeContent, handleContentDecision } = await import("@/lib/autonomous/agent-engine")
             const task = await prisma.task.findFirst({
-              where: { assignedTo: agentsWithTasks[0].id, status: "IN_PROGRESS" },
+              where: { assignedTo: agents[0].id, status: "IN_PROGRESS" },
             })
             if (task) {
-              const content = await aiCreateContent(agentsWithTasks[0].id, agentsWithTasks[0].name, task.type || "content", task.title, organizationId)
+              const content = await generateCreativeContent(agents[0].name, task.type || "content", task.title, "agencia de marketing")
               if (content) {
-                await recordAgentMemory(agentsWithTasks[0].id, "completed_task", task.title, organizationId)
+                await recordAgentMemory(agents[0].id, "completed_task", task.title, organizationId)
+                await handleContentDecision(organizationId, content, agents[0].id, channelId)
               }
             }
           } catch {}

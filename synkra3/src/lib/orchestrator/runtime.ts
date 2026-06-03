@@ -22,6 +22,7 @@ import { respondToMessage, postAgentMessage } from "./conversationV2"
 import { recordAgentMemory, summarizeAgentDay, isLunchTime, isCheckpointTime, isClosingTime, isWorkingHours } from "./memory"
 import { canActAutonomously } from "./autonomy"
 import { scheduleAction } from "./scheduler"
+import { getEasterEggResponse, postTimeBasedMessage } from "@/lib/autonomous/agent-engine"
 
 // ── Process pending mentions (two-way conversation) ─────────
 export async function processPendingMentions(organizationId: string, channelId: string): Promise<string[]> {
@@ -207,14 +208,13 @@ export async function processTimeBasedEvents(organizationId: string, channelId: 
         },
       } as any)
 
-      // Set agents to idle
-      for (const agent of agents) {
-        await prisma.agent.update({
-          where: { id: agent.id },
-          data: { status: "ACTIVE", workState: "IDLE" },
-        })
+      // Post lunch easter egg message
+      const maya = agents.find(a => a.role === "STRATEGIST")
+      if (maya) {
+        await postTimeBasedMessage(organizationId, "geral", maya.name, maya.id,
+          "🍽️ Hora do almoço, time! Pausa até 13h.",
+          "lunch_break")
       }
-      results.push("Almoco: agentes pausaram")
     }
     return results // Don't process other events during lunch
   }
@@ -296,11 +296,12 @@ export async function processTimeBasedEvents(organizationId: string, channelId: 
         },
       } as any)
 
-      for (const agent of agents) {
-        await prisma.agent.update({
-          where: { id: agent.id },
-          data: { status: "ACTIVE", workState: "IDLE" },
-        })
+      // Post closing easter egg
+      const mayaClose = agents.find(a => a.role === "STRATEGIST")
+      if (mayaClose) {
+        await postTimeBasedMessage(organizationId, "geral", mayaClose.name, mayaClose.id,
+          "🌙 Fim do expediente! Voltamos amanhã às 9h. Tenham uma ótima noite, time! 💜",
+          "office_closed")
       }
       results.push("Fechamento: escritorio fechou ate amanha")
     }
