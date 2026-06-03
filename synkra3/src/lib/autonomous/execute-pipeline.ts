@@ -140,6 +140,9 @@ ${ctx.approvalHistory.rejected.length > 0 ? `EVITE (CEO rejeitou): ${ctx.approva
   const { outputSchema } = getTaskSchema(task.taskType)
   const taskRules = getTaskRules(task.taskType, ctx)
 
+  return { systemPrompt, userPrompt, outputSchema }
+}
+
 export async function executeWithRetry(
   taskInput: TaskExecutionInput,
 ): Promise<{ success: boolean; output: any; attempts: number; error?: string }> {
