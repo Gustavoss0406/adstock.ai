@@ -88,7 +88,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
     <div className="h-full overflow-y-auto bg-[#F8F8F8]">
       <div className="max-w-3xl mx-auto p-6 space-y-8">
         <div>
-          <h2 className="font-bold text-xl text-[#1D1C1D] flex items-center gap-2">🔗 Integrações</h2>
+          <h2 className="font-bold text-xl text-black flex items-center gap-2">🔗 Integrações</h2>
           <p className="text-sm text-[#616061] mt-1">Quanto mais conectado, mais os agentes conseguem fazer por você.</p>
         </div>
 
@@ -107,7 +107,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-[#1D1C1D]">{int.name}</h3>
+                            <h3 className="font-bold text-black">{int.name}</h3>
                             <Badge variant="success" className="text-[10px]">Conectado</Badge>
                           </div>
                           <p className="text-xs text-[#616061]">{int.accountName || "Conectado"} · {int.stats || "Sincronizado"} · Última sync: agora</p>
@@ -138,7 +138,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
                         {int.emoji}
                       </div>
                       <div>
-                        <h3 className="font-bold text-[#1D1C1D]">{int.name}</h3>
+                        <h3 className="font-bold text-black">{int.name}</h3>
                         <p className="text-xs text-[#616061]">{int.features[0]}</p>
                       </div>
                     </div>
@@ -157,7 +157,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-3 pl-16">
                     {int.features.map((f, i) => (
-                      <span key={i} className="text-[10px] text-[#CFC3CF] flex items-center gap-1">
+                      <span key={i} className="text-[10px] text-[#999] flex items-center gap-1">
                         <CheckCircle2 className="w-2.5 h-2.5" /> {f}
                       </span>
                     ))}

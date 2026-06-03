@@ -54,7 +54,7 @@ export function SettingsPage({
   return (
     <div className="h-full overflow-y-auto bg-[#F8F8F8]">
       <div className="max-w-3xl mx-auto p-6">
-        <h2 className="font-bold text-xl text-[#1D1C1D] mb-6 flex items-center gap-2">⚙️ Configurações</h2>
+        <h2 className="font-bold text-xl text-black mb-6 flex items-center gap-2">⚙️ Configurações</h2>
 
         <div className="flex gap-6">
           {/* Tabs sidebar */}
@@ -65,7 +65,7 @@ export function SettingsPage({
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   "w-full text-left px-3 py-2  text-sm transition-colors flex items-center gap-2",
-                  activeTab === tab.id ? "bg-[#000000] text-white font-bold" : "text-[#616061] hover:bg-white hover:text-[#1D1C1D]"
+                  activeTab === tab.id ? "bg-[#000000] text-white font-bold" : "text-[#616061] hover:bg-white hover:text-black"
                 )}
               >
                 <span>{tab.icon}</span> {tab.label}
@@ -78,7 +78,7 @@ export function SettingsPage({
             {/* Company */}
             {activeTab === "company" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-[#1D1C1D] mb-4">Perfil da Empresa</h3>
+                <h3 className="font-bold text-lg text-black mb-4">Perfil da Empresa</h3>
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs font-bold text-[#616061] block mb-1">Nome da empresa</label>
@@ -100,7 +100,7 @@ export function SettingsPage({
             {/* Routines */}
             {activeTab === "routines" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-[#1D1C1D] mb-4">⏰ Rotinas da Agência</h3>
+                <h3 className="font-bold text-lg text-black mb-4">⏰ Rotinas da Agência</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-[#616061] font-bold">Daily</span>
@@ -114,7 +114,7 @@ export function SettingsPage({
                       <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white" value={weeklyDay} onChange={e => setWeeklyDay(e.target.value)}>
                         {[{v:"monday",l:"Segunda"},{v:"tuesday",l:"Terça"},{v:"wednesday",l:"Quarta"},{v:"thursday",l:"Quinta"},{v:"friday",l:"Sexta"}].map(d => <option key={d.v} value={d.v}>{d.l}</option>)}
                       </select>
-                      <span className="text-sm text-[#CFC3CF]">às</span>
+                      <span className="text-sm text-[#999]">às</span>
                       <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white" value={weeklyTime} onChange={e => setWeeklyTime(e.target.value)}>
                         {["08:00","09:00","10:00","11:00"].map(t => <option key={t}>{t}</option>)}
                       </select>
@@ -149,20 +149,20 @@ export function SettingsPage({
             {/* Identity */}
             {activeTab === "identity" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-[#1D1C1D] mb-4">🎨 Identidade Visual</h3>
+                <h3 className="font-bold text-lg text-black mb-4">🎨 Identidade Visual</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-[#616061] font-bold">Cor primária</span>
                     <div className="flex items-center gap-2">
                       <input type="color" defaultValue="#7C3AED" className="w-8 h-8 rounded cursor-pointer border-0" />
-                      <span className="text-xs text-[#CFC3CF]">#7C3AED</span>
+                      <span className="text-xs text-[#999]">#7C3AED</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-[#616061] font-bold">Cor secundária</span>
                     <div className="flex items-center gap-2">
                       <input type="color" defaultValue="#2563EB" className="w-8 h-8 rounded cursor-pointer border-0" />
-                      <span className="text-xs text-[#CFC3CF]">#2563EB</span>
+                      <span className="text-xs text-[#999]">#2563EB</span>
                     </div>
                   </div>
                   <div>
@@ -175,7 +175,7 @@ export function SettingsPage({
                       </label>
                     ))}
                   </div>
-                  <p className="text-xs text-[#CFC3CF]">Os agentes usam essas informações em tudo que criam.</p>
+                  <p className="text-xs text-[#999]">Os agentes usam essas informações em tudo que criam.</p>
                   <Button size="sm">Salvar</Button>
                 </div>
               </Card>
@@ -184,11 +184,11 @@ export function SettingsPage({
             {/* Billing */}
             {activeTab === "billing" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-[#1D1C1D] mb-4">💳 Plano e Faturamento</h3>
+                <h3 className="font-bold text-lg text-black mb-4">💳 Plano e Faturamento</h3>
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-sm font-bold text-[#1D1C1D]">Growth · R$197/mês</p>
+                      <p className="text-sm font-bold text-black">Growth · R$197/mês</p>
                       <p className="text-xs text-[#616061]">Próxima cobrança: 15 de Fevereiro</p>
                     </div>
                     <Badge variant="success" className="text-[10px]">Ativo</Badge>
@@ -235,7 +235,7 @@ export function SettingsPage({
             {/* Notifications */}
             {activeTab === "notifications" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-[#1D1C1D] mb-4">🔔 Notificações</h3>
+                <h3 className="font-bold text-lg text-black mb-4">🔔 Notificações</h3>
                 <div className="space-y-3">
                   {[
                     { label: "Daily iniciada", desc: "Notificar quando a daily começar" },
@@ -246,7 +246,7 @@ export function SettingsPage({
                   ].map(n => (
                     <div key={n.label} className="flex items-center justify-between py-2">
                       <div>
-                        <p className="text-sm font-bold text-[#1D1C1D]">{n.label}</p>
+                        <p className="text-sm font-bold text-black">{n.label}</p>
                         <p className="text-xs text-[#616061]">{n.desc}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
@@ -273,6 +273,6 @@ export function SettingsPage({
 }
 
 function Badge({ children, variant, className }: any) {
-  const colors: Record<string, string> = { success: "bg-[#059669]/10 text-[#059669]", outline: "border border-[#DDDDDD] text-[#616061]" }
+  const colors: Record<string, string> = { success: "bg-black/10 text-black", outline: "border border-[#DDDDDD] text-[#616061]" }
   return <span className={cn("inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-bold", colors[variant] || "", className)}>{children}</span>
 }

@@ -29,7 +29,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
       <div className="max-w-[1200px] mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="font-bold text-xl text-[#1D1C1D] flex items-center gap-2">📊 Dashboard</h2>
+          <h2 className="font-bold text-xl text-black flex items-center gap-2">📊 Dashboard</h2>
           <div className="flex items-center gap-2">
             <select className="text-xs border border-[#DDDDDD]  px-3 py-1.5 bg-white font-bold">
               <option>Janeiro 2025</option>
@@ -52,7 +52,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
                 <span className="text-[11px] text-[#616061]">{kpi.label}</span>
                 <span className="text-lg">{kpi.icon}</span>
               </div>
-              <p className="text-2xl font-bold text-[#1D1C1D]">{kpi.value}</p>
+              <p className="text-2xl font-bold text-black">{kpi.value}</p>
               {kpi.change && (
                 <span className={cn("text-[11px] font-bold", kpi.up ? "text-black" : "text-black")}>{kpi.change}</span>
               )}
@@ -62,7 +62,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
 
         {/* Reach Chart */}
         <Card className="p-6">
-          <h3 className="text-sm font-bold text-[#1D1C1D] mb-4">📈 Alcance ao longo do mês</h3>
+          <h3 className="text-sm font-bold text-black mb-4">📈 Alcance ao longo do mês</h3>
           <div className="flex items-end gap-1 h-32">
             {data.reachData.map((d, i) => (
               <motion.div
@@ -77,7 +77,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
               </motion.div>
             ))}
           </div>
-          <div className="flex justify-between mt-2 text-[9px] text-[#CFC3CF]">
+          <div className="flex justify-between mt-2 text-[9px] text-[#999]">
             {data.reachData.filter((_, i) => i % 7 === 0).map((d, i) => <span key={i}>{d.date}</span>)}
           </div>
         </Card>
@@ -85,7 +85,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
         {/* By Network + Top Posts */}
         <div className="grid grid-cols-2 gap-4">
           <Card className="p-5">
-            <h3 className="text-sm font-bold text-[#1D1C1D] mb-3">📱 Por Rede Social</h3>
+            <h3 className="text-sm font-bold text-black mb-3">📱 Por Rede Social</h3>
             <div className="space-y-3">
               {data.byNetwork.map(n => (
                 <div key={n.network} className="flex items-center gap-3">
@@ -100,14 +100,14 @@ export function Dashboard({ data }: { data: DashboardData }) {
           </Card>
 
           <Card className="p-5">
-            <h3 className="text-sm font-bold text-[#1D1C1D] mb-3">🏆 Top 5 Posts</h3>
+            <h3 className="text-sm font-bold text-black mb-3">🏆 Top 5 Posts</h3>
             <div className="space-y-2">
               {data.topPosts.map((p, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs">
-                  <span className={cn("font-bold w-5", i === 0 ? "text-[#ECB22E]" : "text-[#CFC3CF]")}>#{i + 1}</span>
+                  <span className={cn("font-bold w-5", i === 0 ? "text-black" : "text-[#999]")}>#{i + 1}</span>
                   <span className="flex-1 text-[#616061] truncate">{p.title}</span>
                   <span className="text-[#000000] font-bold">{p.reach.toLocaleString()}</span>
-                  <span className="text-[#CFC3CF]">{p.agent}</span>
+                  <span className="text-[#999]">{p.agent}</span>
                 </div>
               ))}
             </div>
@@ -116,7 +116,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
 
         {/* SEO Section */}
         <Card className="p-5">
-          <h3 className="text-sm font-bold text-[#1D1C1D] mb-3 flex items-center gap-2"><Search className="w-4 h-4" /> SEO — Google Search Console</h3>
+          <h3 className="text-sm font-bold text-black mb-3 flex items-center gap-2"><Search className="w-4 h-4" /> SEO — Google Search Console</h3>
           <div className="grid grid-cols-4 gap-4 text-center">
             {[
               { label: "Cliques orgânicos", value: data.seo.clicks.toLocaleString(), change: "↑8%" },
@@ -125,7 +125,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
               { label: "Posição média", value: data.seo.position, change: "" },
             ].map(s => (
               <div key={s.label}>
-                <p className="text-xl font-bold text-[#1D1C1D]">{s.value}</p>
+                <p className="text-xl font-bold text-black">{s.value}</p>
                 <p className="text-[11px] text-[#616061]">{s.label}</p>
                 {s.change && <p className="text-[10px] text-black font-bold">{s.change}</p>}
               </div>
@@ -141,7 +141,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
               <p className="text-xs font-bold text-black mb-1">🟢 Lena Souza · Análise de Performance</p>
               <p className="text-sm text-[#616061] leading-relaxed mb-2">{data.lenaAnalysis.text}</p>
               {data.lenaAnalysis.recommendations.map((r, i) => (
-                <p key={i} className="text-xs text-[#1D1C1D] font-bold">{i + 1}. {r}</p>
+                <p key={i} className="text-xs text-black font-bold">{i + 1}. {r}</p>
               ))}
               <button className="mt-3 text-xs text-[#000000] font-bold hover:underline">📋 Gerar tarefa baseada nessa análise →</button>
             </div>

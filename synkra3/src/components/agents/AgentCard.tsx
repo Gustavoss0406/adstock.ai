@@ -19,10 +19,10 @@ interface AgentCardProps {
 }
 
 const statusConfig: Record<AgentStatus, { label: string; color: string; dot: string }> = {
-  ACTIVE: { label: "Ativo", color: "text-[#2BAC76]", dot: "bg-[#2BAC76]" },
-  IDLE: { label: "Ocioso", color: "text-[#ECB22E]", dot: "bg-[#ECB22E]" },
-  WORKING: { label: "Trabalhando", color: "text-[#2BAC76]", dot: "bg-[#2BAC76] animate-pulse" },
-  IN_MEETING: { label: "Em reunião", color: "text-[#4A154B]", dot: "bg-[#4A154B] animate-pulse" },
+  ACTIVE: { label: "Ativo", color: "text-black", dot: "bg-black" },
+  IDLE: { label: "Ocioso", color: "text-black", dot: "bg-black" },
+  WORKING: { label: "Trabalhando", color: "text-black", dot: "bg-black animate-pulse" },
+  IN_MEETING: { label: "Em reunião", color: "text-black", dot: "bg-black animate-pulse" },
   OFFLINE: { label: "Offline", color: "text-[#616061]", dot: "bg-[#616061]" },
   FIRED: { label: "Demitido", color: "text-black", dot: "bg-black" },
 }
@@ -41,7 +41,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-sm truncate text-[#1D1C1D]">{agent.name}</span>
+              <span className="font-bold text-sm truncate text-black">{agent.name}</span>
               <span className={cn("w-1.5 h-1.5 rounded-pill flex-shrink-0", status.dot)} />
             </div>
             <span className="text-[13px] text-[#616061]">{getRoleLabel(agent.role)}</span>
@@ -89,14 +89,14 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
                 <Star className="w-3 h-3" />
                 Nível
               </div>
-              <span className="text-sm font-bold text-[#1264A3]">{agent.level}</span>
+              <span className="text-sm font-bold text-black">{agent.level}</span>
             </div>
             <div className="bg-[#F8F8F8] rounded-sm p-2">
               <div className="flex items-center gap-1 text-[11px] text-[#616061] mb-0.5">
                 <TrendingUp className="w-3 h-3" />
                 Perf.
               </div>
-              <span className="text-sm font-bold text-[#2BAC76]">{Math.round(agent.performance)}%</span>
+              <span className="text-sm font-bold text-black">{Math.round(agent.performance)}%</span>
             </div>
           </div>
 
@@ -115,7 +115,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
           {/* Salary */}
           <div className="flex items-center justify-between pt-3 border-t border-[#DDDDDD]">
             <span className="text-[13px] text-[#616061]">
-              Salário <span className="text-[#1D1C1D] font-bold">{formatCurrency(agent.salary)}</span>
+              Salário <span className="text-black font-bold">{formatCurrency(agent.salary)}</span>
             </span>
           </div>
 
@@ -133,7 +133,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
             <Button
               size="sm"
               variant="ghost"
-              className="text-xs h-8 px-2 text-[#2BAC76] hover:text-[#2BAC76]"
+              className="text-xs h-8 px-2 text-black hover:text-black"
               onClick={(e) => { e.stopPropagation(); onPromote?.(agent) }}
             >
               <ChevronUp className="w-3.5 h-3.5" />

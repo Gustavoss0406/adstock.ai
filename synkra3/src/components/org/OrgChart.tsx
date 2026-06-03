@@ -83,26 +83,26 @@ function OrgChartNode({ node, depth, isLast }: { node: OrgNode; depth: number; i
         {/* Status dot */}
         <span className={cn(
           "absolute top-2 right-2 w-2.5 h-2.5 rounded-pill border-2 border-white",
-          node.agent.status === "WORKING" ? "bg-[#2BAC76] animate-pulse" :
-          isOnline ? "bg-[#2BAC76]" : "bg-[#CFC3CF]"
+          node.agent.status === "WORKING" ? "bg-black animate-pulse" :
+          isOnline ? "bg-black" : "bg-[#CFC3CF]"
         )} />
 
         {/* Crown for CEO */}
         {isCeo && (
           <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-            <Crown className="w-5 h-5 text-[#ECB22E] drop-shadow-sm" />
+            <Crown className="w-5 h-5 text-black drop-shadow-sm" />
           </div>
         )}
 
         <div className="flex items-center gap-2 mt-1">
           <div className={cn(
             "w-8 h-8 rounded-md flex items-center justify-center text-white text-xs font-bold flex-shrink-0",
-            isCeo ? "bg-[#4A154B]" : `bg-gradient-to-br ${getAgentGradient(node.agent.role)}`
+            isCeo ? "bg-black" : `bg-gradient-to-br ${getAgentGradient(node.agent.role)}`
           )}>
             {isCeo ? "CE" : getAgentInitials(node.agent.name)}
           </div>
           <div className="min-w-0">
-            <p className="text-xs font-bold text-[#1D1C1D] truncate">{node.agent.name}</p>
+            <p className="text-xs font-bold text-black truncate">{node.agent.name}</p>
             <p className="text-[10px] text-[#616061]">{isCeo ? "CEO" : getRoleLabel(node.agent.role)}</p>
           </div>
         </div>
@@ -110,7 +110,7 @@ function OrgChartNode({ node, depth, isLast }: { node: OrgNode; depth: number; i
         {/* Budget bar */}
         {!isCeo && (
           <div className="mt-2">
-            <div className="flex justify-between text-[9px] text-[#CFC3CF] mb-0.5">
+            <div className="flex justify-between text-[9px] text-[#999] mb-0.5">
               <span>Orçamento</span>
               <span>{formatCurrency(node.agent.salary)}/mês</span>
             </div>
@@ -118,7 +118,7 @@ function OrgChartNode({ node, depth, isLast }: { node: OrgNode; depth: number; i
               <div
                 className={cn(
                   "h-full rounded-pill transition-all",
-                  node.agent.salary > 3000 ? "bg-[#ECB22E]" : "bg-[#2BAC76]"
+                  node.agent.salary > 3000 ? "bg-black" : "bg-black"
                 )}
                 style={{ width: `${Math.min((node.agent.salary / 5000) * 100, 100)}%` }}
               />

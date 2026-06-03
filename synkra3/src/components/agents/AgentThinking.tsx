@@ -62,7 +62,7 @@ export function AgentThinking({ agentName, action, isActive, progressSteps, curr
             {/* Header */}
             <div className="flex items-center gap-3">
               <div className="relative flex-shrink-0">
-                <div className="w-10 h-10 rounded-md bg-[#4A154B] flex items-center justify-center">
+                <div className="w-10 h-10 rounded-md bg-black flex items-center justify-center">
                   <Brain className="w-5 h-5 text-white" />
                 </div>
                 <motion.div
@@ -70,12 +70,12 @@ export function AgentThinking({ agentName, action, isActive, progressSteps, curr
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
                 >
-                  <Loader2 className="w-4 h-4 text-[#1264A3]" />
+                  <Loader2 className="w-4 h-4 text-black" />
                 </motion.div>
               </div>
 
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-[#1D1C1D]">
+                <p className="text-sm font-bold text-black">
                   {agentName} está {action}{dots}
                 </p>
                 <motion.p
@@ -94,7 +94,7 @@ export function AgentThinking({ agentName, action, isActive, progressSteps, curr
                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
                 className="flex-shrink-0"
               >
-                <Sparkles className="w-5 h-5 text-[#ECB22E]" />
+                <Sparkles className="w-5 h-5 text-black" />
               </motion.div>
             </div>
 
@@ -116,8 +116,8 @@ export function AgentThinking({ agentName, action, isActive, progressSteps, curr
                     transition={{ delay: i * 0.15 }}
                     className={cn(
                       "flex items-center gap-2.5 transition-colors",
-                      isCurrentStep && "text-[#1264A3]",
-                      isDone && "text-[#2BAC76]",
+                      isCurrentStep && "text-black",
+                      isDone && "text-black",
                     )}
                   >
                     {isCurrentStep ? (
@@ -125,13 +125,13 @@ export function AgentThinking({ agentName, action, isActive, progressSteps, curr
                         animate={{ scale: [1, 1.3, 1] }}
                         transition={{ duration: 1.5, repeat: Infinity }}
                       >
-                        <Loader2 className="w-3.5 h-3.5 text-[#1264A3] animate-spin" />
+                        <Loader2 className="w-3.5 h-3.5 text-black animate-spin" />
                       </motion.div>
                     ) : isDone ? (
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-3.5 h-3.5 rounded-pill bg-[#2BAC76] flex items-center justify-center"
+                        className="w-3.5 h-3.5 rounded-pill bg-black flex items-center justify-center"
                       >
                         <svg className="w-2 h-2 text-white" viewBox="0 0 12 12" fill="none">
                           <path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />

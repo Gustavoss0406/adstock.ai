@@ -33,10 +33,10 @@ const roleIcons: Record<string, React.ReactNode> = {
 }
 
 const roleColors: Record<string, string> = {
-  SEO: "from-[#1264A3] to-[#0e4d7f]",
-  CREATIVE_DIRECTOR: "from-[#4A154B] to-[#3b1040]",
-  MEDIA_BUYER: "from-[#E01E5A] to-[#c4184e]",
-  COMMUNITY_MANAGER: "from-[#2BAC76] to-[#1a7a4e]",
+  SEO: "bg-black",
+  CREATIVE_DIRECTOR: "bg-black",
+  MEDIA_BUYER: "bg-black",
+  COMMUNITY_MANAGER: "bg-black",
 }
 
 export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
@@ -83,7 +83,7 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
 
   return (
     <>
-      <Button size="sm" variant="outline" onClick={openModal} className="text-[#4A154B] border-[#4A154B]/30 hover:bg-[#4A154B]/5">
+      <Button size="sm" variant="outline" onClick={openModal} className="text-black border-[#4A154B]/30 hover:bg-black/5">
         <UserPlus className="w-3.5 h-3.5 mr-1" />Contratar
       </Button>
 
@@ -107,8 +107,8 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
               {/* Header */}
               <div className="p-6 border-b border-[#DDDDDD]">
                 <div className="flex items-center gap-2 mb-1">
-                  <UserPlus className="w-5 h-5 text-[#4A154B]" />
-                  <h2 className="font-bold text-xl text-[#1D1C1D]">
+                  <UserPlus className="w-5 h-5 text-black" />
+                  <h2 className="font-bold text-xl text-black">
                     {step === "done" ? "Contratação concluída!" : "Abrir Vaga — Contratar Agente"}
                   </h2>
                 </div>
@@ -128,7 +128,7 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
                       className={cn(
                         "p-4  border-2 cursor-pointer transition-all",
                         selected === profile.key
-                          ? "border-[#4A154B] bg-[#4A154B]/5 shadow-elevated"
+                          ? "border-[#4A154B] bg-black/5 shadow-elevated"
                           : "border-[#DDDDDD] hover:border-[#4A154B]/30"
                       )}
                       onClick={() => setSelected(profile.key)}
@@ -142,10 +142,10 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-[#1D1C1D]">{profile.name}</h3>
+                            <h3 className="font-bold text-black">{profile.name}</h3>
                             <Badge variant="outline" className="text-[10px]">{profile.role}</Badge>
                           </div>
-                          <p className="text-[11px] text-[#4A154B] font-medium mt-0.5">{profile.personality}</p>
+                          <p className="text-[11px] text-black font-medium mt-0.5">{profile.personality}</p>
                           <p className="text-xs text-[#616061] mt-2 line-clamp-3">{profile.preview}</p>
                           <div className="flex flex-wrap gap-1 mt-2">
                             {profile.strengths.slice(0, 3).map(s => (
@@ -153,8 +153,8 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
                             ))}
                           </div>
                           <div className="flex items-center justify-between mt-3 pt-2 border-t border-[#DDDDDD]">
-                            <span className="text-sm font-bold text-[#1D1C1D]">{formatCurrency(profile.salary)}/mês</span>
-                            {selected === profile.key && <Check className="w-4 h-4 text-[#2BAC76]" />}
+                            <span className="text-sm font-bold text-black">{formatCurrency(profile.salary)}/mês</span>
+                            {selected === profile.key && <Check className="w-4 h-4 text-black" />}
                           </div>
                         </div>
                       </div>
@@ -175,11 +175,11 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
                     initial={{ scale: 0 }}
                     animate={{ scale: 1 }}
                     transition={{ type: "spring", stiffness: 200 }}
-                    className="w-16 h-16 rounded-pill bg-[#2BAC76]/10 flex items-center justify-center mx-auto mb-4"
+                    className="w-16 h-16 rounded-pill bg-black/10 flex items-center justify-center mx-auto mb-4"
                   >
-                    <Check className="w-8 h-8 text-[#2BAC76]" />
+                    <Check className="w-8 h-8 text-black" />
                   </motion.div>
-                  <p className="text-[#1D1C1D] font-bold text-lg">{hiredName} contratado!</p>
+                  <p className="text-black font-bold text-lg">{hiredName} contratado!</p>
                   <p className="text-[#616061] text-sm mt-1">Ele já está disponível no seu time.</p>
                 </div>
               )}
