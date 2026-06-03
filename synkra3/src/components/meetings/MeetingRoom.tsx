@@ -71,7 +71,7 @@ export function MeetingRoom({ meeting, onRun, isRunning = false }: MeetingRoomPr
   return (
     <Card className="overflow-hidden">
       {/* Header */}
-      <div className="border-b border-[#DDDDDD] bg-[#F8F8F8] px-5 py-4">
+      <div className="border-b border-[#CCC] bg-[#F5F5F5] px-5 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={cn(
@@ -81,13 +81,13 @@ export function MeetingRoom({ meeting, onRun, isRunning = false }: MeetingRoomPr
               {isActive ? (
                 <Video className="w-5 h-5 text-black" />
               ) : isCompleted ? (
-                <CheckCircle2 className="w-5 h-5 text-[#2BAC76]" />
+                <CheckCircle2 className="w-5 h-5 text-black" />
               ) : (
-                <Clock className="w-5 h-5 text-[#1264A3]" />
+                <Clock className="w-5 h-5 text-black" />
               )}
             </div>
             <div>
-              <h3 className="font-bold text-[#1D1C1D]">{meeting.title}</h3>
+              <h3 className="font-bold text-black">{meeting.title}</h3>
               <p className="text-xs text-[#616061]">{meeting.topic}</p>
             </div>
           </div>
@@ -125,7 +125,7 @@ export function MeetingRoom({ meeting, onRun, isRunning = false }: MeetingRoomPr
 
       {/* Participants */}
       {meeting.participants.length > 0 && (
-        <div className="px-5 py-2.5 border-b border-[#DDDDDD] flex items-center gap-2">
+        <div className="px-5 py-2.5 border-b border-[#CCC] flex items-center gap-2">
           <span className="text-xs font-bold text-[#616061]">Participantes:</span>
           <div className="flex -space-x-1.5">
             {meeting.participants.map((p) => (
@@ -139,7 +139,7 @@ export function MeetingRoom({ meeting, onRun, isRunning = false }: MeetingRoomPr
                 className={cn(
                   "w-7 h-7 rounded-sm bg-gradient-to-br flex items-center justify-center text-white text-[9px] font-bold border-2 border-white shadow-sm",
                   getAgentGradient(p.agent.role),
-                  speakingAgent === p.agent.name && isRunning && "ring-2 ring-[#2BAC76] ring-offset-1"
+                  speakingAgent === p.agent.name && isRunning && "ring-2 ring-black ring-offset-1"
                 )}
                 title={p.agent.name}
               >
@@ -157,24 +157,24 @@ export function MeetingRoom({ meeting, onRun, isRunning = false }: MeetingRoomPr
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="px-5 py-3 border-b border-[#DDDDDD] bg-[#F8F8F8]"
+            className="px-5 py-3 border-b border-[#CCC] bg-[#F5F5F5]"
           >
             <div className="flex items-center gap-3">
-              <Loader2 className="w-4 h-4 text-[#1264A3] animate-spin flex-shrink-0" />
+              <Loader2 className="w-4 h-4 text-black animate-spin flex-shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-bold text-[#1D1C1D]">{currentPhase}</p>
+                <p className="text-sm font-bold text-black">{currentPhase}</p>
                 {speakingAgent && (
                   <p className="text-xs text-[#616061] mt-0.5">
-                    <span className="text-[#4A154B] font-bold">{speakingAgent}</span> está falando...
+                    <span className="text-black font-bold">{speakingAgent}</span> está falando...
                   </p>
                 )}
               </div>
             </div>
 
             {/* Progress bar */}
-            <div className="mt-2 h-1.5 w-full rounded-pill bg-[#DDDDDD] overflow-hidden">
+            <div className="mt-2 h-1.5 w-full rounded-pill bg-[#CCC] overflow-hidden">
               <motion.div
-                className="h-full rounded-pill bg-gradient-to-r from-[#4A154B] via-[#1264A3] to-[#2BAC76]"
+                className="h-full rounded-pill bg-gradient-to-r bg-black"
                 animate={{ width: ["0%", "100%"] }}
                 transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
               />
@@ -205,10 +205,10 @@ export function MeetingRoom({ meeting, onRun, isRunning = false }: MeetingRoomPr
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-0.5">
-                        <span className="text-sm font-bold text-[#1D1C1D]">{msg.agent.name}</span>
-                        <span className="text-[11px] text-[#CFC3CF]">{formatDate(msg.createdAt, "relative")}</span>
+                        <span className="text-sm font-bold text-black">{msg.agent.name}</span>
+                        <span className="text-[11px] text-[#999]">{formatDate(msg.createdAt, "relative")}</span>
                       </div>
-                      <p className="text-[15px] text-[#1D1C1D] leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+                      <p className="text-[15px] text-black leading-relaxed whitespace-pre-wrap">{msg.content}</p>
                     </div>
                   </>
                 ) : (
@@ -222,9 +222,9 @@ export function MeetingRoom({ meeting, onRun, isRunning = false }: MeetingRoomPr
           </div>
         ) : !isRunning && meeting.status === "SCHEDULED" ? (
           <div className="p-12 text-center">
-            <Video className="w-10 h-10 text-[#CFC3CF] mx-auto mb-3" />
+            <Video className="w-10 h-10 text-[#999] mx-auto mb-3" />
             <p className="text-[#616061] text-sm">A reunião ainda não começou</p>
-            <p className="text-[#CFC3CF] text-xs mt-1">Clique em Iniciar para começar a daily</p>
+            <p className="text-[#999] text-xs mt-1">Clique em Iniciar para começar a daily</p>
           </div>
         ) : null}
       </div>

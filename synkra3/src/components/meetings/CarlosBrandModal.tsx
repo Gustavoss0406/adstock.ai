@@ -17,15 +17,15 @@ interface Props {
 const INITIAL_BRAND: BrandIdentity = {
   name: "",
   handle: "@",
-  colors: ["#FF6B35"],
+  colors: ["#000000"],
   logoBase64: null,
   fontStyle: "luxe",
 }
 
 // Predefined color suggestions
 const COLOR_SUGGESTIONS = [
-  "#FF6B35", "#6366F1", "#2BAC76", "#DC2626", "#D97706",
-  "#000000", "#EC4899", "#0891B2", "#84CC16", "#F59E0B",
+  "#000000", "#1A1A1A", "#1A1A1A", "#333333", "#1A1A1A",
+  "#000000", "#222222", "#222222", "#333333", "#333333",
   "#000000", "#FFFFFF",
 ]
 
@@ -104,7 +104,7 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
         >
           {/* Carlos header */}
           <div className="flex items-center gap-4 p-6 pb-4">
-            <div className="w-14 h-14  bg-gradient-to-br from-[#D97706] to-[#F59E0B] flex items-center justify-center ring-2 ring-[#D97706]/20 flex-shrink-0">
+            <div className="w-14 h-14  bg-gradient-to-br bg-black flex items-center justify-center ring-2 ring-black/10 flex-shrink-0">
               <img src="/agents/Carlos.png" className="w-10 h-10  object-cover" alt="Carlos" />
             </div>
             <div className="flex-1 min-w-0">
@@ -151,7 +151,7 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
                       <span className="block text-center text-[9px] text-editor-muted mt-1">{c}</span>
                       {brand.colors.length > 1 && (
                         <button onClick={() => removeColor(i)}
-                          className="absolute -top-2 -right-2 w-5 h-5 rounded-pill bg-[#DC2626]/20 border border-[#DC2626]/30 text-[#DC2626] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          className="absolute -top-2 -right-2 w-5 h-5 rounded-pill bg-black/5 border border-black/10 text-black flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="w-2.5 h-2.5" />
                         </button>
                       )}
@@ -221,7 +221,7 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
                     <img src={logoPreview} className="w-12 h-12  object-contain bg-white/[0.03]" alt="Logo preview" />
                     <div>
                       <p className="text-[11px] text-editor-muted">Preview da logo</p>
-                      <p className="text-[10px] text-[#2BAC76]">✓ Carregada</p>
+                      <p className="text-[10px] text-black">✓ Carregada</p>
                     </div>
                     <button onClick={() => { setLogoPreview(null); setBrand(b => ({ ...b, logoBase64: null })) }}
                       className="ml-auto p-1 rounded hover:bg-white/[0.04] text-editor-muted hover:text-editor-muted">
@@ -247,8 +247,8 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-pill flex items-center justify-center ${brand.fontStyle === key ? "bg-[#2BAC76]/20" : "bg-white/[0.03]"}`}>
-                        {brand.fontStyle === key && <Check className="w-3 h-3 text-[#2BAC76]" />}
+                      <div className={`w-6 h-6 rounded-pill flex items-center justify-center ${brand.fontStyle === key ? "bg-black/5" : "bg-white/[0.03]"}`}>
+                        {brand.fontStyle === key && <Check className="w-3 h-3 text-black" />}
                       </div>
                       <div>
                         <p className="text-[12px] font-semibold text-editor-ink">{font.label}</p>
@@ -269,7 +269,7 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
             </button>
             <button onClick={handleSave}
               disabled={!brand.name || brand.colors.length === 0}
-              className="flex-1 py-2  bg-[#D97706]/10 hover:bg-[#D97706]/20 disabled:opacity-20 text-[11px] text-[#D97706] font-medium transition-colors">
+              className="flex-1 py-2  bg-black/5 hover:bg-black/10 disabled:opacity-20 text-[11px] text-black font-medium transition-colors">
               Salvar identidade
             </button>
           </div>
