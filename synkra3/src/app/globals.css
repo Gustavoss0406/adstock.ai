@@ -4,58 +4,93 @@
 
 @layer base {
   :root {
+    /* ── Squarespace: Pure black/white ── */
     --background: #ffffff;
-    --foreground: #222222;
+    --foreground: #000000;
 
     --card: #ffffff;
-    --card-foreground: #222222;
+    --card-foreground: #000000;
 
     --popover: #ffffff;
-    --popover-foreground: #222222;
+    --popover-foreground: #000000;
 
-    --primary: #ff385c;
+    --primary: #000000;
     --primary-foreground: #ffffff;
-    --primary-active: #e00b41;
-    --primary-disabled: #ffd1da;
+    --primary-hover: #1A1A1A;
 
     --secondary: #ffffff;
-    --secondary-foreground: #222222;
+    --secondary-foreground: #000000;
 
-    --muted: #f7f7f7;
-    --muted-foreground: #6a6a6a;
+    --muted: #F5F5F5;
+    --muted-foreground: #666666;
 
-    --accent: #ff385c;
+    --accent: #000000;
     --accent-foreground: #ffffff;
-    --accent-teal: #2bac76;
-    --accent-amber: #ecb22e;
 
-    --destructive: #c13515;
+    --destructive: #000000;
     --destructive-foreground: #ffffff;
 
-    --border: #dddddd;
-    --input: #dddddd;
-    --ring: #222222;
+    --border: #CCCCCC;
+    --input: #CCCCCC;
+    --ring: #000000;
 
     --surface: #ffffff;
-    --surface-1: #f7f7f7;
-    --surface-2: #f2f2f2;
+    --surface-1: #F5F5F5;
+    --surface-2: #EBEBEB;
 
-    --ink: #222222;
-    --ink-body: #3f3f3f;
-    --ink-muted: #6a6a6a;
+    --ink: #000000;
+    --ink-body: #000000;
+    --ink-muted: #666666;
 
-    --sidebar: #f7f7f7;
-    --sidebar-text: #6a6a6a;
-    --sidebar-active: #222222;
+    --sidebar: #F5F5F5;
+    --sidebar-text: #666666;
+    --sidebar-active: #000000;
 
-    --success: #2bac76;
-    --warning: #ecb22e;
-    --danger: #e00b41;
-    --info: #2563eb;
+    --success: #000000;
+    --warning: #000000;
+    --danger: #000000;
+    --info: #000000;
 
-    --radius: 8px;
-    --radius-card: 14px;
+    --radius: 0px;
+    --radius-card: 4px;
     --radius-pill: 9999px;
+
+    /* ── Editor mode (workspace) ── */
+    --editor-bg: #1A1A1A;
+    --editor-panel: #222222;
+    --editor-ink: #FFFFFF;
+    --editor-muted: #999999;
+    --editor-border: #333333;
+    --editor-surface: #222222;
+  }
+
+  .dark {
+    --background: #1A1A1A;
+    --foreground: #FFFFFF;
+    --card: #222222;
+    --card-foreground: #FFFFFF;
+    --popover: #222222;
+    --popover-foreground: #FFFFFF;
+    --primary: #FFFFFF;
+    --primary-foreground: #000000;
+    --secondary: #1A1A1A;
+    --secondary-foreground: #FFFFFF;
+    --muted: #333333;
+    --muted-foreground: #999999;
+    --accent: #FFFFFF;
+    --accent-foreground: #000000;
+    --border: #333333;
+    --input: #333333;
+    --ring: #FFFFFF;
+    --surface: #1A1A1A;
+    --surface-1: #222222;
+    --surface-2: #2A2A2A;
+    --ink: #FFFFFF;
+    --ink-body: #FFFFFF;
+    --ink-muted: #999999;
+    --sidebar: #1A1A1A;
+    --sidebar-text: #999999;
+    --sidebar-active: #FFFFFF;
   }
 }
 
@@ -66,21 +101,39 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
 }
 
 @layer components {
   .text-link {
     @apply text-primary underline underline-offset-2 decoration-1 transition-colors font-medium;
+    text-underline-offset: 4px;
   }
 
   .text-link:hover {
-    color: var(--primary-active);
-    text-decoration-color: var(--primary-active);
+    opacity: 0.7;
+  }
+
+  /* ── Squarespace: display typography ── */
+  .display-text {
+    font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-weight: 900;
+    line-height: 0.95;
+    letter-spacing: -0.04em;
+  }
+
+  .body-text {
+    font-family: 'Graphik', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', sans-serif;
+    font-weight: 400;
+    line-height: 1.6;
+    letter-spacing: 0;
   }
 }
 
+/* ── Scrollbar — monochrome ── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -91,10 +144,19 @@
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #dddddd;
-  border-radius: 3px;
+  background: #CCCCCC;
+  border-radius: 0;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #c1c1c1;
+  background: #999999;
+}
+
+/* ── Motion: respect reduced motion ── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
