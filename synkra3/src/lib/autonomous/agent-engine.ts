@@ -13,11 +13,11 @@
 
 import { prisma } from "@/lib/prisma"
 import { chatCompletion } from "@/lib/ai/client"
-import { requestTurn, releaseTurn, calculateTypingTime, setTypingIndicator, clearTypingIndicator } from "./turns"
-import { notifyTaskChain } from "./conversation"
-import { internalTeamDiscussion } from "./conversation"
-import { recordAgentMemory } from "./memory"
-import { canActAutonomously } from "./autonomy"
+import { requestTurn, releaseTurn, calculateTypingTime, setTypingIndicator, clearTypingIndicator } from "@/lib/orchestrator/turns"
+import { notifyTaskChain } from "@/lib/orchestrator/conversation"
+import { internalTeamDiscussion } from "@/lib/orchestrator/conversation"
+import { recordAgentMemory } from "@/lib/orchestrator/memory"
+import { canActAutonomously } from "@/lib/orchestrator/autonomy"
 
 // ── Structured message type ────────────────────────────────
 interface StructuredMessage {
