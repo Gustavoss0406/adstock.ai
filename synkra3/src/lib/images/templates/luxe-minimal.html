@@ -1,0 +1,52 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<link href="{google_fonts_url}" rel="stylesheet"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--white:#faf9f7;--ink:#141210}
+body{width:1080px;height:1350px;overflow:hidden;background:var(--white)}
+.canvas{width:1080px;height:1350px;position:relative;background:var(--white);overflow:hidden}
+.side-stripe{position:absolute;top:0;left:0;width:8px;height:100%;background:{brand_primary}}
+.top-bar{position:absolute;top:52px;left:64px;right:64px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-family:'{body_font}',sans-serif;font-weight:200;font-size:13px;letter-spacing:0.38em;text-transform:uppercase;color:var(--ink)}
+.issue{font-family:'{body_font}',sans-serif;font-weight:300;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:#9a9490}
+.rule-h{position:absolute;left:64px;right:64px;height:0.5px;background:#e8e4df}
+.category{position:absolute;top:120px;left:64px;display:flex;align-items:center;gap:14px}
+.category-line{width:28px;height:1px;background:{brand_primary}}
+.category-text{font-family:'{body_font}',sans-serif;font-weight:300;font-size:11px;letter-spacing:0.26em;text-transform:uppercase;color:{brand_primary}}
+.headline-wrap{position:absolute;top:168px;left:64px;right:64px}
+.headline{font-family:'{heading_font}',serif;font-weight:300;font-size:104px;line-height:0.92;letter-spacing:-0.03em;color:var(--ink)}
+.headline em{font-style:italic;font-weight:300;color:{brand_primary}}
+.mid-divider{position:absolute;left:64px;right:64px;display:flex;align-items:center;gap:20px}
+.mid-rule{flex:1;height:0.5px;background:#e8e4df}
+.mid-num{font-family:'{heading_font}',serif;font-weight:300;font-size:12px;letter-spacing:0.22em;color:#9a9490}
+.lead{position:absolute;left:64px;right:160px}
+.lead-text{font-family:'{heading_font}',serif;font-weight:400;font-style:italic;font-size:30px;line-height:1.45;color:var(--ink);letter-spacing:-0.01em}
+.coral-block{position:absolute;left:64px;right:64px;background:{brand_primary};padding:40px 52px}
+.coral-label{font-family:'{body_font}',sans-serif;font-weight:200;font-size:10px;letter-spacing:0.32em;text-transform:uppercase;color:rgba(250,249,247,0.5);margin-bottom:18px}
+.coral-quote{font-family:'{heading_font}',serif;font-weight:300;font-size:50px;line-height:0.96;letter-spacing:-0.02em;color:var(--white)}
+.coral-quote em{font-style:italic}
+.coral-source{font-family:'{body_font}',sans-serif;font-weight:200;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:rgba(250,249,247,0.4);margin-top:24px}
+.cols{position:absolute;left:64px;right:64px;display:grid;grid-template-columns:1fr 1fr 1fr}
+.col{padding:0 24px 0 0;border-right:0.5px solid #e8e4df;margin-right:24px}
+.col:last-child{border-right:none;margin-right:0;padding-right:0}
+.col-num{font-family:'{heading_font}',serif;font-weight:300;font-size:44px;line-height:1;letter-spacing:-0.03em;color:var(--ink);margin-bottom:6px}
+.col-label{font-family:'{body_font}',sans-serif;font-weight:200;font-size:10px;letter-spacing:0.22em;text-transform:uppercase;color:#9a9490;margin-bottom:8px}
+.col-desc{font-family:'{body_font}',sans-serif;font-weight:300;font-size:13px;line-height:1.55;color:#9a9490}
+.footer{position:absolute;left:64px;right:64px;display:flex;align-items:center;justify-content:space-between}
+.footer-handle{font-family:'{body_font}',sans-serif;font-weight:200;font-size:12px;letter-spacing:0.22em;text-transform:uppercase;color:#9a9490}
+.footer-cta{font-family:'{body_font}',sans-serif;font-weight:300;font-size:11px;letter-spacing:0.22em;text-transform:uppercase;color:{brand_primary};display:flex;align-items:center;gap:10px}
+.footer-cta::after{content:'';display:block;width:20px;height:1px;background:{brand_primary}}
+.footer-pg{font-family:'{heading_font}',serif;font-weight:300;font-size:14px;letter-spacing:0.14em;color:#9a9490}
+</style></head><body><div class="canvas">
+<div class="side-stripe"></div>
+<div class="top-bar"><span class="brand">{brand_name}</span><span class="issue">Vol. I · 2025</span></div>
+<div class="rule-h" style="top:96px"></div>
+<div class="category"><div class="category-line"></div><span class="category-text">Branding &amp; Estrategia</span></div>
+<div class="headline-wrap"><div class="headline">O silencio<br>custa<br><em>caro.</em></div></div>
+<div class="mid-divider" style="top:475px"><div class="mid-rule"></div><span class="mid-num">§ 01</span><div class="mid-rule"></div></div>
+<div class="lead" style="top:505px"><p class="lead-text">Marcas que nao comunicam com intencao deixam a interpretacao para o mercado — e o mercado nao e gentil.</p></div>
+<div class="coral-block" style="top:616px"><div class="coral-label">Ponto central</div><div class="coral-quote">Presenca nao e<br>frequencia.<br>E <em>intencao.</em></div><div class="coral-source">— Principio de posicionamento</div></div>
+<div class="rule-h" style="top:960px"></div>
+<div class="cols" style="top:990px"><div class="col"><div class="col-num">73%</div><div class="col-label">Decisao</div><div class="col-desc">das compras sao influenciadas pela percepcao de marca</div></div><div class="col"><div class="col-num">5x</div><div class="col-label">Impacto</div><div class="col-desc">mais retorno em marcas com identidade consistente</div></div><div class="col"><div class="col-num">0.3s</div><div class="col-label">Janela</div><div class="col-desc">e o tempo que voce tem para causar uma impressao</div></div></div>
+<div class="rule-h" style="top:1132px"></div>
+<div class="footer" style="top:1288px"><span class="footer-handle">{brand_handle}</span><span class="footer-cta">Salvar</span><span class="footer-pg">{brand_initial} / 01</span></div>
+</div></body></html>

@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<link href="{google_fonts_url}" rel="stylesheet"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--cream:#f2ede3;--ink:#1a1814}
+body{width:1080px;height:1350px;overflow:hidden;background:var(--cream);font-family:'Barlow Condensed',sans-serif}
+.canvas{width:1080px;height:1350px;position:relative;background:var(--cream);overflow:hidden}
+.grain{position:absolute;inset:0;z-index:20;pointer-events:none;opacity:0.55;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");background-size:180px 180px;mix-blend-mode:multiply}
+.shape-circle{position:absolute;width:680px;height:680px;border-radius:50%;border:1.5px solid var(--ink);top:220px;left:-160px;opacity:0.12}
+.shape-accent{position:absolute;width:420px;height:420px;border-radius:50%;background:{brand_primary};top:640px;right:-90px;mix-blend-mode:multiply;opacity:0.75}
+.shape-rect{position:absolute;width:320px;height:320px;background:{brand_secondary};top:880px;left:-60px;mix-blend-mode:multiply;opacity:0.18;transform:rotate(18deg)}
+.top-rule{position:absolute;top:72px;left:60px;right:60px;height:3px;background:var(--ink)}
+.header{position:absolute;top:92px;left:60px;right:60px;display:flex;align-items:flex-start;justify-content:space-between}
+.issue-label{font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.06em;color:var(--ink);opacity:0.45;line-height:1.6}
+.brand-name{font-family:'{heading_font}',sans-serif;font-size:22px;letter-spacing:0.12em;color:var(--ink)}
+.hero-number{position:absolute;top:148px;left:48px;font-family:'{heading_font}',sans-serif;font-size:520px;line-height:0.85;letter-spacing:-0.04em;color:{brand_primary};mix-blend-mode:multiply;opacity:0.13;user-select:none}
+.headline-block{position:absolute;top:168px;left:60px;right:120px;z-index:2}
+.kicker{display:inline-block;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:0.14em;text-transform:uppercase;color:var(--cream);background:var(--ink);padding:5px 12px 4px;margin-bottom:22px}
+.headline{font-family:'{heading_font}',sans-serif;font-size:196px;line-height:0.88;letter-spacing:0.01em;color:var(--ink)}
+.headline .outline{-webkit-text-stroke:3px var(--ink);color:transparent}
+.headline .accent{color:{brand_primary}}
+.highlight-box{position:absolute;z-index:2;background:{brand_primary};padding:28px 36px}
+.highlight-text{font-family:'{heading_font}',sans-serif;font-size:72px;line-height:0.92;letter-spacing:0.02em;color:var(--ink)}
+.highlight-sub{font-family:'Space Mono',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:var(--ink);opacity:0.55;margin-top:14px}
+.mid-rule{position:absolute;left:60px;right:60px;height:2px;background:var(--ink);z-index:2}
+.text-col{position:absolute;z-index:2}
+.body-text{font-family:'Barlow Condensed',sans-serif;font-size:24px;font-weight:300;line-height:1.55;color:var(--ink);opacity:0.72}
+.bold-line{font-weight:800;font-size:28px;color:var(--ink);opacity:1;display:block;margin-top:18px}
+.footer-rule{position:absolute;left:60px;right:60px;height:3px;background:var(--ink);z-index:2}
+.footer{position:absolute;left:60px;right:60px;z-index:2;display:flex;align-items:center;justify-content:space-between}
+.footer-handle{font-family:'Space Mono',monospace;font-size:13px;letter-spacing:0.06em;color:var(--ink)}
+.footer-num{font-family:'{heading_font}',sans-serif;font-size:18px;letter-spacing:0.1em;color:var(--ink);opacity:0.35}
+</style></head><body><div class="canvas">
+<div class="grain"></div><div class="shape-circle"></div><div class="shape-accent"></div><div class="shape-rect"></div>
+<div class="top-rule"></div>
+<div class="header"><div class="issue-label">VOL.01 / 2025<br>EDICAO CRIATIVA</div><div class="brand-name">{brand_name}</div></div>
+<div class="hero-number">2</div>
+<div class="headline-block"><div class="kicker">Identidade Visual</div>
+<div class="headline">FACA<br><span class="outline">BARULHO</span><br><span class="accent">VISUAL.</span></div></div>
+<div class="mid-rule" style="top:718px"></div>
+<div class="text-col" style="top:742px;left:60px;width:520px"><p class="body-text">Marcas que ficam na memoria nao pedem licenca para existir. Elas entram, tomam espaco e deixam uma marca.<span class="bold-line">Sua identidade precisa gritar mais alto que o ruido.</span></p></div>
+<div class="highlight-box" style="top:730px;left:640px;width:380px"><div class="highlight-text">BOLD<br>OR<br>GO<br>HOME.</div><div class="highlight-sub">Regra do design</div></div>
+<div class="footer-rule" style="top:1276px"></div>
+<div class="footer" style="top:1296px"><div class="footer-handle">{brand_handle}</div><span class="footer-num">{brand_initial} / 01</span></div>
+</div></body></html>

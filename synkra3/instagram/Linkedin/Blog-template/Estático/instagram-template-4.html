@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=1080">
+<title>Instagram Template 4 — Luxo Minimal 1080×1350</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400&display=swap" rel="stylesheet">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  :root {
+    --white:  #faf9f7;
+    --ink:    #141210;
+    --coral:  #c4583a;
+    --muted:  #9a9490;
+    --light:  #e8e4df;
+  }
+
+  body {
+    width: 1080px;
+    height: 1350px;
+    overflow: hidden;
+    background: var(--white);
+  }
+
+  .canvas {
+    width: 1080px;
+    height: 1350px;
+    position: relative;
+    background: var(--white);
+    overflow: hidden;
+  }
+
+  .side-stripe {
+    position: absolute;
+    top: 0; left: 0;
+    width: 8px; height: 100%;
+    background: var(--coral);
+  }
+
+  /* TOPO */
+  .top-bar {
+    position: absolute;
+    top: 52px; left: 64px; right: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .brand {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200; font-size: 13px;
+    letter-spacing: 0.38em;
+    text-transform: uppercase;
+    color: var(--ink);
+  }
+
+  .issue {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300; font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+
+  .rule-h {
+    position: absolute;
+    left: 64px; right: 64px;
+    height: 0.5px;
+    background: var(--light);
+  }
+
+  /* CATEGORIA */
+  .category {
+    position: absolute;
+    top: 120px; left: 64px;
+    display: flex; align-items: center; gap: 14px;
+  }
+
+  .category-line { width: 28px; height: 1px; background: var(--coral); }
+
+  .category-text {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300; font-size: 11px;
+    letter-spacing: 0.26em;
+    text-transform: uppercase;
+    color: var(--coral);
+  }
+
+  /* HEADLINE */
+  .headline-wrap {
+    position: absolute;
+    top: 168px; left: 64px; right: 64px;
+  }
+
+  .headline {
+    font-family: 'Cormorant', serif;
+    font-weight: 300;
+    font-size: 104px;
+    line-height: 0.92;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    hyphens: none;
+    word-break: keep-all;
+  }
+
+  .headline em {
+    font-style: italic;
+    font-weight: 300;
+    color: var(--coral);
+  }
+
+  /* DIVISÓRIA */
+  .mid-divider {
+    position: absolute;
+    left: 64px; right: 64px;
+    display: flex; align-items: center; gap: 20px;
+  }
+
+  .mid-rule { flex: 1; height: 0.5px; background: var(--light); }
+
+  .mid-num {
+    font-family: 'Cormorant', serif;
+    font-weight: 300; font-size: 12px;
+    letter-spacing: 0.22em; color: var(--muted);
+  }
+
+  /* LEAD */
+  .lead {
+    position: absolute;
+    left: 64px; right: 160px;
+  }
+
+  .lead-text {
+    font-family: 'Cormorant', serif;
+    font-weight: 400; font-style: italic;
+    font-size: 30px; line-height: 1.45;
+    color: var(--ink); letter-spacing: -0.01em;
+  }
+
+  /* BLOCO CORAL */
+  .coral-block {
+    position: absolute;
+    left: 64px; right: 64px;
+    background: var(--coral);
+    padding: 40px 52px;
+  }
+
+  .coral-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200; font-size: 10px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    color: rgba(250,249,247,0.5);
+    margin-bottom: 18px;
+  }
+
+  .coral-quote {
+    font-family: 'Cormorant', serif;
+    font-weight: 300; font-size: 50px;
+    line-height: 0.96; letter-spacing: -0.02em;
+    color: var(--white);
+  }
+
+  .coral-quote em { font-style: italic; }
+
+  .coral-source {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200; font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(250,249,247,0.4);
+    margin-top: 24px;
+  }
+
+  /* TRÊS COLUNAS */
+  .cols {
+    position: absolute;
+    left: 64px; right: 64px;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+  }
+
+  .col {
+    padding: 0 24px 0 0;
+    border-right: 0.5px solid var(--light);
+    margin-right: 24px;
+  }
+
+  .col:last-child { border-right: none; margin-right: 0; padding-right: 0; }
+
+  .col-num {
+    font-family: 'Cormorant', serif;
+    font-weight: 300; font-size: 44px;
+    line-height: 1; letter-spacing: -0.03em;
+    color: var(--ink); margin-bottom: 6px;
+  }
+
+  .col-label {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200; font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--muted); margin-bottom: 8px;
+  }
+
+  .col-desc {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300; font-size: 13px;
+    line-height: 1.55; color: var(--muted);
+  }
+
+  /* RODAPÉ */
+  .footer {
+    position: absolute;
+    left: 64px; right: 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .footer-handle {
+    font-family: 'Jost', sans-serif;
+    font-weight: 200; font-size: 12px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--muted);
+  }
+
+  .footer-cta {
+    font-family: 'Jost', sans-serif;
+    font-weight: 300; font-size: 11px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase; color: var(--coral);
+    display: flex; align-items: center; gap: 10px;
+  }
+
+  .footer-cta::after {
+    content: '';
+    display: block; width: 20px; height: 1px;
+    background: var(--coral);
+  }
+
+  .footer-pg {
+    font-family: 'Cormorant', serif;
+    font-weight: 300; font-size: 14px;
+    letter-spacing: 0.14em; color: var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="canvas">
+
+  <div class="side-stripe"></div>
+
+  <!-- TOPO -->
+  <div class="top-bar">
+    <span class="brand">Atelier</span>
+    <span class="issue">Vol. IV · 2025</span>
+  </div>
+
+  <div class="rule-h" style="top:96px;"></div>
+
+  <!-- CATEGORIA -->
+  <div class="category">
+    <div class="category-line"></div>
+    <span class="category-text">Branding &amp; Estratégia</span>
+  </div>
+
+  <!-- HEADLINE: sem hifenização manual, fonte menor que cabe na largura -->
+  <div class="headline-wrap">
+    <div class="headline">
+      O silêncio<br>
+      custa<br>
+      <em>caro.</em>
+    </div>
+  </div>
+
+  <!-- DIVISÓRIA -->
+  <!-- headline: 168 + 104×3×0.92 ≈ 455px → divider em 475px -->
+  <div class="mid-divider" style="top:475px;">
+    <div class="mid-rule"></div>
+    <span class="mid-num">§ 01</span>
+    <div class="mid-rule"></div>
+  </div>
+
+  <!-- LEAD: top 505px, 30px×2linhas×1.45 ≈ 87px → termina ~592px -->
+  <div class="lead" style="top:505px;">
+    <p class="lead-text">
+      Marcas que não comunicam com intenção deixam a interpretação para o mercado — e o mercado não é gentil.
+    </p>
+  </div>
+
+  <!-- BLOCO CORAL: top 616px, pad40+label28+texto50×3×0.96+pad40 ≈ 252px → termina ~868px -->
+  <div class="coral-block" style="top:616px;">
+    <div class="coral-label">Ponto central</div>
+    <div class="coral-quote">
+      Presença não é<br>
+      frequência.<br>
+      É <em>intenção.</em>
+    </div>
+    <div class="coral-source">— Princípio de posicionamento</div>
+  </div>
+
+  <!-- DIVISÓRIA: top 960px -->
+  <div class="rule-h" style="top:960px;"></div>
+
+  <!-- COLUNAS: top 990px -->
+  <div class="cols" style="top:990px;">
+    <div class="col">
+      <div class="col-num">73%</div>
+      <div class="col-label">Decisão</div>
+      <div class="col-desc">das compras são influenciadas pela percepção de marca</div>
+    </div>
+    <div class="col">
+      <div class="col-num">5×</div>
+      <div class="col-label">Impacto</div>
+      <div class="col-desc">mais retorno em marcas com identidade consistente</div>
+    </div>
+    <div class="col">
+      <div class="col-num">0.3s</div>
+      <div class="col-label">Janela</div>
+      <div class="col-desc">é o tempo que você tem para causar uma impressão</div>
+    </div>
+  </div>
+
+  <!-- DIVISÓRIA: top 1132px -->
+  <div class="rule-h" style="top:1132px;"></div>
+
+  <!-- RODAPÉ: top 1288px (bottom 62px de 1350) -->
+  <div class="footer" style="top:1288px;">
+    <span class="footer-handle">@atelier.co</span>
+    <span class="footer-cta">Salvar</span>
+    <span class="footer-pg">04 / 08</span>
+  </div>
+
+</div>
+</body>
+</html>

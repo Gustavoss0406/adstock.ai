@@ -18,6 +18,8 @@ import { KanbanBoard } from "@/components/kanban/KanbanBoard"
 import { SprintBoard } from "@/components/kanban/SprintBoard"
 import { DailyModal } from "@/components/meetings/DailyModal"
 import { FirstDailyOverlay } from "@/components/meetings/FirstDailyOverlay"
+import { CarlosBrandModal } from "@/components/meetings/CarlosBrandModal"
+import type { BrandIdentity } from "@/lib/images/template-engine"
 
 type OrgData = { id: string; name: string; agents: Agent[]; channels: Array<{ id: string; name: string }>; officeSettings?: { workflowMethod: string; dailyTime: string } }
 
@@ -54,6 +56,8 @@ export default function WorkspaceHub() {
   const [dailyOpen, setDailyOpen] = useState(false)
   const [isFirstDaily, setIsFirstDaily] = useState(false)
   const [firstDailyOverlay, setFirstDailyOverlay] = useState(false)
+  const [carlosBrandOpen, setCarlosBrandOpen] = useState(false)
+  const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null)
   const [dailyApproved, setDailyApproved] = useState<Record<string, boolean>>({})
   const [showingCommentInput, setShowingCommentInput] = useState<Record<string, boolean>>({})
   const [commentText, setCommentText] = useState("")
@@ -922,9 +926,23 @@ export default function WorkspaceHub() {
         onClose={() => {
           setDailyOpen(false)
           setIsFirstDaily(false)
+          // If first daily completed, open Carlos brand modal
+          if (isFirstDaily) {
+            setTimeout(() => setCarlosBrandOpen(true), 1500)
+          }
           queryClient.invalidateQueries({ queryKey: ["meetings"] })
           queryClient.invalidateQueries({ queryKey: ["organization", orgId] })
         }}
+      />
+      <CarlosBrandModal
+        open={carlosBrandOpen}
+        userName={session?.user?.name || "CEO"}
+        orgId={orgId}
+        onSave={(brand) => {
+          setBrandIdentity(brand)
+          setCarlosBrandOpen(false)
+        }}
+        onDismiss={() => setCarlosBrandOpen(false)}
       />
     </div>
   )

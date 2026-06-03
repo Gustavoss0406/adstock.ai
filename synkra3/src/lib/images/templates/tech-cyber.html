@@ -1,0 +1,44 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<link href="{google_fonts_url}" rel="stylesheet"><style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{width:1080px;height:1350px;overflow:hidden;background:#0d0d0d}
+.canvas{width:1080px;height:1350px;position:relative;overflow:hidden;background:#0d0d0d}
+.bg-photo{position:absolute;inset:0;background:radial-gradient(ellipse 80% 60% at 70% 30%,{brand_dark}44 0%,transparent 60%),radial-gradient(ellipse 60% 80% at 20% 80%,{brand_secondary}22 0%,transparent 60%),linear-gradient(160deg,#111a0f 0%,#0d0d0d 40%,{brand_darkBg} 100%)}
+.bg-light{position:absolute;top:-200px;right:-100px;width:800px;height:800px;background:radial-gradient(ellipse,{brand_primary}30 0%,transparent 55%);pointer-events:none}
+.scanlines{position:absolute;inset:0;background-image:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(255,255,255,0.012) 3px,rgba(255,255,255,0.012) 4px);pointer-events:none}
+.profile-bar{position:absolute;top:52px;left:56px;right:56px;display:flex;align-items:center;justify-content:space-between}
+.avatar-ring{width:56px;height:56px;border-radius:50%;padding:2px;background:linear-gradient(135deg,{brand_primary},{brand_secondary})}
+.avatar-inner{width:100%;height:100%;border-radius:50%;background:{brand_darkBg};border:2px solid #0d0d0d;display:flex;align-items:center;justify-content:center;font-family:'{heading_font}',sans-serif;font-weight:800;font-size:18px;color:{brand_primary};letter-spacing:-0.02em}
+.profile-name{font-family:'{heading_font}',sans-serif;font-weight:700;font-size:16px;color:#fff;letter-spacing:0.01em}
+.profile-sub{font-family:'{body_font}',monospace;font-size:11px;color:rgba(255,255,255,0.35);letter-spacing:0.04em;margin-top:2px}
+.follow-btn{font-family:'{heading_font}',sans-serif;font-size:13px;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:#0d0d0d;background:{brand_primary};padding:10px 24px;border-radius:100px}
+.topic-pill{position:absolute;top:156px;left:56px;background:{brand_primary}20;border:1px solid {brand_primary}44;border-radius:100px;padding:8px 20px;display:flex;align-items:center;gap:8px}
+.topic-dot{width:7px;height:7px;border-radius:50%;background:{brand_primary}}
+.topic-text{font-family:'{body_font}',monospace;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:{brand_primary}}
+.headline-block{position:absolute;top:200px;left:56px;right:56px}
+.headline{font-family:'{heading_font}',sans-serif;font-weight:800;font-size:92px;line-height:0.88;letter-spacing:-0.04em;color:#fff}
+.headline .accent{color:{brand_primary}}
+.headline-sub{font-family:'{heading_font}',sans-serif;font-weight:400;font-size:22px;color:rgba(255,255,255,0.45);margin-top:22px;line-height:1.5;max-width:680px;letter-spacing:-0.01em}
+.rule{position:absolute;left:56px;right:56px;height:1px;background:rgba(255,255,255,0.08)}
+.feature-block{position:absolute;left:56px;right:56px;top:680px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-radius:24px;padding:32px 44px}
+.feature-label{font-family:'{body_font}',monospace;font-size:11px;letter-spacing:0.18em;text-transform:uppercase;color:rgba(255,255,255,0.3);margin-bottom:14px}
+.feature-text{font-family:'{heading_font}',sans-serif;font-weight:700;font-size:44px;line-height:1.05;letter-spacing:-0.03em;color:#fff}
+.feature-text span{color:{brand_primary}}
+.items-row{position:absolute;left:56px;right:56px;top:960px;display:flex;gap:12px}
+.item{flex:1;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);border-radius:18px;padding:20px}
+.item-num{font-family:'{body_font}',monospace;font-size:11px;color:{brand_primary};letter-spacing:0.1em;margin-bottom:10px}
+.item-title{font-family:'{heading_font}',sans-serif;font-weight:700;font-size:22px;color:#fff;line-height:1.15;letter-spacing:-0.02em;margin-bottom:8px}
+.item-desc{font-family:'{heading_font}',sans-serif;font-weight:400;font-size:14px;color:rgba(255,255,255,0.35);line-height:1.5}
+.footer{position:absolute;bottom:52px;left:56px;right:56px;display:flex;align-items:center;justify-content:space-between}
+.save-cta{display:flex;align-items:center;gap:10px;background:{brand_primary}18;border:1px solid {brand_primary}33;border-radius:100px;padding:10px 22px}
+.save-text{font-family:'{heading_font}',sans-serif;font-weight:700;font-size:12px;letter-spacing:0.1em;text-transform:uppercase;color:{brand_primary}}
+</style></head><body><div class="canvas">
+<div class="bg-photo"></div><div class="bg-light"></div><div class="scanlines"></div>
+<div class="profile-bar"><div style="display:flex;align-items:center;gap:16px"><div class="avatar-ring"><div class="avatar-inner">{brand_initial}</div></div><div><div class="profile-name">{brand_name}</div><div class="profile-sub">{brand_handle}</div></div></div><div class="follow-btn">Seguir</div></div>
+<div class="topic-pill"><div class="topic-dot"></div><span class="topic-text">Growth · {brand_name}</span></div>
+<div class="headline-block"><div class="headline">PARE<br>DE SER<br><span class="accent">INViSiVEL.</span></div><div class="headline-sub">Sua marca existe. Mas sera que as pessoas certas estao te vendo?</div></div>
+<div class="rule" style="top:650px"></div>
+<div class="feature-block"><div class="feature-label">O problema real</div><div class="feature-text">Nao e falta de<br>produto. E falta<br>de <span>presenca.</span></div></div>
+<div class="items-row"><div class="item"><div class="item-num">01</div><div class="item-title">Posicionamento</div><div class="item-desc">Onde voce esta na cabeca do cliente</div></div><div class="item"><div class="item-num">02</div><div class="item-title">Consistencia</div><div class="item-desc">Toda semana, todo canal</div></div><div class="item"><div class="item-num">03</div><div class="item-title">Autoridade</div><div class="item-desc">O que te separa do resto</div></div></div>
+<div class="footer"><div></div><div class="save-cta"><div class="save-text">Salvar post</div></div><div></div></div>
+</div></body></html>
