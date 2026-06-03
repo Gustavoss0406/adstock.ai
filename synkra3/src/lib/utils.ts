@@ -48,35 +48,36 @@ export function getAgentInitials(name: string): string {
 }
 
 export function getAgentColor(role: string): string {
+  // Squarespace: monochrome. Agent differentiation via typography/layout, not color.
   const colors: Record<string, string> = {
-    STRATEGIST: "bg-[#4A154B]",
-    DESIGNER: "bg-[#2BAC76]",
-    COPYWRITER: "bg-[#ECB22E]",
-    ANALYST: "bg-[#1264A3]",
-    SOCIAL_MEDIA: "bg-[#4A154B]",
-    SEO: "bg-[#1264A3]",
-    MEDIA_BUYER: "bg-[#E01E5A]",
-    COMMUNITY_MANAGER: "bg-[#2BAC76]",
-    CREATIVE_DIRECTOR: "bg-[#3b1040]",
-    TRAFFIC_MANAGER: "bg-[#ECB22E]",
+    STRATEGIST: "bg-black",
+    DESIGNER: "bg-[#333]",
+    COPYWRITER: "bg-[#1A1A1A]",
+    ANALYST: "bg-[#2A2A2A]",
+    SOCIAL_MEDIA: "bg-[#222]",
+    SEO: "bg-[#1A1A1A]",
+    MEDIA_BUYER: "bg-[#333]",
+    COMMUNITY_MANAGER: "bg-[#222]",
+    CREATIVE_DIRECTOR: "bg-black",
+    TRAFFIC_MANAGER: "bg-[#2A2A2A]",
   }
-  return colors[role] || "bg-[#616061]"
+  return colors[role] || "bg-[#444]"
 }
 
 export function getAgentGradient(role: string): string {
   const gradients: Record<string, string> = {
-    STRATEGIST: "from-[#4A154B] to-[#3b1040]",
-    DESIGNER: "from-[#2BAC76] to-[#1a7a4e]",
-    COPYWRITER: "from-[#ECB22E] to-[#d49540]",
-    ANALYST: "from-[#1264A3] to-[#0e4d7f]",
-    SOCIAL_MEDIA: "from-[#4A154B] to-[#611f69]",
-    SEO: "from-[#1264A3] to-[#0a3558]",
-    MEDIA_BUYER: "from-[#E01E5A] to-[#c4184e]",
-    COMMUNITY_MANAGER: "from-[#2BAC76] to-[#1a7a4e]",
-    CREATIVE_DIRECTOR: "from-[#3b1040] to-[#2a0b2e]",
-    TRAFFIC_MANAGER: "from-[#ECB22E] to-[#c48a2a]",
+    STRATEGIST: "bg-black",
+    DESIGNER: "bg-[#333]",
+    COPYWRITER: "bg-[#1A1A1A]",
+    ANALYST: "bg-[#2A2A2A]",
+    SOCIAL_MEDIA: "bg-[#222]",
+    SEO: "bg-[#1A1A1A]",
+    MEDIA_BUYER: "bg-[#333]",
+    COMMUNITY_MANAGER: "bg-[#222]",
+    CREATIVE_DIRECTOR: "bg-black",
+    TRAFFIC_MANAGER: "bg-[#2A2A2A]",
   }
-  return gradients[role] || "from-[#616061] to-[#4a4a4a]"
+  return gradients[role] || "bg-[#444]"
 }
 
 export function getRoleLabel(role: string): string {

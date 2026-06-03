@@ -139,7 +139,7 @@ function ApprovalCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
         <div className="space-y-1 mb-3">
           {msg.approvalData.votes.map((v, i) => (
             <div key={i} className="flex items-center gap-2 text-xs">
-              <span className={cn("w-2 h-2 rounded-full")} style={{ backgroundColor: v.color }} />
+              <span className={cn("w-2 h-2 rounded-pill")} style={{ backgroundColor: v.color }} />
               <span className="font-bold text-[#1D1C1D]">{v.name}</span>
               <span className={v.vote === "approve" ? "text-[#059669]" : v.vote === "warn" ? "text-[#ECB22E]" : "text-[#CFC3CF]"}>
                 {v.vote === "approve" ? "✅" : v.vote === "warn" ? "⚠️" : "—"}
@@ -177,7 +177,7 @@ function ConflictCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
       <div className="grid grid-cols-2 gap-4 mb-4">
         <div className="p-3  bg-white border border-[#DDDDDD]">
           <div className="flex items-center gap-2 mb-2">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: agentA.color }} />
+            <span className="w-3 h-3 rounded-pill" style={{ backgroundColor: agentA.color }} />
             <span className="text-sm font-bold text-[#1D1C1D]">{agentA.name} diz:</span>
           </div>
           <p className="text-xs text-[#616061] italic leading-relaxed">"{agentA.quote}"</p>
@@ -185,7 +185,7 @@ function ConflictCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
         </div>
         <div className="p-3  bg-white border border-[#DDDDDD]">
           <div className="flex items-center gap-2 mb-2">
-            <span className="w-3 h-3 rounded-full" style={{ backgroundColor: agentB.color }} />
+            <span className="w-3 h-3 rounded-pill" style={{ backgroundColor: agentB.color }} />
             <span className="text-sm font-bold text-[#1D1C1D]">{agentB.name} diz:</span>
           </div>
           <p className="text-xs text-[#616061] italic leading-relaxed">"{agentB.quote}"</p>
@@ -282,7 +282,7 @@ export function ChatComposer({ channel, onSend, agentColors }: { channel: string
         <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-[#DDDDDD]  shadow-elevated p-1 z-10">
           {agents.filter(a => a.toLowerCase().startsWith((text.split("@").pop() || "").toLowerCase())).map(name => (
             <button key={name} onClick={() => handleMention(name)} className="w-full text-left px-3 py-2 rounded-md hover:bg-[#F8F8F8] text-sm font-bold flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full" style={{ backgroundColor: agentColors[name] }} /> {name}
+              <span className="w-3 h-3 rounded-pill" style={{ backgroundColor: agentColors[name] }} /> {name}
             </button>
           ))}
         </div>

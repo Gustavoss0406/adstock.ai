@@ -151,7 +151,7 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
                       <span className="block text-center text-[9px] text-editor-muted mt-1">{c}</span>
                       {brand.colors.length > 1 && (
                         <button onClick={() => removeColor(i)}
-                          className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#DC2626]/20 border border-[#DC2626]/30 text-[#DC2626] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          className="absolute -top-2 -right-2 w-5 h-5 rounded-pill bg-[#DC2626]/20 border border-[#DC2626]/30 text-[#DC2626] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                           <Trash2 className="w-2.5 h-2.5" />
                         </button>
                       )}
@@ -247,7 +247,7 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center ${brand.fontStyle === key ? "bg-[#2BAC76]/20" : "bg-white/[0.03]"}`}>
+                      <div className={`w-6 h-6 rounded-pill flex items-center justify-center ${brand.fontStyle === key ? "bg-[#2BAC76]/20" : "bg-white/[0.03]"}`}>
                         {brand.fontStyle === key && <Check className="w-3 h-3 text-[#2BAC76]" />}
                       </div>
                       <div>

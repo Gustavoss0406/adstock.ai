@@ -149,7 +149,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
                       disabled={connecting === int.platform}
                     >
                       {connecting === int.platform ? (
-                        <><div className="w-3 h-3 rounded-full border-2 border-white border-t-transparent animate-spin mr-1" /> Conectando...</>
+                        <><div className="w-3 h-3 rounded-pill border-2 border-white border-t-transparent animate-spin mr-1" /> Conectando...</>
                       ) : (
                         <>Conectar <ArrowRight className="w-3 h-3 ml-1" /></>
                       )}

@@ -80,7 +80,7 @@ export function NotificationBell({ orgId }: { orgId: string }) {
           <motion.span
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-full bg-[#E01E5A] text-white text-[10px] font-bold flex items-center justify-center"
+            className="absolute -top-0.5 -right-0.5 w-5 h-5 rounded-pill bg-[#E01E5A] text-white text-[10px] font-bold flex items-center justify-center"
           >
             {unreadCount}
           </motion.span>
@@ -117,7 +117,7 @@ export function NotificationBell({ orgId }: { orgId: string }) {
                         </div>
                         <div className="flex-shrink-0 flex flex-col items-end gap-1">
                           <span className="text-[10px] text-[#CFC3CF]">{n.time ? new Date(n.time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : ""}</span>
-                          {!n.read && <span className="w-2 h-2 rounded-full bg-[#000000]" />}
+                          {!n.read && <span className="w-2 h-2 rounded-pill bg-[#000000]" />}
                         </div>
                       </div>
                     </div>

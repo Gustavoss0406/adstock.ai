@@ -135,7 +135,7 @@ export default function OnboardingPage() {
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  className="w-14 h-14 mx-auto rounded-full border-2 border-white/10 border-t-[#000000]/50"
+                  className="w-14 h-14 mx-auto rounded-pill border-2 border-white/10 border-t-[#000000]/50"
                 />
                 <div className="space-y-1">
                   <p className="text-sm text-editor-ink">Criando sua agencia...</p>
@@ -203,7 +203,7 @@ export default function OnboardingPage() {
 
       <motion.div key={step} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-[440px]">
         <div className="flex items-center gap-1.5 mb-6">
-          {Array.from({ length: TOTAL }).map((_, i) => (<div key={i} className={cn("w-1.5 h-1.5 rounded-full transition-all", i <= step ? "bg-white/40" : "bg-white/[0.06]")} />))}
+          {Array.from({ length: TOTAL }).map((_, i) => (<div key={i} className={cn("w-1.5 h-1.5 rounded-pill transition-all", i <= step ? "bg-white/40" : "bg-white/[0.06]")} />))}
         </div>
 
         <div className="bg-editor-surface border border-editor-border  p-6 shadow-[0_0_40px_rgba(255,255,255,0.015)]">
@@ -300,7 +300,7 @@ export default function OnboardingPage() {
               {scanning && (
                 <div className="space-y-1">
                   {["Acessando...", "Identificando...", "Mapeando...", "Extraindo..."].map((s, i) => (
-                    <div key={i} className="flex items-center gap-2 text-[10px]">{scanSteps.includes(i) ? <CheckCircle2 className="w-3 h-3 text-editor-muted" /> : i === scanSteps.length ? <Loader2 className="w-3 h-3 text-editor-muted animate-spin" /> : <div className="w-3 h-3 rounded-full border border-editor-border" />}<span className={scanSteps.includes(i) ? "text-editor-muted" : i === scanSteps.length ? "text-editor-muted" : "text-editor-muted"}>{s}</span></div>
+                    <div key={i} className="flex items-center gap-2 text-[10px]">{scanSteps.includes(i) ? <CheckCircle2 className="w-3 h-3 text-editor-muted" /> : i === scanSteps.length ? <Loader2 className="w-3 h-3 text-editor-muted animate-spin" /> : <div className="w-3 h-3 rounded-pill border border-editor-border" />}<span className={scanSteps.includes(i) ? "text-editor-muted" : i === scanSteps.length ? "text-editor-muted" : "text-editor-muted"}>{s}</span></div>
                   ))}
                 </div>
               )}

@@ -51,12 +51,12 @@ export function AutonomyDashboard({ orgId }: Props) {
           </div>
           <span className="text-sm font-bold text-editor-ink">{autonomyLevel}%</span>
         </div>
-        <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
+        <div className="h-1.5 rounded-pill bg-white/[0.04] overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${autonomyLevel}%` }}
             transition={{ duration: 1 }}
-            className="h-full rounded-full bg-gradient-to-r from-[#000000] to-[#000000]"
+            className="h-full rounded-pill bg-gradient-to-r from-[#000000] to-[#000000]"
           />
         </div>
       </motion.div>
@@ -175,8 +175,8 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
       className="w-full flex items-center justify-between px-2 py-1.5  hover:bg-white/[0.02] transition-colors"
     >
       <span className="text-[11px] text-editor-muted">{label}</span>
-      <div className={`w-7 h-4 rounded-full transition-colors ${checked ? "bg-[#000000]/40" : "bg-white/[0.06]"}`}>
-        <div className={`w-3 h-3 rounded-full bg-white/40 mt-0.5 transition-transform ${checked ? "translate-x-3.5" : "translate-x-0.5"}`} />
+      <div className={`w-7 h-4 rounded-pill transition-colors ${checked ? "bg-[#000000]/40" : "bg-white/[0.06]"}`}>
+        <div className={`w-3 h-3 rounded-pill bg-white/40 mt-0.5 transition-transform ${checked ? "translate-x-3.5" : "translate-x-0.5"}`} />
       </div>
     </button>
   )

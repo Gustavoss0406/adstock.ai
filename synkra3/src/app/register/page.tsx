@@ -41,14 +41,14 @@ export default function RegisterPage() {
         <div className="absolute inset-0 opacity-[0.03]"><iframe src="http://localhost:3100" className="w-full h-full border-0 scale-125 pointer-events-none" /></div>
         <div className="absolute bottom-8 left-1/2 -translate-x-1/2 whitespace-nowrap">
           <span className="text-editor-muted text-[11px] flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/20 animate-pulse" />Sua equipe ja esta montando tudo...
+            <span className="w-1.5 h-1.5 rounded-pill bg-white/20 animate-pulse" />Sua equipe ja esta montando tudo...
           </span>
         </div>
       </div>
 
       <div className="flex-1 flex items-center justify-center p-8">
         <motion.div initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} className="w-full max-w-[360px]">
-          <Link href="/" className="inline-block mb-10"><span className="text-xl font-bold text-white tracking-tight">Agency<span className="text-[#000000]">OS</span></span></Link>
+          <Link href="/" className="inline-block mb-10"><span className="text-xl font-bold text-black tracking-tight">Agency<span className="text-[#000000]">OS</span></span></Link>
 
           <AnimatePresence mode="wait">
             {done ? (
@@ -59,7 +59,7 @@ export default function RegisterPage() {
               </motion.div>
             ) : (
               <motion.div key="form" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
-                <h1 className="text-lg font-bold text-white mb-6">Crie sua conta</h1>
+                <h1 className="text-lg font-bold text-black mb-6">Crie sua conta</h1>
 
                 {error && (
                   <div className="flex items-start gap-2 p-3  bg-white/[0.03] border border-editor-border mb-4">

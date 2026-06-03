@@ -107,7 +107,7 @@ export function KanbanBoard({ tasks, agents, onMoveTask, onCreateTask }: KanbanB
                         <div className="flex items-center gap-1 flex-shrink-0">
                           {task.blocked && <Link className="w-2.5 h-2.5 text-[#000000]/60" />}
                           {isOverdue(task) && <AlertTriangle className="w-2.5 h-2.5 text-[#000000]/60" />}
-                          {task.status === "IN_REVIEW" && <div className="w-1.5 h-1.5 rounded-full bg-[#000000] animate-pulse" />}
+                          {task.status === "IN_REVIEW" && <div className="w-1.5 h-1.5 rounded-pill bg-[#000000] animate-pulse" />}
                         </div>
                       </div>
 

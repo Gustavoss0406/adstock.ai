@@ -26,8 +26,8 @@ export function SprintBoard({ tasks, agents, sprintName, startDate, endDate, onC
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
-            <div className="h-1 w-28 rounded-full bg-white/[0.04] overflow-hidden">
-              <motion.div className="h-full rounded-full bg-white/25" initial={{ width: 0 }} animate={{ width: `${pct}%` }} />
+            <div className="h-1 w-28 rounded-pill bg-white/[0.04] overflow-hidden">
+              <motion.div className="h-full rounded-pill bg-white/25" initial={{ width: 0 }} animate={{ width: `${pct}%` }} />
             </div>
             <p className="text-[9px] text-editor-muted mt-0.5">{completed}/{tasks.length} · {pct}%</p>
           </div>

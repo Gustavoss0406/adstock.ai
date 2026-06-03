@@ -77,18 +77,18 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
             } : {}}
             transition={{ duration: 0.8, repeat: phase === "ringing" ? Infinity : 0 }}
           >
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#000000]/[0.06] border border-[#000000]/10 flex items-center justify-center">
+            <div className="w-16 h-16 mx-auto rounded-pill bg-[#000000]/[0.06] border border-[#000000]/10 flex items-center justify-center">
               <Phone className="w-6 h-6 text-[#000000]/40" />
             </div>
             {phase === "ringing" && (
               <>
                 <motion.div
-                  className="absolute inset-0 rounded-full border border-[#000000]/20"
+                  className="absolute inset-0 rounded-pill border border-[#000000]/20"
                   animate={{ scale: [1, 2.2], opacity: [0.5, 0] }}
                   transition={{ duration: 2.5, repeat: Infinity }}
                 />
                 <motion.div
-                  className="absolute inset-0 rounded-full border border-[#000000]/10"
+                  className="absolute inset-0 rounded-pill border border-[#000000]/10"
                   animate={{ scale: [1, 1.8], opacity: [0.3, 0] }}
                   transition={{ duration: 2.5, repeat: Infinity, delay: 0.7 }}
                 />
@@ -155,7 +155,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
 
             {phase === "connecting" && (
               <div className="space-y-3">
-                <div className="w-8 h-8 border-2 border-editor-border border-t-[#000000]/50 rounded-full animate-spin mx-auto" />
+                <div className="w-8 h-8 border-2 border-editor-border border-t-[#000000]/50 rounded-pill animate-spin mx-auto" />
                 <p className="text-[12px] text-editor-muted">Conectando com a equipe...</p>
               </div>
             )}
@@ -230,7 +230,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
             {[0, 1, 2].map(i => (
               <motion.div
                 key={i}
-                className="w-1.5 h-1.5 rounded-full"
+                className="w-1.5 h-1.5 rounded-pill"
                 animate={{
                   backgroundColor: i <= (phase === "ringing" ? 0 : phase === "connecting" ? 1 : 2) ? "#000000" : "rgba(255,255,255,0.06)",
                 }}

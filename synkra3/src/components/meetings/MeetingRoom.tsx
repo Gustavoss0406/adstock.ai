@@ -172,9 +172,9 @@ export function MeetingRoom({ meeting, onRun, isRunning = false }: MeetingRoomPr
             </div>
 
             {/* Progress bar */}
-            <div className="mt-2 h-1.5 w-full rounded-full bg-[#DDDDDD] overflow-hidden">
+            <div className="mt-2 h-1.5 w-full rounded-pill bg-[#DDDDDD] overflow-hidden">
               <motion.div
-                className="h-full rounded-full bg-gradient-to-r from-[#4A154B] via-[#1264A3] to-[#2BAC76]"
+                className="h-full rounded-pill bg-gradient-to-r from-[#4A154B] via-[#1264A3] to-[#2BAC76]"
                 animate={{ width: ["0%", "100%"] }}
                 transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
               />

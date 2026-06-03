@@ -82,7 +82,7 @@ function OrgChartNode({ node, depth, isLast }: { node: OrgNode; depth: number; i
       >
         {/* Status dot */}
         <span className={cn(
-          "absolute top-2 right-2 w-2.5 h-2.5 rounded-full border-2 border-white",
+          "absolute top-2 right-2 w-2.5 h-2.5 rounded-pill border-2 border-white",
           node.agent.status === "WORKING" ? "bg-[#2BAC76] animate-pulse" :
           isOnline ? "bg-[#2BAC76]" : "bg-[#CFC3CF]"
         )} />
@@ -114,10 +114,10 @@ function OrgChartNode({ node, depth, isLast }: { node: OrgNode; depth: number; i
               <span>Orçamento</span>
               <span>{formatCurrency(node.agent.salary)}/mês</span>
             </div>
-            <div className="h-1 rounded-full bg-[#F8F8F8] overflow-hidden">
+            <div className="h-1 rounded-pill bg-[#F8F8F8] overflow-hidden">
               <div
                 className={cn(
-                  "h-full rounded-full transition-all",
+                  "h-full rounded-pill transition-all",
                   node.agent.salary > 3000 ? "bg-[#ECB22E]" : "bg-[#2BAC76]"
                 )}
                 style={{ width: `${Math.min((node.agent.salary / 5000) * 100, 100)}%` }}

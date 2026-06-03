@@ -111,12 +111,12 @@ export function AgentProfile({ agent, orgId, onClose, onPromote, onFire }: Agent
             {/* Level bar */}
             <div>
               <div className="flex justify-between mb-1"><span className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider">{levelLabel}</span><span className="text-[10px] text-editor-muted">Peso: {opinionWeight}/100</span></div>
-              <div className="h-1.5 rounded-full bg-white/[0.06] overflow-hidden"><motion.div className={cn("h-full rounded-full", gradient)} initial={{ width: 0 }} animate={{ width: `${opinionWeight}%` }} /></div>
+              <div className="h-1.5 rounded-pill bg-white/[0.06] overflow-hidden"><motion.div className={cn("h-full rounded-pill", gradient)} initial={{ width: 0 }} animate={{ width: `${opinionWeight}%` }} /></div>
             </div>
 
             {/* Status + Time */}
             <div className="flex items-center gap-4 text-xs text-white/35">
-              <span className="flex items-center gap-1"><span className={cn("w-1.5 h-1.5 rounded-full", agent.status === "WORKING" ? "bg-[#000000]" : agent.status === "ACTIVE" ? "bg-[#000000]" : "bg-[#444]")} />{agent.status === "WORKING" ? "Trabalhando" : agent.status === "ACTIVE" ? "Online" : "Offline"}</span>
+              <span className="flex items-center gap-1"><span className={cn("w-1.5 h-1.5 rounded-pill", agent.status === "WORKING" ? "bg-[#000000]" : agent.status === "ACTIVE" ? "bg-[#000000]" : "bg-[#444]")} />{agent.status === "WORKING" ? "Trabalhando" : agent.status === "ACTIVE" ? "Online" : "Offline"}</span>
               <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{timeLabel} na equipe</span>
             </div>
 

@@ -42,7 +42,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
               <span className="font-bold text-sm truncate text-[#1D1C1D]">{agent.name}</span>
-              <span className={cn("w-1.5 h-1.5 rounded-full flex-shrink-0", status.dot)} />
+              <span className={cn("w-1.5 h-1.5 rounded-pill flex-shrink-0", status.dot)} />
             </div>
             <span className="text-[13px] text-[#616061]">{getRoleLabel(agent.role)}</span>
           </div>
@@ -70,7 +70,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
               <p className="text-xs text-editor-ink">{getRoleLabel(agent.role)}</p>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className={cn("w-1.5 h-1.5 rounded-full", status.dot)} />
+              <span className={cn("w-1.5 h-1.5 rounded-pill", status.dot)} />
               <span className={cn("text-[11px] font-bold", status.color)}>{status.label}</span>
             </div>
           </div>

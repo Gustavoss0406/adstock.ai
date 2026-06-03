@@ -131,7 +131,7 @@ export function AgentThinking({ agentName, action, isActive, progressSteps, curr
                       <motion.div
                         initial={{ scale: 0 }}
                         animate={{ scale: 1 }}
-                        className="w-3.5 h-3.5 rounded-full bg-[#2BAC76] flex items-center justify-center"
+                        className="w-3.5 h-3.5 rounded-pill bg-[#2BAC76] flex items-center justify-center"
                       >
                         <svg className="w-2 h-2 text-white" viewBox="0 0 12 12" fill="none">
                           <path d="M2 6l3 3 5-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />

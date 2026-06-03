@@ -75,7 +75,7 @@ const WORK_STATE_LABELS: Record<string, { label: string; emoji: string }> = {
 function WorkStateBadge({ state }: { state: string }) {
   const info = WORK_STATE_LABELS[state] || { label: state, emoji: "❓" }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-editor-ink">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-pill text-[10px] font-medium bg-white/10 text-editor-ink">
       {info.emoji} {info.label}
     </span>
   )
@@ -220,7 +220,7 @@ export function OrchestratorDashboard({ organizationId }: Props) {
                 <Card key={agent.id} className="p-3 border-0 bg-white/5 hover:bg-white/8 transition-colors">
                   <div className="flex items-center gap-2 mb-2">
                     <div
-                      className="w-3 h-3 rounded-full flex-shrink-0"
+                      className="w-3 h-3 rounded-pill flex-shrink-0"
                       style={{ backgroundColor: color }}
                     />
                     <span className="text-sm font-medium text-white truncate">{agent.name}</span>

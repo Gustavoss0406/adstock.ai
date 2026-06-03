@@ -451,7 +451,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-12 h-12 mx-auto rounded-full border-2 border-white/10 border-t-[#000000]/50"
+                  className="w-12 h-12 mx-auto rounded-pill border-2 border-white/10 border-t-[#000000]/50"
                 />
                 <p className="text-sm text-editor-muted">Voltando ao escritorio...</p>
                 <p className="text-[11px] text-editor-muted">Agentes indo para suas mesas</p>
@@ -473,12 +473,12 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
               )}
               {phase === "awaiting_approval" && (
                 <span className="flex items-center gap-1 text-[10px] text-[#000000]/60">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#000000] animate-pulse" /> Aguardando voce
+                  <span className="w-1.5 h-1.5 rounded-pill bg-[#000000] animate-pulse" /> Aguardando voce
                 </span>
               )}
               {phase === "discussing" && (
                 <span className="flex items-center gap-1 text-[10px] text-[#000000]/60">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#000000] animate-pulse" /> Em reuniao
+                  <span className="w-1.5 h-1.5 rounded-pill bg-[#000000] animate-pulse" /> Em reuniao
                 </span>
               )}
               {phase === "completed" && <span className="text-[10px] text-editor-muted">Reuniao encerrada</span>}
@@ -496,7 +496,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
               {(phase === "joining") && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="w-10 h-10 border-2 border-white/10 border-t-[#000000]/50 rounded-full" />
+                    className="w-10 h-10 border-2 border-white/10 border-t-[#000000]/50 rounded-pill" />
                   <motion.p key={loadingStep} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                     className="text-[12px] text-editor-muted max-w-[250px] text-center">{LOADING_MESSAGES[loadingStep]}</motion.p>
                 </div>
@@ -518,10 +518,10 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                     initial={{ opacity: 0, scaleY: 0 }}
                     animate={{ opacity: 1, scaleY: 1 }}
                     transition={{ duration: 0.6 }}
-                    className="absolute rounded-full border border-editor-border bg-white/[0.01]"
+                    className="absolute rounded-pill border border-editor-border bg-white/[0.01]"
                     style={{ left: 40, top: 40, width: tableW, height: tableH }}
                   >
-                    <div className="absolute inset-0 rounded-full bg-gradient-to-r from-transparent via-white/[0.015] to-transparent" />
+                    <div className="absolute inset-0 rounded-pill bg-gradient-to-r from-transparent via-white/[0.015] to-transparent" />
                     <div className="absolute inset-x-6 top-1/2 h-px bg-white/[0.03]" />
                   </motion.div>
 
@@ -532,8 +532,8 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                     style={{ left: tableW / 2 - 60, top: -60, width: 120, height: 50 }}
                   >
                     <div className="p-1.5">
-                      <div className="w-full h-0.5 bg-white/[0.08] rounded-full mb-1" />
-                      <div className="w-3/4 h-0.5 bg-white/[0.05] rounded-full" />
+                      <div className="w-full h-0.5 bg-white/[0.08] rounded-pill mb-1" />
+                      <div className="w-3/4 h-0.5 bg-white/[0.05] rounded-pill" />
                     </div>
                   </motion.div>
 
@@ -575,7 +575,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                           {img ? <img src={img} className={cn(" object-cover", isMaya ? "w-16 h-16 ring-2 ring-[#000000]/20" : "w-12 h-12", isThinking && "ring-2 ring-[#000000] ring-offset-2 ring-offset-[#0a0a0a]", isSpeaking && !isThinking && "ring-2 ring-[#000000] ring-offset-2 ring-offset-[#0a0a0a]")} alt={agent.name} /> :
                           <div className={cn(" flex items-center justify-center text-white font-bold", gradient, isMaya ? "w-16 h-16 text-lg" : "w-12 h-12 text-sm")}>{getAgentInitials(agent.name)}</div>}
                           {isMaya && phase === "discussing" && <span className="absolute -top-1 -right-1 text-[8px]">🎤</span>}
-                          <span className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border border-[#0a0a0a]",
+                          <span className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-pill border border-[#0a0a0a]",
                             isThinking ? "bg-[#000000] animate-pulse" : isSpeaking ? "bg-[#000000] animate-pulse" : hasSpoken ? "bg-[#000000]" : "bg-white/10")} />
                         </div>
                         <div className="text-center">
@@ -583,12 +583,12 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                         </div>
                         {isThinking && (
                           <div className="flex items-center gap-1">
-                            {[0, 1, 2].map(i => <motion.span key={i} className="w-1 h-1 rounded-full bg-[#000000]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />)}
+                            {[0, 1, 2].map(i => <motion.span key={i} className="w-1 h-1 rounded-pill bg-[#000000]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />)}
                           </div>
                         )}
                         {isSpeaking && !isThinking && (
                           <div className="flex items-center gap-1">
-                            {[0, 1, 2].map(i => <motion.span key={i} className="w-1 h-1 rounded-full bg-[#000000]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />)}
+                            {[0, 1, 2].map(i => <motion.span key={i} className="w-1 h-1 rounded-pill bg-[#000000]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />)}
                           </div>
                         )}
                       </motion.div>
@@ -665,7 +665,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                   {/* Creating tasks spinner */}
                   {phase === "creating_tasks" && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 py-2">
-                      <div className="w-5 h-5 rounded-full border-2 border-white/10 border-t-[#000000]/50 animate-spin" />
+                      <div className="w-5 h-5 rounded-pill border-2 border-white/10 border-t-[#000000]/50 animate-spin" />
                       <span className="text-[11px] text-editor-muted">Maya esta criando os cards...</span>
                     </motion.div>
                   )}
@@ -744,11 +744,11 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
           {/* Bottom bar */}
           <div className="flex items-center justify-center gap-3 px-4 py-3 border-t border-editor-border flex-shrink-0">
             <button onClick={() => setMicActive(!micActive)}
-              className={cn("p-3 rounded-full transition-all", micActive ? "bg-white/[0.06] text-editor-muted" : "bg-[#000000]/10 text-[#000000]/60")}>
+              className={cn("p-3 rounded-pill transition-all", micActive ? "bg-white/[0.06] text-editor-muted" : "bg-[#000000]/10 text-[#000000]/60")}>
               {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
             </button>
             <button onClick={handleClose}
-              className="p-3 rounded-full bg-[#000000]/10 hover:bg-[#000000]/20 text-[#000000]/60 transition-colors">
+              className="p-3 rounded-pill bg-[#000000]/10 hover:bg-[#000000]/20 text-[#000000]/60 transition-colors">
               <PhoneOff className="w-5 h-5" />
             </button>
           </div>

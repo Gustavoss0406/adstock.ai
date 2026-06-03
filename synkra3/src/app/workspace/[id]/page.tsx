@@ -472,8 +472,8 @@ export default function WorkspaceHub() {
       <div className="h-screen w-full bg-editor-bg flex items-center justify-center">
         <div className="text-center">
           <p className="text-editor-muted text-xs mb-4">{LOAD[loadStep]}</p>
-          <div className="w-40 h-0.5 bg-white/[0.04] rounded-full overflow-hidden mx-auto">
-            <motion.div className="h-full bg-white/20 rounded-full" initial={{ width: "0%" }} animate={{ width: `${loadPct}%` }} />
+          <div className="w-40 h-0.5 bg-white/[0.04] rounded-pill overflow-hidden mx-auto">
+            <motion.div className="h-full bg-white/20 rounded-pill" initial={{ width: "0%" }} animate={{ width: `${loadPct}%` }} />
           </div>
         </div>
       </div>
@@ -505,7 +505,7 @@ export default function WorkspaceHub() {
           ))}
           {arrivalIdx < ags.length && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 justify-center">
-              <div className="w-5 h-5 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
+              <div className="w-5 h-5 rounded-pill border-2 border-white/10 border-t-white/40 animate-spin" />
               <span className="text-editor-muted text-xs">Alguem esta chegando...</span>
             </motion.div>
           )}
@@ -517,11 +517,11 @@ export default function WorkspaceHub() {
     )
   }
 
-  if (!org) return <div className="h-screen w-full bg-editor-bg flex items-center justify-center"><div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" /></div>
+  if (!org) return <div className="h-screen w-full bg-editor-bg flex items-center justify-center"><div className="w-6 h-6 rounded-pill border-2 border-white/10 border-t-white/40 animate-spin" /></div>
 
   const agents = org.agents?.filter(a => a.status !== "FIRED") || []
   const channels = org.channels || []
-  const statusDot = (a: Agent) => { if (a.status === "WORKING") return "bg-[#000000] animate-pulse"; if (a.status === "ACTIVE") return "bg-[#000000]"; return "bg-[#444]" }
+  const statusDot = (a: Agent) => { if (a.status === "WORKING") return "bg-[#666] animate-pulse"; if (a.status === "ACTIVE") return "bg-[#000000]"; return "bg-[#444]" }
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-editor-bg">
@@ -541,7 +541,7 @@ export default function WorkspaceHub() {
              {agents.map(a => {
                const ws = a.status === "WORKING" ? "Trabalhando..." : a.status === "IN_MEETING" ? "Em reuniao" : a.status === "ACTIVE" ? "Online" : "Offline"
                return (
-               <button key={a.id} onClick={() => setSelectedAgent(a)} className="w-full flex items-center gap-2 px-4 py-0.5 text-xs text-left hover:bg-white/[0.03] transition-colors"><div className="relative flex-shrink-0">{AGENT_CHARS[a.name] ? <img src={AGENT_CHARS[a.name]} className="w-5 h-5 rounded object-cover" alt={a.name} /> : <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold", getAgentGradient(a.role))}>{getAgentInitials(a.name)}</div>}<span className={cn("absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-[#0d0d0f]", statusDot(a))} /></div><div className="flex-1 min-w-0"><div className="text-editor-ink truncate text-[11px]">{a.name}</div><div className="text-editor-muted text-[9px] truncate">{ws}</div></div></button>
+               <button key={a.id} onClick={() => setSelectedAgent(a)} className="w-full flex items-center gap-2 px-4 py-0.5 text-xs text-left hover:bg-white/[0.03] transition-colors"><div className="relative flex-shrink-0">{AGENT_CHARS[a.name] ? <img src={AGENT_CHARS[a.name]} className="w-5 h-5 rounded object-cover" alt={a.name} /> : <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold", getAgentGradient(a.role))}>{getAgentInitials(a.name)}</div>}<span className={cn("absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-pill border border-[#0d0d0f]", statusDot(a))} /></div><div className="flex-1 min-w-0"><div className="text-editor-ink truncate text-[11px]">{a.name}</div><div className="text-editor-muted text-[9px] truncate">{ws}</div></div></button>
              )})}
           </div>
         </div>
@@ -552,8 +552,8 @@ export default function WorkspaceHub() {
             </span>
             <span className="text-[9px] text-editor-muted">{org.officeSettings?.workflowMethod === "SPRINTS" ? "2 semanas" : "Fluxo continuo"}</span>
           </div>
-          <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden">
-            <div className="h-full rounded-full bg-white/20" style={{ width: "45%" }} />
+          <div className="h-1 rounded-pill bg-white/[0.04] overflow-hidden">
+            <div className="h-full rounded-pill bg-white/20" style={{ width: "45%" }} />
           </div>
           <div className="flex gap-1">
             <button onClick={() => setBoardOpen(true)} className="flex-1 text-center py-1 rounded text-[9px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.03] transition-colors">
@@ -617,7 +617,7 @@ export default function WorkspaceHub() {
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-editor-bg">
               <div className="text-center space-y-3">
-                <div className="w-8 h-8 border-2 border-white/10 border-t-[#000000]/50 rounded-full animate-spin mx-auto" />
+                <div className="w-8 h-8 border-2 border-white/10 border-t-[#000000]/50 rounded-pill animate-spin mx-auto" />
                 <p className="text-[11px] text-editor-muted">Acordando o escritorio...</p>
               </div>
             </div>
@@ -625,7 +625,7 @@ export default function WorkspaceHub() {
           <button onClick={() => setOfficeFs(!officeFs)} className="absolute top-2 right-2 p-1 rounded bg-black/20 hover:bg-black/40 text-editor-muted hover:text-editor-ink transition-colors z-10">{officeFs ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}</button>
         </div>
         {/* Divider */}
-        {!officeFs && (<div className="h-1 bg-white/[0.03] hover:bg-white/[0.06] cursor-row-resize flex-shrink-0 flex items-center justify-center group transition-colors" onMouseDown={dragDiv}><div className="w-6 h-0.5 rounded-full bg-white/[0.06] group-hover:bg-white/15 transition-colors" /></div>)}
+        {!officeFs && (<div className="h-1 bg-white/[0.03] hover:bg-white/[0.06] cursor-row-resize flex-shrink-0 flex items-center justify-center group transition-colors" onMouseDown={dragDiv}><div className="w-6 h-0.5 rounded-pill bg-white/[0.06] group-hover:bg-white/15 transition-colors" /></div>)}
         {/* Chat */}
         {!officeFs && (
           <div className="flex-1 flex flex-col bg-editor-bg min-h-0">
@@ -825,7 +825,7 @@ export default function WorkspaceHub() {
                 <div className="flex items-center gap-2 py-2">
                   <div className="flex gap-1">
                     {[0, 1, 2].map(i => (
-                      <motion.div key={i} className="w-1.5 h-1.5 rounded-full bg-white/30" animate={{ opacity: [0.2, 0.8, 0.2] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
+                      <motion.div key={i} className="w-1.5 h-1.5 rounded-pill bg-white/30" animate={{ opacity: [0.2, 0.8, 0.2] }} transition={{ duration: 1, repeat: Infinity, delay: i * 0.2 }} />
                     ))}
                   </div>
                   <div className="flex items-center gap-1.5">

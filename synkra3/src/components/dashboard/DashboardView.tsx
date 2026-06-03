@@ -90,8 +90,8 @@ export function Dashboard({ data }: { data: DashboardData }) {
               {data.byNetwork.map(n => (
                 <div key={n.network} className="flex items-center gap-3">
                   <span className="text-sm w-20 text-[#616061]">{n.network}</span>
-                  <div className="flex-1 h-5 rounded-full bg-[#F8F8F8] overflow-hidden">
-                    <motion.div initial={{ width: 0 }} animate={{ width: `${n.pct}%` }} className="h-full rounded-full" style={{ backgroundColor: n.color }} />
+                  <div className="flex-1 h-5 rounded-pill bg-[#F8F8F8] overflow-hidden">
+                    <motion.div initial={{ width: 0 }} animate={{ width: `${n.pct}%` }} className="h-full rounded-pill" style={{ backgroundColor: n.color }} />
                   </div>
                   <span className="text-xs font-bold text-[#616061] w-10 text-right">{n.pct}%</span>
                 </div>

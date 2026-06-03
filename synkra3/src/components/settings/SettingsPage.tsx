@@ -126,8 +126,8 @@ export function SettingsPage({
                       {[{v:"KANBAN",l:"Kanban — fluxo contínuo"},{v:"SPRINTS_1",l:"Sprint — 1 semana"},{v:"SPRINTS_2",l:"Sprint — 2 semanas"}].map(m => (
                         <label key={m.v} className="flex items-center gap-3 p-2.5  cursor-pointer hover:bg-[#F8F8F8]">
                           <input type="radio" name="workflow" className="sr-only" checked={workflow === m.v} onChange={() => setWorkflow(m.v)} />
-                          <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center", workflow === m.v ? "border-[#000000]" : "border-[#DDDDDD]")}>
-                            {workflow === m.v && <div className="w-2 h-2 rounded-full bg-[#000000]" />}
+                          <div className={cn("w-4 h-4 rounded-pill border-2 flex items-center justify-center", workflow === m.v ? "border-[#000000]" : "border-[#DDDDDD]")}>
+                            {workflow === m.v && <div className="w-2 h-2 rounded-pill bg-[#000000]" />}
                           </div>
                           <span className="text-sm text-[#616061]">{m.l}</span>
                         </label>
@@ -170,7 +170,7 @@ export function SettingsPage({
                     {["Formal e profissional","Descontraído e próximo","Jovem e irreverente","Técnico e especialista"].map(tone => (
                       <label key={tone} className="flex items-center gap-3 p-2  cursor-pointer hover:bg-[#F8F8F8]">
                         <input type="radio" name="tone" className="sr-only" defaultChecked={tone === "Descontraído e próximo"} />
-                        <div className="w-4 h-4 rounded-full border-2 border-[#DDDDDD] flex items-center justify-center" />
+                        <div className="w-4 h-4 rounded-pill border-2 border-[#DDDDDD] flex items-center justify-center" />
                         <span className="text-sm text-[#616061]">{tone}</span>
                       </label>
                     ))}
@@ -203,8 +203,8 @@ export function SettingsPage({
                         <div className="flex justify-between text-xs text-[#616061] mb-0.5">
                           <span>{u.label}</span><span>{u.current}/{u.max}</span>
                         </div>
-                        <div className="h-1.5 rounded-full bg-[#F8F8F8] overflow-hidden">
-                          <div className="h-full rounded-full bg-[#000000]" style={{ width: `${(u.current/u.max)*100}%` }} />
+                        <div className="h-1.5 rounded-pill bg-[#F8F8F8] overflow-hidden">
+                          <div className="h-full rounded-pill bg-[#000000]" style={{ width: `${(u.current/u.max)*100}%` }} />
                         </div>
                       </div>
                     ))}
@@ -251,7 +251,7 @@ export function SettingsPage({
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" defaultChecked />
-                        <div className="w-9 h-5 bg-[#DDDDDD] rounded-full peer-checked:bg-[#000000] after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
+                        <div className="w-9 h-5 bg-[#DDDDDD] rounded-pill peer-checked:bg-[#000000] after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-pill after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
                       </label>
                     </div>
                   ))}
