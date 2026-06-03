@@ -140,7 +140,14 @@ ${ctx.approvalHistory.rejected.length > 0 ? `EVITE (CEO rejeitou): ${ctx.approva
   const { outputSchema } = getTaskSchema(task.taskType)
   const taskRules = getTaskRules(task.taskType, ctx)
 
-  const fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\n${taskRules}\n\nFORMATO DE SAIDA OBRIGATORIO (JSON):\n${outputSchema}\n\nRETORNE APENAS o JSON, sem explicacoes, sem markdown. Comece com { e termine com }`
+export async function executeWithRetry(
+  taskInput: TaskExecutionInput,
+): Promise<{ success: boolean; output: any; attempts: number; error?: string }> {
+  const ctx = await buildExecutionContext(taskInput)
+  const { systemPrompt, userPrompt, outputSchema } = buildSpecificPrompt(taskInput, ctx)
+  const { validator } = getTaskSchema(taskInput.taskType)
+
+  let fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\nFORMATO DE SAIDA OBRIGATORIO (JSON):\n${outputSchema}\n\nREGRAS: RETORNE APENAS JSON, sem explicacoes, sem markdown.`
 
   let result: any = null
   let errorMsg = ""
@@ -330,8 +337,6 @@ async function createTasksFromPosts(organizationId: string, agentId: string, out
       }
     }
   }
-
-  return { created, posts: result.output.posts || [] }
 }
 
 export async function executeCopyPipeline(organizationId: string, agentId: string, agentName: string, brief: string): Promise<{ variants: any[] } | null> {
