@@ -215,7 +215,7 @@ export async function executeWithRetry(
   const { systemPrompt, userPrompt, outputSchema } = buildSpecificPrompt(taskInput, ctx)
   const { validator } = getTaskSchema(taskInput.taskType)
 
-  const fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\nFORMATO DE SAIDA OBRIGATORIO (JSON):\n${outputSchema}\n\nREGRAS:\n- RETORNE APENAS o JSON, sem explicacoes\n- Nao use markdown (\`\`\`json)\n- Comece com { e termine com }`
+  let fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\nFORMATO DE SAIDA OBRIGATORIO (JSON):\n${outputSchema}\n\nREGRAS:\n- RETORNE APENAS o JSON, sem explicacoes\n- Nao use markdown (\`\`\`json)\n- Comece com { e termine com }`
 
   let result: any = null
   let errorMsg = ""
