@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       { title: "Pronto para comecar?", subtitle: `Siga ${brand.handle} para mais conteudos`, type: "cta" },
     ]
     const html = generateCarouselHtml(brand, slides)
-    return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } })
+  return new Response(rendered, { headers: { "Content-Type": "text/html; charset=utf-8" } })
   }
 
   const html = await loadTemplateHtml(templateId)
