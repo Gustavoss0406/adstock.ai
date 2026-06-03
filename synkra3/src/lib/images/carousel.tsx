@@ -53,7 +53,7 @@ function InstagramSlide({ slide, brand }: { slide: SlideData; brand: BrandColors
     >
       {/* Progress bar */}
       <div style={{
-        position: "absolute", bottom: 0, left: 0, right: 0, height: 4,
+        position: "absolute", bottom: 0, left: 0, right: 0, height: 4, display: "flex",
         background: isDark || isGradient ? "rgba(255,255,255,0.1)" : "rgba(0,0,0,0.05)",
       }}>
         <div style={{
@@ -61,6 +61,19 @@ function InstagramSlide({ slide, brand }: { slide: SlideData; brand: BrandColors
           background: isGradient ? "rgba(255,255,255,0.3)" : primary,
           borderRadius: "0 2px 2px 0",
         }} />
+      </div>
+
+      {/* Slide counter */}
+      <div style={{
+        position: "absolute", bottom: 24, right: 40, display: "flex", alignItems: "center",
+        fontSize: 16, color: mutedColor,
+      }}>
+        <span>{slide.number}/{slide.total}</span>
+        {slide.number < slide.total && (
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={mutedColor} strokeWidth="2" style={{ marginLeft: 8 }}>
+            <path d="M9 18l6-6-6-6" />
+          </svg>
+        )}
       </div>
 
       {/* Slide counter */}
