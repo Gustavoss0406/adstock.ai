@@ -104,22 +104,21 @@ export function applyBrandToTemplate(html: string, brand: BrandIdentity): string
 
 export async function loadBrandFromDb(organizationId: string): Promise<BrandIdentity> {
   try {
-    const onboarding = await prisma.onboarding.findUnique({ where: { organizationId } })
-    const saved = (onboarding as any)?.metadata?.brandIdentity
-    if (saved && saved.name && saved.colors?.length > 0) {
-      return { ...DEFAULT_BRAND, ...saved }
+    // Use raw query because metadata is JSONB
+    const result = await prisma.$queryRawUnsafe(
+      `SELECT metadata->'brandIdentity' as brand FROM "Onboarding" WHERE "organizationId" = $1`,
+      organizationId
+    ) as any[]
+    if (result?.[0]?.brand) {
+      return { ...DEFAULT_BRAND, ...result[0].brand }
     }
   } catch {}
   return { ...DEFAULT_BRAND }
 }
 
 export async function saveBrandToDb(organizationId: string, brand: BrandIdentity): Promise<void> {
-  const onboarding = await prisma.onboarding.findUnique({ where: { organizationId } })
-  const existingMeta = (onboarding as any)?.metadata || {}
-  await prisma.onboarding.update({
-    where: { organizationId },
-    data: {
-      metadata: { ...existingMeta, brandIdentity: brand },
-    },
-  } as any)
+  await prisma.$queryRawUnsafe(
+    `UPDATE "Onboarding" SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{brandIdentity}', $1::jsonb) WHERE "organizationId" = $2`,
+    JSON.stringify(brand), organizationId
+  )
 }
