@@ -258,9 +258,7 @@ export async function executeCalendarPipeline(organizationId: string, agentId: s
     taskType: "create_calendar",
   })
 
-  if (!result.success || !result.output) {
-    return await createFallbackCalendar(organizationId, agentId)
-  }
+  if (!result.success || !result.output) return { created: 0, posts: [] }
 
   let created = 0
   for (const post of result.output.posts || []) {
@@ -348,33 +346,4 @@ export async function executeCarouselPipeline(organizationId: string, agentId: s
   } as any)
 
   return result.output
-}
-
-async function createFallbackCalendar(organizationId: string, agentId: string): Promise<{ created: number; posts: any[] }> {
-  const agents = await prisma.agent.findMany({
-    where: { organizationId, status: { not: "FIRED" } },
-    select: { id: true, name: true, role: true },
-  })
-  const designer = agents.find(a => a.role === "DESIGNER") || agents[1] || agents[0]
-  const analyst = agents.find(a => a.role === "ANALYST") || agents[2] || agents[0]
-  const social = agents.find(a => a.role === "SOCIAL_MEDIA") || agents[3] || agents[0]
-  const posts = [
-    { theme: "Post motivacional da semana", assignTo: designer.name || "", priority: "MEDIUM" },
-    { theme: "Dica pratica - conteudo educativo", assignTo: designer.name || "", priority: "HIGH" },
-    { theme: "Bastidores do time", assignTo: social.name || "", priority: "LOW" },
-    { theme: "Relatorio semanal de metricas", assignTo: analyst.name || "", priority: "LOW" },
-  ]
-  let created = 0
-  for (const p of posts) {
-    const ag = agents.find(a => a.name === p.assignTo)
-    if (ag) {
-      await prisma.task.create({ data: { organizationId, title: p.theme, type: "content", priority: p.priority, status: "TODO", assignedTo: ag.id, estimatedMinutes: 60 } } as any)
-      created++
-    }
-  }
-  const channel = await prisma.channel.findFirst({ where: { organizationId, name: "geral" } })
-  if (channel) {
-    await prisma.message.create({ data: { content: `📅 Calendario criado! ${created} posts.\\n\\n${posts.map((p: any) => `• ${p.theme} → ${p.assignTo}`).join("\\n")}`, metadata: { type: "calendar_created", fallback: true }, agentId, channelId: channel.id } } as any)
-  }
-  return { created, posts }
 }
