@@ -28,9 +28,14 @@ export async function processPendingMentions(organizationId: string, channelId: 
   const results: string[] = []
   const fiveMinutesAgo = new Date(Date.now() - 300000)
 
+  const channelIds = (await prisma.channel.findMany({
+    where: { organizationId },
+    select: { id: true },
+  })).map(c => c.id)
+
   const recentMessages = await prisma.message.findMany({
     where: {
-      organizationId,
+      channelId: { in: channelIds.length > 0 ? channelIds : undefined },
       agentId: { not: null },
       createdAt: { gte: fiveMinutesAgo },
     },
@@ -55,7 +60,7 @@ export async function processPendingMentions(organizationId: string, channelId: 
     // Check if already responded within last 10 minutes
     const alreadyReplied = await prisma.message.findFirst({
       where: {
-        organizationId,
+        channelId: { in: channelIds.length > 0 ? channelIds : undefined },
         agentId: mentionedAgent.id,
         createdAt: { gte: new Date(Date.now() - 600000) },
       },
@@ -470,11 +475,14 @@ export async function checkRejectionPattern(organizationId: string): Promise<str
 export async function continueConversationChain(organizationId: string): Promise<string[]> {
   const results: string[] = []
   const fiveMinutes = new Date(Date.now() - 600000)
+  const channelIds = (await prisma.channel.findMany({
+    where: { organizationId },
+    select: { id: true },
+  })).map(c => c.id)
 
-  // Find recent messages mentioning agents (check for @mentions)
   const cascades = await prisma.message.findMany({
     where: {
-      organizationId,
+      channelId: { in: channelIds.length > 0 ? channelIds : undefined },
       agentId: { not: null },
       createdAt: { gte: fiveMinutes },
     },
@@ -600,7 +608,7 @@ export async function getTeamContext(organizationId: string): Promise<string> {
 
   const recentMessages = await prisma.message.findMany({
     where: {
-      organizationId,
+      channelId: { in: channelIds.length > 0 ? channelIds : undefined },
       createdAt: { gte: new Date(Date.now() - 3600000) },
       agentId: { not: null },
     },
