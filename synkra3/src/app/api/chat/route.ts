@@ -8,7 +8,7 @@ import { detectConflict } from "@/lib/orchestrator/conflict"
 import { postWithTurn } from "@/lib/orchestrator/executor"
 
 const AGENT_ROLES: Record<string, { name: string; specialty: string; style: string; color: string }> = {
-  STRATEGIST: { name: "Maya Ferreira", specialty: "estrategia de conteudo e growth", style: "visionaria, entusiasmada, lider", color: "#ff385c" },
+  STRATEGIST: { name: "Maya Ferreira", specialty: "estrategia de conteudo e growth", style: "visionaria, entusiasmada, lider", color: "#000000" },
   SOCIAL_MEDIA: { name: "Bruno Costa", specialty: "redes sociais, trends, viralizacao", style: "descontraido, antenado, criativo", color: "#2563eb" },
   ANALYST: { name: "Lena Souza", specialty: "metricas, dados, analytics", style: "direta, cetica, baseada em dados", color: "#2bac76" },
   DESIGNER: { name: "Carlos Lima", specialty: "design visual, identidade de marca", style: "perfeccionista, calmo, focado", color: "#d97706" },

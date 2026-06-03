@@ -72,7 +72,7 @@ export function DailyHealthDashboard({ organizationId }: Props) {
 
   if (!data) {
     return (
-      <div className="p-6 text-center text-white/20 text-xs">
+      <div className="p-6 text-center text-editor-muted text-xs">
         Carregando métricas...
       </div>
     )
@@ -93,10 +93,10 @@ export function DailyHealthDashboard({ organizationId }: Props) {
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-lg font-semibold text-white flex items-center gap-2">
-              <CalendarCheck className="w-5 h-5 text-[#2bac76]" />
+              <CalendarCheck className="w-5 h-5 text-[#000000]" />
               Saúde da Daily
             </h2>
-            <p className="text-xs text-white/30 mt-0.5">
+            <p className="text-xs text-editor-muted mt-0.5">
               Métricas dos últimos {period} dias
             </p>
           </div>
@@ -107,8 +107,8 @@ export function DailyHealthDashboard({ organizationId }: Props) {
                 onClick={() => setPeriod(p)}
                 className={`px-3 py-1 rounded text-[10px] font-medium transition-colors ${
                   period === p
-                    ? "bg-white/[0.08] text-white/60"
-                    : "text-white/20 hover:text-white/40"
+                    ? "bg-white/[0.08] text-editor-ink"
+                    : "text-editor-muted hover:text-editor-muted"
                 }`}
               >
                 {p}d
@@ -152,12 +152,12 @@ export function DailyHealthDashboard({ organizationId }: Props) {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {/* Daily timeline */}
           <Card className="p-4 border-0 bg-white/[0.03]">
-            <h3 className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-3">
+            <h3 className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider mb-3">
               Últimas Dailies
             </h3>
             <div className="space-y-1.5">
               {data.dailies.length === 0 ? (
-                <p className="text-xs text-white/20 py-4 text-center">Nenhuma daily no período</p>
+                <p className="text-xs text-editor-muted py-4 text-center">Nenhuma daily no período</p>
               ) : (
                 data.dailies.map((d, i) => {
                   const badge = STATUS_BADGES[d.status] || STATUS_BADGES.pending
@@ -167,7 +167,7 @@ export function DailyHealthDashboard({ organizationId }: Props) {
                       className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-white/[0.02] text-xs"
                     >
                       <div className="flex items-center gap-3">
-                        <span className="text-white/30 font-mono w-[55px]">
+                        <span className="text-editor-muted font-mono w-[55px]">
                           {new Date(d.date + "T00:00:00").toLocaleDateString("pt-BR", {
                             day: "2-digit",
                             month: "short",
@@ -177,7 +177,7 @@ export function DailyHealthDashboard({ organizationId }: Props) {
                           {badge.label}
                         </span>
                       </div>
-                      <div className="flex items-center gap-3 text-[10px] text-white/20">
+                      <div className="flex items-center gap-3 text-[10px] text-editor-muted">
                         <span>{d.agentCount} agents</span>
                         <span>{d.tasksExtracted} tasks</span>
                         {d.hadAlerts && <span className="text-yellow-400/60">⚠️</span>}
@@ -192,7 +192,7 @@ export function DailyHealthDashboard({ organizationId }: Props) {
 
           {/* Agent participation */}
           <Card className="p-4 border-0 bg-white/[0.03]">
-            <h3 className="text-[10px] font-semibold text-white/30 uppercase tracking-wider mb-3">
+            <h3 className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider mb-3">
               Participação dos Agentes (esta semana)
             </h3>
             <div className="space-y-1.5">
@@ -203,9 +203,9 @@ export function DailyHealthDashboard({ organizationId }: Props) {
                     key={agent.agentId}
                     className="flex items-center justify-between py-1.5 px-2 rounded hover:bg-white/[0.02] text-xs"
                   >
-                    <span className="text-white/60">{agent.agentName}</span>
+                    <span className="text-editor-ink">{agent.agentName}</span>
                     <div className="flex items-center gap-2 text-[10px]">
-                      <span className="text-white/20">{agent.dailiesThisWeek}x this week</span>
+                      <span className="text-editor-muted">{agent.dailiesThisWeek}x this week</span>
                       {daysAgo !== null && (
                         <span
                           className={
@@ -230,26 +230,26 @@ export function DailyHealthDashboard({ organizationId }: Props) {
         {/* Avg stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           <Card className="p-3 border-0 bg-white/[0.02]">
-            <p className="text-[10px] text-white/20 uppercase">Média Agentes</p>
-            <p className="text-xl font-bold text-white/60 mt-1">
+            <p className="text-[10px] text-editor-muted uppercase">Média Agentes</p>
+            <p className="text-xl font-bold text-editor-ink mt-1">
               {s.avgAgentCount || "—"}
             </p>
           </Card>
           <Card className="p-3 border-0 bg-white/[0.02]">
-            <p className="text-[10px] text-white/20 uppercase">Média Falas</p>
-            <p className="text-xl font-bold text-white/60 mt-1">
+            <p className="text-[10px] text-editor-muted uppercase">Média Falas</p>
+            <p className="text-xl font-bold text-editor-ink mt-1">
               {s.avgSpeechCount || "—"}
             </p>
           </Card>
           <Card className="p-3 border-0 bg-white/[0.02]">
-            <p className="text-[10px] text-white/20 uppercase">Média Tarefas</p>
-            <p className="text-xl font-bold text-white/60 mt-1">
+            <p className="text-[10px] text-editor-muted uppercase">Média Tarefas</p>
+            <p className="text-xl font-bold text-editor-ink mt-1">
               {s.avgTasksExtracted || "—"}
             </p>
           </Card>
           <Card className="p-3 border-0 bg-white/[0.02]">
-            <p className="text-[10px] text-white/20 uppercase">Leitura</p>
-            <p className="text-xl font-bold text-white/60 mt-1">
+            <p className="text-[10px] text-editor-muted uppercase">Leitura</p>
+            <p className="text-xl font-bold text-editor-ink mt-1">
               {s.readDailies}/{s.completedDailies}
             </p>
           </Card>
@@ -282,11 +282,11 @@ function KpiCard({
   return (
     <Card className="p-3 border-0 bg-white/[0.03]">
       <div className="flex items-center gap-1.5 mb-1">
-        <span className={colorMap[color] || "text-white/50"}>{icon}</span>
-        <span className="text-[10px] text-white/20 uppercase">{label}</span>
+        <span className={colorMap[color] || "text-editor-muted"}>{icon}</span>
+        <span className="text-[10px] text-editor-muted uppercase">{label}</span>
       </div>
       <div className="text-lg font-bold text-white">{value}</div>
-      <div className="text-[10px] text-white/15 mt-0.5">{sub}</div>
+      <div className="text-[10px] text-editor-muted mt-0.5">{sub}</div>
     </Card>
   )
 }

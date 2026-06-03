@@ -10,10 +10,10 @@ const Badge = React.forwardRef<HTMLSpanElement, BadgeProps>(
     const variantClasses = {
       default: "bg-[#f7f7f7] text-[#6a6a6a]",
       outline: "border border-[#ddd] bg-transparent text-[#6a6a6a]",
-      success: "bg-[#2bac76]/10 text-[#1a7a4e]",
-      warning: "bg-[#ecb22e]/10 text-[#b0801a]",
+      success: "bg-[#000000]/10 text-[#1a7a4e]",
+      warning: "bg-[#000000]/10 text-[#b0801a]",
       danger: "bg-[#c13515]/10 text-[#b32505]",
-      info: "bg-[#2563eb]/10 text-[#1d4ed8]",
+      info: "bg-[#000000]/10 text-[#1d4ed8]",
     }
 
     return (

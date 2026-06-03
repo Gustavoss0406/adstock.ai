@@ -469,9 +469,9 @@ export default function WorkspaceHub() {
 
   if (stage === "load") {
     return (
-      <div className="h-screen w-full bg-[#0a0a0b] flex items-center justify-center">
+      <div className="h-screen w-full bg-editor-bg flex items-center justify-center">
         <div className="text-center">
-          <p className="text-white/20 text-xs mb-4">{LOAD[loadStep]}</p>
+          <p className="text-editor-muted text-xs mb-4">{LOAD[loadStep]}</p>
           <div className="w-40 h-0.5 bg-white/[0.04] rounded-full overflow-hidden mx-auto">
             <motion.div className="h-full bg-white/20 rounded-full" initial={{ width: "0%" }} animate={{ width: `${loadPct}%` }} />
           </div>
@@ -483,22 +483,22 @@ export default function WorkspaceHub() {
   if (stage === "arrival") {
     const ags = org?.agents?.filter(a => a.status !== "FIRED") || []
     return (
-      <div className="h-screen bg-[#0a0a0b] flex flex-col items-center justify-center relative overflow-hidden">
+      <div className="h-screen bg-editor-bg flex flex-col items-center justify-center relative overflow-hidden">
         <div className="absolute inset-0 opacity-[0.03]">
           <iframe src="https://adstock-ai.onrender.com" className="w-full h-full border-0 pointer-events-none" />
         </div>
         <div className="relative space-y-5">
           {ags.slice(0, arrivalIdx).map((a) => (
             <motion.div key={a.id} initial={{ opacity: 0, y: 20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: "spring", stiffness: 180, damping: 18 }}>
-              <div className="flex items-center gap-3 bg-[#111] border border-white/[0.04] rounded-xl px-4 py-3 min-w-[240px]">
+              <div className="flex items-center gap-3 bg-editor-surface border border-editor-border  px-4 py-3 min-w-[240px]">
                 {AGENT_CHARS[a.name] ? (
-                  <img src={AGENT_CHARS[a.name]} className="w-10 h-10 rounded-lg object-cover" alt={a.name} />
+                  <img src={AGENT_CHARS[a.name]} className="w-10 h-10  object-cover" alt={a.name} />
                 ) : (
-                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold text-sm", getAgentGradient(a.role))}>{getAgentInitials(a.name)}</div>
+                  <div className={cn("w-10 h-10  flex items-center justify-center text-white font-bold text-sm", getAgentGradient(a.role))}>{getAgentInitials(a.name)}</div>
                 )}
                 <div>
-                  <span className="text-sm font-semibold text-white/80">{a.name}</span>
-                  <span className="text-[11px] text-white/30 ml-2">{getRoleLabel(a.role)}</span>
+                  <span className="text-sm font-semibold text-editor-ink">{a.name}</span>
+                  <span className="text-[11px] text-editor-muted ml-2">{getRoleLabel(a.role)}</span>
                 </div>
               </div>
             </motion.div>
@@ -506,62 +506,62 @@ export default function WorkspaceHub() {
           {arrivalIdx < ags.length && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 justify-center">
               <div className="w-5 h-5 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" />
-              <span className="text-white/20 text-xs">Alguem esta chegando...</span>
+              <span className="text-editor-muted text-xs">Alguem esta chegando...</span>
             </motion.div>
           )}
         </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-20 h-16 bg-white/[0.02] rounded-t-xl border border-white/[0.03] flex items-center justify-center">
-          <span className="text-white/10 text-lg">| |</span>
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-20 h-16 bg-white/[0.02] rounded-t-xl border border-editor-border flex items-center justify-center">
+          <span className="text-editor-muted text-lg">| |</span>
         </div>
       </div>
     )
   }
 
-  if (!org) return <div className="h-screen w-full bg-[#0a0a0b] flex items-center justify-center"><div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" /></div>
+  if (!org) return <div className="h-screen w-full bg-editor-bg flex items-center justify-center"><div className="w-6 h-6 rounded-full border-2 border-white/10 border-t-white/40 animate-spin" /></div>
 
   const agents = org.agents?.filter(a => a.status !== "FIRED") || []
   const channels = org.channels || []
-  const statusDot = (a: Agent) => { if (a.status === "WORKING") return "bg-[#2bac76] animate-pulse"; if (a.status === "ACTIVE") return "bg-[#2bac76]"; return "bg-[#444]" }
+  const statusDot = (a: Agent) => { if (a.status === "WORKING") return "bg-[#000000] animate-pulse"; if (a.status === "ACTIVE") return "bg-[#000000]"; return "bg-[#444]" }
 
   return (
-    <div className="h-screen w-full flex overflow-hidden bg-[#0a0a0b]">
+    <div className="h-screen w-full flex overflow-hidden bg-editor-bg">
       {/* SIDEBAR */}
-      <div className="w-[200px] bg-[#0d0d0f] flex flex-col flex-shrink-0 border-r border-white/[0.04] select-none">
-        <div className="h-10 flex items-center px-4 border-b border-white/[0.04]"><span className="text-white/70 text-xs font-semibold tracking-tight truncate">{org.name}</span></div>
+      <div className="w-[200px] bg-editor-panel flex flex-col flex-shrink-0 border-r border-editor-border select-none">
+        <div className="h-10 flex items-center px-4 border-b border-editor-border"><span className="text-editor-ink text-xs font-semibold tracking-tight truncate">{org.name}</span></div>
         <div className="flex-1 overflow-y-auto py-2">
           <div className="px-3 pb-2 space-y-1">
-            <button onClick={() => setTaskOpen(true)} className="w-full flex items-center gap-2 px-3 py-1.5 rounded text-[11px] font-medium text-white/40 hover:text-white/60 hover:bg-white/[0.04] transition-all">
+            <button onClick={() => setTaskOpen(true)} className="w-full flex items-center gap-2 px-3 py-1.5 rounded text-[11px] font-medium text-editor-muted hover:text-editor-ink hover:bg-white/[0.04] transition-all">
               <Plus className="w-3 h-3" />Nova tarefa
             </button>
             <HireModal orgId={orgId} onHired={() => queryClient.invalidateQueries({ queryKey: ["organization", orgId] })} />
           </div>
-          <div className="px-4 py-1"><span className="text-[9px] font-semibold text-white/15 uppercase tracking-widest">Canais</span></div>
-          {channels.map(ch => (<button key={ch.id} onClick={() => { setSelChannel(ch.name); setBoardOpen(false) }} className={cn("w-full flex items-center gap-1.5 px-4 py-0.5 text-xs transition-colors", selChannel === ch.name ? "text-white/80" : "text-white/25 hover:text-white/50")}><Hash className="w-3 h-3 opacity-30" /><span className="truncate">{ch.name}</span></button>))}
-          <div className="mt-4 pt-3 border-t border-white/[0.04]"><div className="px-4 py-1"><span className="text-[9px] font-semibold text-white/15 uppercase tracking-widest">Agentes</span></div>
+          <div className="px-4 py-1"><span className="text-[9px] font-semibold text-editor-muted uppercase tracking-widest">Canais</span></div>
+          {channels.map(ch => (<button key={ch.id} onClick={() => { setSelChannel(ch.name); setBoardOpen(false) }} className={cn("w-full flex items-center gap-1.5 px-4 py-0.5 text-xs transition-colors", selChannel === ch.name ? "text-editor-ink" : "text-editor-muted hover:text-editor-muted")}><Hash className="w-3 h-3 opacity-30" /><span className="truncate">{ch.name}</span></button>))}
+          <div className="mt-4 pt-3 border-t border-editor-border"><div className="px-4 py-1"><span className="text-[9px] font-semibold text-editor-muted uppercase tracking-widest">Agentes</span></div>
              {agents.map(a => {
                const ws = a.status === "WORKING" ? "Trabalhando..." : a.status === "IN_MEETING" ? "Em reuniao" : a.status === "ACTIVE" ? "Online" : "Offline"
                return (
-               <button key={a.id} onClick={() => setSelectedAgent(a)} className="w-full flex items-center gap-2 px-4 py-0.5 text-xs text-left hover:bg-white/[0.03] transition-colors"><div className="relative flex-shrink-0">{AGENT_CHARS[a.name] ? <img src={AGENT_CHARS[a.name]} className="w-5 h-5 rounded object-cover" alt={a.name} /> : <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold", getAgentGradient(a.role))}>{getAgentInitials(a.name)}</div>}<span className={cn("absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-[#0d0d0f]", statusDot(a))} /></div><div className="flex-1 min-w-0"><div className="text-white/70 truncate text-[11px]">{a.name}</div><div className="text-white/15 text-[9px] truncate">{ws}</div></div></button>
+               <button key={a.id} onClick={() => setSelectedAgent(a)} className="w-full flex items-center gap-2 px-4 py-0.5 text-xs text-left hover:bg-white/[0.03] transition-colors"><div className="relative flex-shrink-0">{AGENT_CHARS[a.name] ? <img src={AGENT_CHARS[a.name]} className="w-5 h-5 rounded object-cover" alt={a.name} /> : <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold", getAgentGradient(a.role))}>{getAgentInitials(a.name)}</div>}<span className={cn("absolute -bottom-0.5 -right-0.5 w-1.5 h-1.5 rounded-full border border-[#0d0d0f]", statusDot(a))} /></div><div className="flex-1 min-w-0"><div className="text-editor-ink truncate text-[11px]">{a.name}</div><div className="text-editor-muted text-[9px] truncate">{ws}</div></div></button>
              )})}
           </div>
         </div>
-        <div className="p-3 border-t border-white/[0.04] space-y-2">
+        <div className="p-3 border-t border-editor-border space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[9px] font-semibold text-white/15 uppercase tracking-widest">
+            <span className="text-[9px] font-semibold text-editor-muted uppercase tracking-widest">
               {org.officeSettings?.workflowMethod === "SPRINTS" ? "Sprint" : "Kanban"}
             </span>
-            <span className="text-[9px] text-white/10">{org.officeSettings?.workflowMethod === "SPRINTS" ? "2 semanas" : "Fluxo continuo"}</span>
+            <span className="text-[9px] text-editor-muted">{org.officeSettings?.workflowMethod === "SPRINTS" ? "2 semanas" : "Fluxo continuo"}</span>
           </div>
           <div className="h-1 rounded-full bg-white/[0.04] overflow-hidden">
             <div className="h-full rounded-full bg-white/20" style={{ width: "45%" }} />
           </div>
           <div className="flex gap-1">
-            <button onClick={() => setBoardOpen(true)} className="flex-1 text-center py-1 rounded text-[9px] text-white/25 hover:text-white/40 hover:bg-white/[0.03] transition-colors">
+            <button onClick={() => setBoardOpen(true)} className="flex-1 text-center py-1 rounded text-[9px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.03] transition-colors">
               {org.officeSettings?.workflowMethod === "SPRINTS" ? "Sprint board" : "Kanban board"}
             </button>
           </div>
-          <button onClick={runDaily} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/[0.04] hover:bg-white/[0.06] text-white/40 hover:text-white/60 text-[11px] font-medium transition-all"><Zap className="w-3 h-3" />Daily</button>
-          <button onClick={() => fetch("/api/agents/heartbeat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId }) }).then(() => toast.success("Agentes trabalhando!"))} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/[0.02] hover:bg-white/[0.04] text-white/25 hover:text-white/40 text-[10px] font-medium transition-all">Executar tarefas</button>
+          <button onClick={runDaily} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/[0.04] hover:bg-white/[0.06] text-editor-muted hover:text-editor-ink text-[11px] font-medium transition-all"><Zap className="w-3 h-3" />Daily</button>
+          <button onClick={() => fetch("/api/agents/heartbeat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId }) }).then(() => toast.success("Agentes trabalhando!"))} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/[0.02] hover:bg-white/[0.04] text-editor-muted hover:text-editor-muted text-[10px] font-medium transition-all">Executar tarefas</button>
           <button onClick={async () => {
             if (!confirm("Limpar TODAS as tarefas do board?")) return
             const res = await fetch(`/api/tasks/clear?orgId=${orgId}`, { method: "DELETE" })
@@ -570,8 +570,8 @@ export default function WorkspaceHub() {
               toast.success(d.message)
               queryClient.invalidateQueries({ queryKey: ["tasks", orgId] })
             }
-          }} className="w-full text-center text-white/10 hover:text-[#ff385c]/40 text-[10px] transition-colors">Limpar board</button>
-          <button onClick={() => signOut()} className="w-full text-center text-white/10 hover:text-white/25 text-[10px] transition-colors">Sair</button>
+          }} className="w-full text-center text-editor-muted hover:text-[#000000]/40 text-[10px] transition-colors">Limpar board</button>
+          <button onClick={() => signOut()} className="w-full text-center text-editor-muted hover:text-editor-muted text-[10px] transition-colors">Sair</button>
         </div>
       </div>
 
@@ -601,7 +601,7 @@ export default function WorkspaceHub() {
         ) : (
           <>
             {/* Office */}
-            <div className="relative bg-[#111118] flex-shrink-0 border-2 border-white/[0.04] rounded-lg overflow-hidden" style={{ height: officeFs ? "100%" : `${dividerY}%` }}>
+            <div className="relative bg-[#111118] flex-shrink-0 border-2 border-editor-border  overflow-hidden" style={{ height: officeFs ? "100%" : `${dividerY}%` }}>
           {officeReady ? (
             <iframe
               ref={(el) => { officeIframeRef.current = el }}
@@ -615,23 +615,23 @@ export default function WorkspaceHub() {
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-[#0a0a0b]">
+            <div className="w-full h-full flex items-center justify-center bg-editor-bg">
               <div className="text-center space-y-3">
-                <div className="w-8 h-8 border-2 border-white/10 border-t-[#2bac76]/50 rounded-full animate-spin mx-auto" />
-                <p className="text-[11px] text-white/20">Acordando o escritorio...</p>
+                <div className="w-8 h-8 border-2 border-white/10 border-t-[#000000]/50 rounded-full animate-spin mx-auto" />
+                <p className="text-[11px] text-editor-muted">Acordando o escritorio...</p>
               </div>
             </div>
           )}
-          <button onClick={() => setOfficeFs(!officeFs)} className="absolute top-2 right-2 p-1 rounded bg-black/20 hover:bg-black/40 text-white/30 hover:text-white/60 transition-colors z-10">{officeFs ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}</button>
+          <button onClick={() => setOfficeFs(!officeFs)} className="absolute top-2 right-2 p-1 rounded bg-black/20 hover:bg-black/40 text-editor-muted hover:text-editor-ink transition-colors z-10">{officeFs ? <Minimize2 className="w-3 h-3" /> : <Maximize2 className="w-3 h-3" />}</button>
         </div>
         {/* Divider */}
         {!officeFs && (<div className="h-1 bg-white/[0.03] hover:bg-white/[0.06] cursor-row-resize flex-shrink-0 flex items-center justify-center group transition-colors" onMouseDown={dragDiv}><div className="w-6 h-0.5 rounded-full bg-white/[0.06] group-hover:bg-white/15 transition-colors" /></div>)}
         {/* Chat */}
         {!officeFs && (
-          <div className="flex-1 flex flex-col bg-[#0a0a0b] min-h-0">
-            <div className="h-8 border-b border-white/[0.04] flex items-center px-4 flex-shrink-0 gap-2">
-              <Hash className="w-3 h-3 text-white/15" />
-              <span className="text-xs font-medium text-white/40 flex-1">{selChannel}</span>
+          <div className="flex-1 flex flex-col bg-editor-bg min-h-0">
+            <div className="h-8 border-b border-editor-border flex items-center px-4 flex-shrink-0 gap-2">
+              <Hash className="w-3 h-3 text-editor-muted" />
+              <span className="text-xs font-medium text-editor-muted flex-1">{selChannel}</span>
               <button onClick={async () => {
                 const a = org?.agents?.[Math.floor(Math.random() * org.agents.filter(a => a.status !== "FIRED").length)]
                 if (!a) return
@@ -639,11 +639,11 @@ export default function WorkspaceHub() {
                 await fetch("/api/routine", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, event: "approval_request", agentId: a.id }) })
                 queryClient.invalidateQueries({ queryKey: ["messages"] })
                 toast.success("Conteudo gerado!")
-              }} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-white/25 hover:text-white/50 hover:bg-white/[0.04] transition-colors">
+              }} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.04] transition-colors">
                 <Plus className="w-3 h-3" />Conteudo
               </button>
-              <button onClick={() => setTaskOpen(true)} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-white/25 hover:text-white/50 hover:bg-white/[0.04] transition-colors"><Plus className="w-3 h-3" />Tarefa</button>
-              <button onClick={runDaily} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-white/25 hover:text-white/50 hover:bg-white/[0.04] transition-colors"><Zap className="w-3 h-3" />Daily</button>
+              <button onClick={() => setTaskOpen(true)} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.04] transition-colors"><Plus className="w-3 h-3" />Tarefa</button>
+              <button onClick={runDaily} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.04] transition-colors"><Zap className="w-3 h-3" />Daily</button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
@@ -651,7 +651,7 @@ export default function WorkspaceHub() {
               {selChannel === "geral" && welcome && wData && (
                 <div className="flex gap-2">
                   {AGENT_CHARS[wData.name] ? <img src={AGENT_CHARS[wData.name]} className="w-7 h-7 rounded object-cover flex-shrink-0 mt-0.5" alt={wData.name} /> : <div className={cn("w-7 h-7 rounded flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-0.5", wData.gradient)}>{wData.name[0]}</div>}
-                  <div><div className="flex items-center gap-2 mb-0.5"><span className="text-xs font-semibold text-white/70">{wData.name}</span><span className="text-[10px] text-white/15">{wData.role}</span></div><p className="text-xs text-white/45 leading-relaxed whitespace-pre-wrap">{welcome}{!welcomeDone && <span className="animate-pulse text-white/30">|</span>}</p></div>
+                  <div><div className="flex items-center gap-2 mb-0.5"><span className="text-xs font-semibold text-editor-ink">{wData.name}</span><span className="text-[10px] text-editor-muted">{wData.role}</span></div><p className="text-xs text-white/45 leading-relaxed whitespace-pre-wrap">{welcome}{!welcomeDone && <span className="animate-pulse text-editor-muted">|</span>}</p></div>
                 </div>
               )}
 
@@ -665,26 +665,26 @@ export default function WorkspaceHub() {
                 // ── Conflict Card ──
                 if (conflictData) {
                   return (
-                    <div key={msg.id} className="my-3 p-4 rounded-xl border border-[#ecb22e]/20 bg-[#ecb22e]/[0.03]">
+                    <div key={msg.id} className="my-3 p-4  border border-[#000000]/20 bg-[#000000]/[0.03]">
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-[10px] font-semibold text-[#ecb22e]/60 uppercase tracking-wider">Conflito Detectado</span>
+                        <span className="text-[10px] font-semibold text-[#000000]/60 uppercase tracking-wider">Conflito Detectado</span>
                       </div>
-                      <p className="text-[10px] text-white/30 mb-3">Sobre: {conflictData.topic || "estrategia"}</p>
+                      <p className="text-[10px] text-editor-muted mb-3">Sobre: {conflictData.topic || "estrategia"}</p>
                       <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                          <p className="text-[10px] font-semibold text-white/40 mb-1">{conflictData.agentA || "Agente A"}</p>
-                          <p className="text-[10px] text-white/30 italic">"{conflictData.positionA?.slice(0, 150) || "..."}"</p>
+                        <div className="p-2.5  bg-white/[0.02] border border-editor-border">
+                          <p className="text-[10px] font-semibold text-editor-muted mb-1">{conflictData.agentA || "Agente A"}</p>
+                          <p className="text-[10px] text-editor-muted italic">"{conflictData.positionA?.slice(0, 150) || "..."}"</p>
                         </div>
-                        <div className="p-2.5 rounded-lg bg-white/[0.02] border border-white/[0.04]">
-                          <p className="text-[10px] font-semibold text-white/40 mb-1">{conflictData.agentB || "Agente B"}</p>
-                          <p className="text-[10px] text-white/30 italic">"{conflictData.positionB?.slice(0, 150) || "..."}"</p>
+                        <div className="p-2.5  bg-white/[0.02] border border-editor-border">
+                          <p className="text-[10px] font-semibold text-editor-muted mb-1">{conflictData.agentB || "Agente B"}</p>
+                          <p className="text-[10px] text-editor-muted italic">"{conflictData.positionB?.slice(0, 150) || "..."}"</p>
                         </div>
                       </div>
-                      <div className="flex items-center gap-1 text-[9px] text-white/20 mb-2">Com quem voce concorda?</div>
+                      <div className="flex items-center gap-1 text-[9px] text-editor-muted mb-2">Com quem voce concorda?</div>
                       <div className="flex gap-1.5">
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-white/50 transition-colors">{conflictData.agentA || "Ag. A"}</button>
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-white/50 transition-colors">{conflictData.agentB || "Ag. B"}</button>
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-white/50 transition-colors">Meio a meio</button>
+                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-editor-muted transition-colors">{conflictData.agentA || "Ag. A"}</button>
+                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-editor-muted transition-colors">{conflictData.agentB || "Ag. B"}</button>
+                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-editor-muted transition-colors">Meio a meio</button>
                       </div>
                     </div>
                   )
@@ -693,22 +693,22 @@ export default function WorkspaceHub() {
                 // ── Approval Card ──
                 if (approvalData) {
                   return (
-                    <div key={msg.id} className="my-3 p-3 rounded-lg border border-white/[0.06] bg-white/[0.02]">
+                    <div key={msg.id} className="my-3 p-3  border border-editor-border bg-white/[0.02]">
                       <div className="flex items-center gap-2 mb-2">
                         {msg.agentId ? (AGENT_CHARS[msg.agentName || ""] ? <img src={AGENT_CHARS[msg.agentName || ""]} className="w-6 h-6 rounded object-cover" alt={msg.agentName} /> : <div className={cn("w-6 h-6 rounded flex items-center justify-center text-white text-[8px] font-bold", msg.agentGradient || "bg-[#444]")}>{(msg.agentName || "A")[0]}</div>) : null}
-                        <span className="text-xs font-semibold text-white/60">{msg.agentName}</span>
-                        <span className="text-[9px] text-white/20">pede aprovacao</span>
+                        <span className="text-xs font-semibold text-editor-ink">{msg.agentName}</span>
+                        <span className="text-[9px] text-editor-muted">pede aprovacao</span>
                       </div>
-                      <div className="bg-white/[0.02] rounded-lg p-3 mb-2">
-                        <p className="text-[10px] text-white/20 uppercase tracking-wider mb-1">{approvalData.platform} · {approvalData.specs || "1080x1080px"}</p>
-                        <h4 className="text-xs font-semibold text-white/50 mb-1">{approvalData.title}</h4>
-                        <p className="text-[11px] text-white/30 italic">"{approvalData.copy}"</p>
-                        <p className="text-[9px] text-white/15 mt-1">Publicacao sugerida: {approvalData.publishDate || "em breve"}</p>
+                      <div className="bg-white/[0.02]  p-3 mb-2">
+                        <p className="text-[10px] text-editor-muted uppercase tracking-wider mb-1">{approvalData.platform} · {approvalData.specs || "1080x1080px"}</p>
+                        <h4 className="text-xs font-semibold text-editor-muted mb-1">{approvalData.title}</h4>
+                        <p className="text-[11px] text-editor-muted italic">"{approvalData.copy}"</p>
+                        <p className="text-[9px] text-editor-muted mt-1">Publicacao sugerida: {approvalData.publishDate || "em breve"}</p>
                       </div>
                       <div className="flex gap-1.5">
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.04] hover:bg-[#2bac76]/20 text-white/40 hover:text-[#2bac76] transition-colors">Aprovar</button>
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.04] hover:bg-[#ecb22e]/20 text-white/40 hover:text-[#ecb22e] transition-colors">Revisao</button>
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.04] hover:bg-[#ff385c]/20 text-white/40 hover:text-[#ff385c] transition-colors">Reprovar</button>
+                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.04] hover:bg-[#000000]/20 text-editor-muted hover:text-[#000000] transition-colors">Aprovar</button>
+                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.04] hover:bg-[#000000]/20 text-editor-muted hover:text-[#000000] transition-colors">Revisao</button>
+                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.04] hover:bg-[#000000]/20 text-editor-muted hover:text-[#000000] transition-colors">Reprovar</button>
                       </div>
                     </div>
                   )
@@ -725,9 +725,9 @@ export default function WorkspaceHub() {
                 if (isDailyStart) {
                   return (
                     <div key={msg.id} className="my-3 text-center">
-                      <div className="inline-flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                        <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Daily Standup</span>
-                        <p className="text-[11px] text-white/40 whitespace-pre-wrap">{cleanContent}</p>
+                      <div className="inline-flex flex-col items-center gap-1 px-4 py-2  bg-white/[0.02] border border-editor-border">
+                        <span className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider">Daily Standup</span>
+                        <p className="text-[11px] text-editor-muted whitespace-pre-wrap">{cleanContent}</p>
                       </div>
                     </div>
                   )
@@ -737,45 +737,45 @@ export default function WorkspaceHub() {
                   const approved = dailyApproved[msg.id]
                   const showComment = showingCommentInput[msg.id]
                   return (
-                    <div key={msg.id} className="my-3 p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]">
+                    <div key={msg.id} className="my-3 p-4  bg-white/[0.02] border border-editor-border">
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-[10px] font-semibold text-white/30 uppercase tracking-wider">Resumo da Daily</span>
+                        <span className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider">Resumo da Daily</span>
                       </div>
-                      <p className="text-[11px] text-white/40 leading-relaxed whitespace-pre-wrap">{cleanContent}</p>
+                      <p className="text-[11px] text-editor-muted leading-relaxed whitespace-pre-wrap">{cleanContent}</p>
                       {!approved ? (
                         <>
-                          <div className="flex gap-2 mt-3 pt-3 border-t border-white/[0.04]">
+                          <div className="flex gap-2 mt-3 pt-3 border-t border-editor-border">
                             <button
                               onClick={() => handleDailyApprove(msg.id)}
-                              className="px-3 py-1.5 rounded-lg bg-[#2bac76]/10 hover:bg-[#2bac76]/20 text-[10px] text-[#2bac76] font-medium transition-colors"
+                              className="px-3 py-1.5  bg-[#000000]/10 hover:bg-[#000000]/20 text-[10px] text-[#000000] font-medium transition-colors"
                             >
                               ✅ Tudo certo, podem comecar
                             </button>
                             <button
                               onClick={() => handleDailyComment(msg.id)}
                               className={cn(
-                                "px-3 py-1.5 rounded-lg border border-white/[0.04] hover:bg-white/[0.03] text-[10px] transition-colors",
-                                showComment ? "text-white/60 border-white/[0.08]" : "text-white/25"
+                                "px-3 py-1.5  border border-editor-border hover:bg-white/[0.03] text-[10px] transition-colors",
+                                showComment ? "text-editor-ink border-editor-border" : "text-editor-muted"
                               )}
                             >
                               💬 Tenho um comentario
                             </button>
                           </div>
                           {showComment && (
-                            <div className="flex gap-2 mt-2 pt-2 border-t border-white/[0.04]">
+                            <div className="flex gap-2 mt-2 pt-2 border-t border-editor-border">
                               <input
                                 type="text"
                                 value={commentText}
                                 onChange={e => setCommentText(e.target.value)}
                                 onKeyDown={e => { if (e.key === "Enter") handleSubmitComment(msg.id) }}
                                 placeholder="Escreva seu comentario..."
-                                className="flex-1 px-2.5 py-1.5 rounded-lg bg-white/[0.02] border border-white/[0.04] text-[11px] text-white/50 placeholder-white/15 focus:outline-none focus:border-white/[0.1]"
+                                className="flex-1 px-2.5 py-1.5  bg-white/[0.02] border border-editor-border text-[11px] text-editor-muted placeholder-white/15 focus:outline-none focus:border-white/[0.1]"
                                 autoFocus
                               />
                               <button
                                 onClick={() => handleSubmitComment(msg.id)}
                                 disabled={!commentText.trim() || submittingComment}
-                                className="px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 text-[10px] text-white/40 transition-colors"
+                                className="px-3 py-1.5  bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 text-[10px] text-editor-muted transition-colors"
                               >
                                 {submittingComment ? "..." : "Enviar"}
                               </button>
@@ -783,8 +783,8 @@ export default function WorkspaceHub() {
                           )}
                         </>
                       ) : (
-                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-white/[0.04]">
-                          <span className="text-[10px] text-[#2bac76]/60">✅ Daily aprovada — time trabalhando</span>
+                        <div className="flex items-center gap-2 mt-3 pt-3 border-t border-editor-border">
+                          <span className="text-[10px] text-[#000000]/60">✅ Daily aprovada — time trabalhando</span>
                         </div>
                       )}
                     </div>
@@ -793,7 +793,7 @@ export default function WorkspaceHub() {
 
                 return (
                 <div key={msg.id} className={cn(
-                  "flex gap-2 px-2 py-1.5 -mx-2 rounded-lg",
+                  "flex gap-2 px-2 py-1.5 -mx-2 ",
                   isDailySpeech && `ring-1 ring-inset ${(msg.agentGradient ? `bg-[${msg.agentGradient}]/[0.03]` : "bg-white/[0.02]")} border-l-2` as string,
                   // Fallback style when no agentGradient
                   isDailySpeech && !msg.agentGradient && "bg-white/[0.02]",
@@ -808,13 +808,13 @@ export default function WorkspaceHub() {
                     AGENT_CHARS[msg.agentName || ""] ? <img src={AGENT_CHARS[msg.agentName || ""]} className="w-7 h-7 rounded object-cover flex-shrink-0 mt-0.5" alt={msg.agentName} /> :
                     <div className={cn("w-7 h-7 rounded flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-0.5", msg.agentGradient || "bg-[#444]")}>{(msg.agentName || "A")[0]}</div>
                   ) : (
-                    <div className="w-7 h-7 rounded bg-white/[0.04] flex items-center justify-center text-white/30 text-[9px] font-bold flex-shrink-0 mt-0.5">Voce</div>
+                    <div className="w-7 h-7 rounded bg-white/[0.04] flex items-center justify-center text-editor-muted text-[9px] font-bold flex-shrink-0 mt-0.5">Voce</div>
                   )}
                   <div>
                     <div className="flex items-center gap-2 mb-0.5">
-                      <span className="text-xs font-semibold text-white/70">{msg.agentName || "Voce"}</span>
-                      {msg.agentRole && <span className="text-[10px] text-white/15">{msg.agentRole}</span>}
-                      {isDailySpeech && <span className="text-[9px] text-[#2bac76]/60 bg-[#2bac76]/[0.06] px-1.5 py-0.5 rounded font-medium">📅 Daily</span>}
+                      <span className="text-xs font-semibold text-editor-ink">{msg.agentName || "Voce"}</span>
+                      {msg.agentRole && <span className="text-[10px] text-editor-muted">{msg.agentRole}</span>}
+                      {isDailySpeech && <span className="text-[9px] text-[#000000]/60 bg-[#000000]/[0.06] px-1.5 py-0.5 rounded font-medium">📅 Daily</span>}
                     </div>
                     <p className="text-xs text-white/45 leading-relaxed whitespace-pre-wrap">{cleanContent}</p>
                   </div>
@@ -830,24 +830,24 @@ export default function WorkspaceHub() {
                   </div>
                   <div className="flex items-center gap-1.5">
                     {AGENT_CHARS[typingAgent] ? <img src={AGENT_CHARS[typingAgent]} className="w-4 h-4 rounded object-cover opacity-60" alt={typingAgent} /> : null}
-                    <span className="text-[11px] text-white/20">{typingAgent} esta digitando...</span>
+                    <span className="text-[11px] text-editor-muted">{typingAgent} esta digitando...</span>
                   </div>
                 </div>
               )}
               <div ref={chatRef} />
             </div>
 
-            <div className="border-t border-white/[0.04] px-4 py-2 flex gap-2 flex-shrink-0 relative">
+            <div className="border-t border-editor-border px-4 py-2 flex gap-2 flex-shrink-0 relative">
               {/* @Mention dropdown */}
               {showMentions && (
-                <div className="absolute bottom-full left-4 mb-1 w-48 bg-[#111] border border-white/[0.06] rounded-lg shadow-2xl p-1 z-20">
+                <div className="absolute bottom-full left-4 mb-1 w-48 bg-editor-surface border border-editor-border  shadow-2xl p-1 z-20">
                   {agents.map(a => (
                     <button key={a.id} onClick={() => {
                       const beforeAt = chatInput.substring(0, chatInput.lastIndexOf("@"))
                       setChatInput(beforeAt + "@" + a.name.split(" ")[0] + " ")
                       setMentionedAgentId(a.id)
                       setShowMentions(false)
-                    }} className="w-full text-left px-3 py-1.5 rounded text-[11px] text-white/50 hover:bg-white/[0.04] hover:text-white/70 transition-colors flex items-center gap-2">
+                    }} className="w-full text-left px-3 py-1.5 rounded text-[11px] text-editor-muted hover:bg-white/[0.04] hover:text-editor-ink transition-colors flex items-center gap-2">
                       {AGENT_CHARS[a.name] ? <img src={AGENT_CHARS[a.name]} className="w-5 h-5 rounded object-cover" alt={a.name} /> : <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold", getAgentGradient(a.role))}>{getAgentInitials(a.name)}</div>}
                       <div><div className="font-medium">{a.name.split(" ")[0]}</div><div className="text-[9px] opacity-50">{getRoleLabel(a.role)}</div></div>
                     </button>
@@ -855,13 +855,13 @@ export default function WorkspaceHub() {
                 </div>
               )}
               {mentionedAgentId && (
-                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.04] text-[10px] text-white/40 flex-shrink-0">
+                <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-white/[0.04] text-[10px] text-editor-muted flex-shrink-0">
                   @{agents.find(a => a.id === mentionedAgentId)?.name?.split(" ")[0] || "..."}
-                  <button onClick={() => setMentionedAgentId(null)} className="hover:text-white/60"><X className="w-2.5 h-2.5" /></button>
+                  <button onClick={() => setMentionedAgentId(null)} className="hover:text-editor-ink"><X className="w-2.5 h-2.5" /></button>
                 </span>
               )}
               <input
-                className="flex-1 bg-transparent text-xs text-white/50 placeholder-white/10 focus:outline-none"
+                className="flex-1 bg-transparent text-xs text-editor-muted placeholder-white/10 focus:outline-none"
                 placeholder={mentionedAgentId ? `Mensagem para @${agents.find(a => a.id === mentionedAgentId)?.name?.split(" ")[0] || "..."}...` : `Mensagem em #${selChannel}...`}
                 value={chatInput}
                 onChange={e => {
@@ -871,7 +871,7 @@ export default function WorkspaceHub() {
                 }}
                 onKeyDown={e => { if (e.key === "Enter") { e.preventDefault(); handleSend() } }}
               />
-              <button onClick={handleSend} disabled={!chatInput.trim() || sending} className="w-6 h-6 rounded bg-white/[0.04] hover:bg-white/[0.06] text-white/30 hover:text-white/50 flex items-center justify-center disabled:opacity-10 transition-colors">
+              <button onClick={handleSend} disabled={!chatInput.trim() || sending} className="w-6 h-6 rounded bg-white/[0.04] hover:bg-white/[0.06] text-editor-muted hover:text-editor-muted flex items-center justify-center disabled:opacity-10 transition-colors">
                 {sending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}
               </button>
             </div>

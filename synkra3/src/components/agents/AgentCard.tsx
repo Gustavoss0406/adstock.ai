@@ -67,7 +67,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
             </div>
             <div className="flex-1 min-w-0 pb-0.5">
               <h3 className="font-bold text-white truncate text-sm">{agent.name}</h3>
-              <p className="text-xs text-white/70">{getRoleLabel(agent.role)}</p>
+              <p className="text-xs text-editor-ink">{getRoleLabel(agent.role)}</p>
             </div>
             <div className="flex items-center gap-1.5">
               <span className={cn("w-1.5 h-1.5 rounded-full", status.dot)} />

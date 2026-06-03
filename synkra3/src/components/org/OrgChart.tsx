@@ -74,7 +74,7 @@ function OrgChartNode({ node, depth, isLast }: { node: OrgNode; depth: number; i
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: depth * 0.1 }}
         className={cn(
-          "relative p-3 rounded-lg border bg-white shadow-card min-w-[180px] max-w-[200px]",
+          "relative p-3  border bg-white shadow-card min-w-[180px] max-w-[200px]",
           isCeo ? "border-[#4A154B] ring-2 ring-[#4A154B]/20" :
           node.agent.status === "WORKING" ? "border-[#2BAC76]" :
           isOnline ? "border-[#DDDDDD]" : "border-[#DDDDDD] opacity-60"

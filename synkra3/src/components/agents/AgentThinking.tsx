@@ -58,7 +58,7 @@ export function AgentThinking({ agentName, action, isActive, progressSteps, curr
           {/* Background glow */}
           <div className="absolute inset-0 bg-gradient-to-r from-[#4A154B]/5 via-[#1264A3]/5 to-[#2BAC76]/5 animate-pulse" />
 
-          <div className="relative flex flex-col gap-3 p-4 rounded-lg border border-[#DDDDDD] bg-white shadow-card">
+          <div className="relative flex flex-col gap-3 p-4  border border-[#DDDDDD] bg-white shadow-card">
             {/* Header */}
             <div className="flex items-center gap-3">
               <div className="relative flex-shrink-0">

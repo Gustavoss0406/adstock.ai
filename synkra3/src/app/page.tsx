@@ -124,7 +124,7 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-                <p className="text-white/40 text-sm">Daily · 09:00 · 5 agentes online</p>
+                <p className="text-editor-muted text-sm">Daily · 09:00 · 5 agentes online</p>
               </div>
             </div>
           </div>

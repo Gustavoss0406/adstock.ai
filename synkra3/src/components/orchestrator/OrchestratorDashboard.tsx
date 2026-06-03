@@ -75,7 +75,7 @@ const WORK_STATE_LABELS: Record<string, { label: string; emoji: string }> = {
 function WorkStateBadge({ state }: { state: string }) {
   const info = WORK_STATE_LABELS[state] || { label: state, emoji: "❓" }
   return (
-    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-white/70">
+    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-medium bg-white/10 text-editor-ink">
       {info.emoji} {info.label}
     </span>
   )
@@ -133,7 +133,7 @@ export function OrchestratorDashboard({ organizationId }: Props) {
 
   if (!data) {
     return (
-      <div className="flex items-center justify-center h-64 text-white/40 text-sm">
+      <div className="flex items-center justify-center h-64 text-editor-muted text-sm">
         {error ? `Erro: ${error}` : "Carregando..."}
       </div>
     )
@@ -149,11 +149,11 @@ export function OrchestratorDashboard({ organizationId }: Props) {
               <Activity className="w-5 h-5 text-purple-400" />
               Painel de Orquestração
             </h2>
-            <p className="text-xs text-white/40 mt-0.5">
+            <p className="text-xs text-editor-muted mt-0.5">
               Sistema Nervoso do AgencyOS
             </p>
           </div>
-          <div className="flex items-center gap-3 text-xs text-white/30">
+          <div className="flex items-center gap-3 text-xs text-editor-muted">
             {error ? (
               <span className="flex items-center gap-1 text-red-400">
                 <WifiOff className="w-3 h-3" /> Offline
@@ -239,13 +239,13 @@ export function OrchestratorDashboard({ organizationId }: Props) {
                         {agent.status}
                       </span>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-white/40">
+                    <div className="flex items-center gap-2 text-[10px] text-editor-muted">
                       <span>Perf: {agent.performance.toFixed(0)}%</span>
-                      <span className="text-white/20">|</span>
+                      <span className="text-editor-muted">|</span>
                       <span>Moral: {agent.morale}</span>
                     </div>
                     {agent.lastCheckAt && (
-                      <div className="text-[9px] text-white/20">
+                      <div className="text-[9px] text-editor-muted">
                         Check: {new Date(agent.lastCheckAt).toLocaleTimeString()}
                       </div>
                     )}
@@ -264,12 +264,12 @@ export function OrchestratorDashboard({ organizationId }: Props) {
                 <div
                   key={ch.id}
                   className={cn(
-                    "flex items-center justify-between p-2.5 rounded-lg text-sm",
+                    "flex items-center justify-between p-2.5  text-sm",
                     ch.locked ? "bg-yellow-500/10 border border-yellow-500/20" : "bg-white/5",
                   )}
                 >
                   <div className="flex items-center gap-2 min-w-0">
-                    <span className="text-white/80 font-medium truncate">#{ch.name}</span>
+                    <span className="text-editor-ink font-medium truncate">#{ch.name}</span>
                     {ch.locked && (
                       <span className="text-[10px] text-yellow-400/80 flex-shrink-0">
                         lock {(ch.lockAgeMs! / 1000).toFixed(0)}s
@@ -283,10 +283,10 @@ export function OrchestratorDashboard({ organizationId }: Props) {
                       </span>
                     )}
                     {ch.lockedBy && !ch.typing && (
-                      <span className="text-white/50">{ch.lockedBy} falando</span>
+                      <span className="text-editor-muted">{ch.lockedBy} falando</span>
                     )}
                     {ch.queueLength > 0 && (
-                      <span className="text-white/30">fila: {ch.queueLength}</span>
+                      <span className="text-editor-muted">fila: {ch.queueLength}</span>
                     )}
                     {!ch.lockedBy && !ch.typing && (
                       <span className="text-green-400/60 text-[10px]">livre</span>
@@ -301,7 +301,7 @@ export function OrchestratorDashboard({ organizationId }: Props) {
           <Section title="Fila de Ações" count={data.actionQueue.length}>
             <div className="space-y-1.5 max-h-[300px] overflow-y-auto">
               {data.actionQueue.length === 0 ? (
-                <p className="text-xs text-white/30 py-4 text-center">Nenhuma ação pendente</p>
+                <p className="text-xs text-editor-muted py-4 text-center">Nenhuma ação pendente</p>
               ) : (
                 data.actionQueue.map(action => (
                   <div
@@ -310,11 +310,11 @@ export function OrchestratorDashboard({ organizationId }: Props) {
                   >
                     <div className="flex items-center gap-2 min-w-0">
                       <PriorityBadge priority={action.priority} />
-                      <span className="text-white/70 truncate">{action.type}</span>
+                      <span className="text-editor-ink truncate">{action.type}</span>
                     </div>
-                    <div className="flex items-center gap-2 text-[10px] text-white/30 flex-shrink-0">
+                    <div className="flex items-center gap-2 text-[10px] text-editor-muted flex-shrink-0">
                       <span className="truncate max-w-[80px]">{action.agentName}</span>
-                      <span className="font-mono text-white/20">
+                      <span className="font-mono text-editor-muted">
                         {action.secondsUntil <= 0 ? "agora" : `${action.secondsUntil}s`}
                       </span>
                     </div>
@@ -330,10 +330,10 @@ export function OrchestratorDashboard({ organizationId }: Props) {
           <div className="space-y-1 max-h-[250px] overflow-y-auto font-mono">
             {data.activityLog.map(log => (
               <div key={log.id} className="flex items-start gap-2 text-[11px] py-0.5">
-                <span className="text-white/20 flex-shrink-0 w-[60px] text-right">
+                <span className="text-editor-muted flex-shrink-0 w-[60px] text-right">
                   {new Date(log.timestamp).toLocaleTimeString()}
                 </span>
-                <span className="text-white/50 flex-shrink-0 w-[90px] truncate">
+                <span className="text-editor-muted flex-shrink-0 w-[90px] truncate">
                   {log.agentName}
                 </span>
                 <span className={cn(
@@ -342,11 +342,11 @@ export function OrchestratorDashboard({ organizationId }: Props) {
                   log.eventType.includes("acquired") && "text-green-400",
                   log.eventType.includes("queued") && "text-yellow-400",
                   log.eventType.includes("completed") && "text-blue-400",
-                  "text-white/60",
+                  "text-editor-ink",
                 )}>
                   {log.eventType}
                 </span>
-                <span className="text-white/20 truncate flex-1">
+                <span className="text-editor-muted truncate flex-1">
                   {log.details ? JSON.stringify(log.details).slice(0, 80) : ""}
                 </span>
               </div>
@@ -357,23 +357,23 @@ export function OrchestratorDashboard({ organizationId }: Props) {
         {/* ── State Distribution ─────────────────────────── */}
         <div className="grid grid-cols-2 gap-3">
           <Card className="p-3 border-0 bg-white/5">
-            <h4 className="text-[10px] font-medium text-white/30 uppercase mb-2">Work States</h4>
+            <h4 className="text-[10px] font-medium text-editor-muted uppercase mb-2">Work States</h4>
             <div className="space-y-1">
               {Object.entries(data.workStateDistribution).map(([state, count]) => (
                 <div key={state} className="flex items-center justify-between text-xs">
                   <WorkStateBadge state={state} />
-                  <span className="text-white/50">{count}</span>
+                  <span className="text-editor-muted">{count}</span>
                 </div>
               ))}
             </div>
           </Card>
           <Card className="p-3 border-0 bg-white/5">
-            <h4 className="text-[10px] font-medium text-white/30 uppercase mb-2">Status</h4>
+            <h4 className="text-[10px] font-medium text-editor-muted uppercase mb-2">Status</h4>
             <div className="space-y-1">
               {Object.entries(data.statusDistribution).map(([status, count]) => (
                 <div key={status} className="flex items-center justify-between text-xs">
-                  <span className="text-white/60">{status}</span>
-                  <span className="text-white/50">{count}</span>
+                  <span className="text-editor-ink">{status}</span>
+                  <span className="text-editor-muted">{count}</span>
                 </div>
               ))}
             </div>
@@ -398,8 +398,8 @@ function Section({
   return (
     <div className="space-y-2">
       <div className="flex items-center gap-2">
-        <h3 className="text-xs font-semibold text-white/50 uppercase tracking-wider">{title}</h3>
-        <span className="text-[10px] text-white/20 bg-white/5 px-1.5 py-0.5 rounded">{count}</span>
+        <h3 className="text-xs font-semibold text-editor-muted uppercase tracking-wider">{title}</h3>
+        <span className="text-[10px] text-editor-muted bg-white/5 px-1.5 py-0.5 rounded">{count}</span>
       </div>
       {children}
     </div>
@@ -431,11 +431,11 @@ function MetricCard({
   return (
     <Card className="p-3 border-0 bg-white/5">
       <div className="flex items-center gap-1.5 mb-1">
-        <span className={colorMap[color] || "text-white/50"}>{icon}</span>
-        <span className="text-[10px] text-white/30 uppercase">{label}</span>
+        <span className={colorMap[color] || "text-editor-muted"}>{icon}</span>
+        <span className="text-[10px] text-editor-muted uppercase">{label}</span>
       </div>
       <div className="text-lg font-bold text-white">{value}</div>
-      {sub && <div className="text-[10px] text-white/20 mt-0.5">{sub}</div>}
+      {sub && <div className="text-[10px] text-editor-muted mt-0.5">{sub}</div>}
     </Card>
   )
 }

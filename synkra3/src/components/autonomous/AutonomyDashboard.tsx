@@ -29,7 +29,7 @@ export function AutonomyDashboard({ orgId }: Props) {
   }, [orgId])
 
   if (loading) {
-    return <div className="p-6 text-center text-white/20 text-xs">Carregando dashboard...</div>
+    return <div className="p-6 text-center text-editor-muted text-xs">Carregando dashboard...</div>
   }
 
   const patterns = data?.patterns || {}
@@ -42,21 +42,21 @@ export function AutonomyDashboard({ orgId }: Props) {
       <motion.div
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        className="p-4 rounded-xl bg-white/[0.02] border border-white/[0.06]"
+        className="p-4  bg-white/[0.02] border border-editor-border"
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <BrainCircuit className="w-4 h-4 text-[#7C3AED]/60" />
-            <span className="text-[11px] font-semibold text-white/30 uppercase tracking-wider">Nivel de Autonomia</span>
+            <BrainCircuit className="w-4 h-4 text-[#000000]/60" />
+            <span className="text-[11px] font-semibold text-editor-muted uppercase tracking-wider">Nivel de Autonomia</span>
           </div>
-          <span className="text-sm font-bold text-white/70">{autonomyLevel}%</span>
+          <span className="text-sm font-bold text-editor-ink">{autonomyLevel}%</span>
         </div>
         <div className="h-1.5 rounded-full bg-white/[0.04] overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
             animate={{ width: `${autonomyLevel}%` }}
             transition={{ duration: 1 }}
-            className="h-full rounded-full bg-gradient-to-r from-[#7C3AED] to-[#ff385c]"
+            className="h-full rounded-full bg-gradient-to-r from-[#000000] to-[#000000]"
           />
         </div>
       </motion.div>
@@ -64,22 +64,22 @@ export function AutonomyDashboard({ orgId }: Props) {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2">
         <StatCard
-          icon={<CheckCircle2 className="w-3 h-3 text-[#2bac76]" />}
+          icon={<CheckCircle2 className="w-3 h-3 text-[#000000]" />}
           label="Tarefas criadas"
           value={context?.backlogSize || 0}
         />
         <StatCard
-          icon={<Activity className="w-3 h-3 text-[#2563eb]" />}
+          icon={<Activity className="w-3 h-3 text-[#000000]" />}
           label="Em execucao"
           value={context?.taskCounts?.inProgress || 0}
         />
         <StatCard
-          icon={<AlertTriangle className="w-3 h-3 text-[#ecb22e]" />}
+          icon={<AlertTriangle className="w-3 h-3 text-[#000000]" />}
           label="Aprovacoes pendentes"
           value={(patterns?.totalApprovals || 0) + (patterns?.totalRejections || 0)}
         />
         <StatCard
-          icon={<XCircle className="w-3 h-3 text-[#ff385c]" />}
+          icon={<XCircle className="w-3 h-3 text-[#000000]" />}
           label="Rejeicoes"
           value={patterns?.totalRejections || 0}
         />
@@ -90,12 +90,12 @@ export function AutonomyDashboard({ orgId }: Props) {
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]"
+          className="p-3  bg-white/[0.02] border border-editor-border"
         >
-          <p className="text-[10px] text-white/20 mb-1">Taxa de aprovacao do CEO</p>
+          <p className="text-[10px] text-editor-muted mb-1">Taxa de aprovacao do CEO</p>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-[#2bac76]">{Math.round(patterns.approvalRate * 100)}%</span>
-            <span className="text-[10px] text-white/20">
+            <span className="text-lg font-bold text-[#000000]">{Math.round(patterns.approvalRate * 100)}%</span>
+            <span className="text-[10px] text-editor-muted">
               ({patterns.totalApprovals} aprovadas, {patterns.totalRejections} rejeitadas)
             </span>
           </div>
@@ -110,8 +110,8 @@ export function AutonomyDashboard({ orgId }: Props) {
         className="space-y-2"
       >
         <div className="flex items-center gap-2 mb-2">
-          <Settings className="w-3 h-3 text-white/20" />
-          <span className="text-[10px] font-semibold text-white/20 uppercase tracking-wider">Aprovacao necessaria</span>
+          <Settings className="w-3 h-3 text-editor-muted" />
+          <span className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider">Aprovacao necessaria</span>
         </div>
         {[
           { key: "postsNeedApproval", label: "Posts" },
@@ -137,8 +137,8 @@ export function AutonomyDashboard({ orgId }: Props) {
         className="space-y-2"
       >
         <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-3 h-3 text-white/20" />
-          <span className="text-[10px] font-semibold text-white/20 uppercase tracking-wider">Notificacoes</span>
+          <Zap className="w-3 h-3 text-editor-muted" />
+          <span className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider">Notificacoes</span>
         </div>
         {[
           { key: "notificationsImportant", label: "Apenas tarefas importantes" },
@@ -158,12 +158,12 @@ export function AutonomyDashboard({ orgId }: Props) {
 
 function StatCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: number }) {
   return (
-    <div className="p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
+    <div className="p-3  bg-white/[0.02] border border-editor-border">
       <div className="flex items-center gap-1.5 mb-1">
         {icon}
-        <span className="text-[9px] text-white/20">{label}</span>
+        <span className="text-[9px] text-editor-muted">{label}</span>
       </div>
-      <span className="text-lg font-bold text-white/50">{value}</span>
+      <span className="text-lg font-bold text-editor-muted">{value}</span>
     </div>
   )
 }
@@ -172,10 +172,10 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
   return (
     <button
       onClick={onChange}
-      className="w-full flex items-center justify-between px-2 py-1.5 rounded-lg hover:bg-white/[0.02] transition-colors"
+      className="w-full flex items-center justify-between px-2 py-1.5  hover:bg-white/[0.02] transition-colors"
     >
-      <span className="text-[11px] text-white/30">{label}</span>
-      <div className={`w-7 h-4 rounded-full transition-colors ${checked ? "bg-[#2bac76]/40" : "bg-white/[0.06]"}`}>
+      <span className="text-[11px] text-editor-muted">{label}</span>
+      <div className={`w-7 h-4 rounded-full transition-colors ${checked ? "bg-[#000000]/40" : "bg-white/[0.06]"}`}>
         <div className={`w-3 h-3 rounded-full bg-white/40 mt-0.5 transition-transform ${checked ? "translate-x-3.5" : "translate-x-0.5"}`} />
       </div>
     </button>

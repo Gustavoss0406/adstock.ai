@@ -102,7 +102,7 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white rounded-lg shadow-2xl max-w-3xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+              className="relative bg-white  shadow-2xl max-w-3xl w-full mx-4 max-h-[80vh] overflow-y-auto"
             >
               {/* Header */}
               <div className="p-6 border-b border-[#DDDDDD]">
@@ -126,7 +126,7 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
                       key={profile.key}
                       whileHover={{ y: -2 }}
                       className={cn(
-                        "p-4 rounded-lg border-2 cursor-pointer transition-all",
+                        "p-4  border-2 cursor-pointer transition-all",
                         selected === profile.key
                           ? "border-[#4A154B] bg-[#4A154B]/5 shadow-elevated"
                           : "border-[#DDDDDD] hover:border-[#4A154B]/30"

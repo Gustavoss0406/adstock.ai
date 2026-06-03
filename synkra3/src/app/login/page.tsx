@@ -58,7 +58,7 @@ export default function LoginPage() {
           <p className="text-muted-foreground text-sm mt-1.5">Entre para gerenciar seus agentes</p>
         </div>
 
-        <div className="rounded-lg bg-surface-card border border-border p-8">
+        <div className=" bg-surface-card border border-border p-8">
           <form onSubmit={handleSubmit} className="space-y-4">
             <Input
               label="Email"

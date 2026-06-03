@@ -45,7 +45,7 @@ export function ChatMessage({ content, agent, isUser = false, timestamp }: ChatM
 
         <div
           className={cn(
-            "rounded-lg px-3.5 py-2 text-sm leading-relaxed",
+            " px-3.5 py-2 text-sm leading-relaxed",
             isUser
               ? "bg-surface-soft border border-hairline text-body"
               : "bg-background border border-border text-body"

@@ -65,7 +65,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
         transition={{ duration: 0.6 }}
-        className="fixed inset-0 z-[200] bg-[#0a0a0b]/97 flex items-center justify-center backdrop-blur-sm"
+        className="fixed inset-0 z-[200] bg-editor-bg/97 flex items-center justify-center backdrop-blur-sm"
       >
         <div className="text-center space-y-8 max-w-[360px]">
           {/* Phone icon ringing */}
@@ -77,18 +77,18 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
             } : {}}
             transition={{ duration: 0.8, repeat: phase === "ringing" ? Infinity : 0 }}
           >
-            <div className="w-16 h-16 mx-auto rounded-full bg-[#ff385c]/[0.06] border border-[#ff385c]/10 flex items-center justify-center">
-              <Phone className="w-6 h-6 text-[#ff385c]/40" />
+            <div className="w-16 h-16 mx-auto rounded-full bg-[#000000]/[0.06] border border-[#000000]/10 flex items-center justify-center">
+              <Phone className="w-6 h-6 text-[#000000]/40" />
             </div>
             {phase === "ringing" && (
               <>
                 <motion.div
-                  className="absolute inset-0 rounded-full border border-[#ff385c]/20"
+                  className="absolute inset-0 rounded-full border border-[#000000]/20"
                   animate={{ scale: [1, 2.2], opacity: [0.5, 0] }}
                   transition={{ duration: 2.5, repeat: Infinity }}
                 />
                 <motion.div
-                  className="absolute inset-0 rounded-full border border-[#ff385c]/10"
+                  className="absolute inset-0 rounded-full border border-[#000000]/10"
                   animate={{ scale: [1, 1.8], opacity: [0.3, 0] }}
                   transition={{ duration: 2.5, repeat: Infinity, delay: 0.7 }}
                 />
@@ -103,12 +103,12 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
               animate={phase === "ringing" ? { scale: [1, 1.05, 1] } : {}}
               transition={{ duration: 1.5, repeat: Infinity }}
             >
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-br from-[#ff385c] to-[#7C3AED] flex items-center justify-center ring-4 ring-[#ff385c]/10">
-                <img src="/agents/Maya.png" className="w-18 h-18 rounded-xl object-cover" alt="Maya Ferreira" />
+              <div className="w-24 h-24  bg-gradient-to-br from-[#000000] to-[#000000] flex items-center justify-center ring-4 ring-[#000000]/10">
+                <img src="/agents/Maya.png" className="w-18 h-18  object-cover" alt="Maya Ferreira" />
               </div>
               {phase === "ringing" && (
                 <motion.div
-                  className="absolute inset-0 rounded-2xl"
+                  className="absolute inset-0 "
                   animate={{ boxShadow: [
                     "0 0 0px rgba(255,56,92,0)",
                     "0 0 30px rgba(255,56,92,0.3)",
@@ -127,7 +127,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
               >
                 Maya Ferreira
               </motion.h3>
-              <p className="text-xs text-white/30">Diretora de Conteudo · {orgName}</p>
+              <p className="text-xs text-editor-muted">Diretora de Conteudo · {orgName}</p>
             </div>
           </div>
 
@@ -136,7 +136,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
             {phase === "ringing" && (
               <>
                 <motion.p
-                  className="text-sm font-medium text-white/50"
+                  className="text-sm font-medium text-editor-muted"
                   animate={{ opacity: [1, 0.6, 1] }}
                   transition={{ duration: 1.5, repeat: Infinity }}
                 >
@@ -146,7 +146,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
                   key={phraseIdx}
                   initial={{ opacity: 0, y: 4 }}
                   animate={{ opacity: 1, y: 0 }}
-                  className="text-[11px] text-white/25"
+                  className="text-[11px] text-editor-muted"
                 >
                   {RINGING_PHRASES[phraseIdx]}
                 </motion.p>
@@ -155,8 +155,8 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
 
             {phase === "connecting" && (
               <div className="space-y-3">
-                <div className="w-8 h-8 border-2 border-white/[0.06] border-t-[#ff385c]/50 rounded-full animate-spin mx-auto" />
-                <p className="text-[12px] text-white/25">Conectando com a equipe...</p>
+                <div className="w-8 h-8 border-2 border-editor-border border-t-[#000000]/50 rounded-full animate-spin mx-auto" />
+                <p className="text-[12px] text-editor-muted">Conectando com a equipe...</p>
               </div>
             )}
 
@@ -170,24 +170,24 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
                   <h2 className="text-base font-bold text-white mb-1">
                     Primeira Daily
                   </h2>
-                  <p className="text-[11px] text-white/25 max-w-[280px] mx-auto leading-relaxed">
+                  <p className="text-[11px] text-editor-muted max-w-[280px] mx-auto leading-relaxed">
                     Sua equipe esta pronta para a primeira reuniao. Eles vao definir as tarefas iniciais e comecar a trabalhar imediatamente.
                   </p>
                 </motion.div>
 
                 {/* Maya speech bubble */}
                 <motion.div
-                  className="relative mx-4 p-3 rounded-2xl bg-white/[0.03] border border-white/[0.06]"
+                  className="relative mx-4 p-3  bg-white/[0.03] border border-editor-border"
                   initial={{ opacity: 0, scale: 0.95 }}
                   animate={{ opacity: 1, scale: 1 }}
                   transition={{ delay: 0.3 }}
                 >
                   {/* Triangle pointer */}
-                  <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white/[0.03] border-l border-t border-white/[0.06] rotate-45" />
+                  <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white/[0.03] border-l border-t border-editor-border rotate-45" />
                   <div className="flex items-center gap-2 mb-1.5">
                     <img src="/agents/Maya.png" className="w-4 h-4 rounded object-cover" alt="Maya" />
-                    <span className="text-[10px] font-medium text-[#ff385c]/60">Maya</span>
-                    <span className="text-[9px] text-white/15 ml-auto">agora</span>
+                    <span className="text-[10px] font-medium text-[#000000]/60">Maya</span>
+                    <span className="text-[9px] text-editor-muted ml-auto">agora</span>
                   </div>
                   <motion.p
                     key={mayaLineIdx}
@@ -205,7 +205,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
                       setDismissed(true)
                       onAccept()
                     }}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#ff385c] hover:bg-[#ff385c]/80 text-white text-sm font-medium transition-all active:scale-95"
+                    className="flex items-center gap-2 px-6 py-2.5  bg-[#000000] hover:bg-[#000000]/80 text-white text-sm font-medium transition-all active:scale-95"
                   >
                     <Phone className="w-4 h-4" />
                     Atender
@@ -215,7 +215,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
                       setDismissed(true)
                       onDismiss()
                     }}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] text-white/25 hover:text-white/40 text-sm transition-all active:scale-95"
+                    className="flex items-center gap-2 px-6 py-2.5  bg-white/[0.03] hover:bg-white/[0.05] text-editor-muted hover:text-editor-muted text-sm transition-all active:scale-95"
                   >
                     <PhoneOff className="w-4 h-4" />
                     Depois
@@ -232,7 +232,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
                 key={i}
                 className="w-1.5 h-1.5 rounded-full"
                 animate={{
-                  backgroundColor: i <= (phase === "ringing" ? 0 : phase === "connecting" ? 1 : 2) ? "#ff385c" : "rgba(255,255,255,0.06)",
+                  backgroundColor: i <= (phase === "ringing" ? 0 : phase === "connecting" ? 1 : 2) ? "#000000" : "rgba(255,255,255,0.06)",
                 }}
                 transition={{ duration: 0.3 }}
               />

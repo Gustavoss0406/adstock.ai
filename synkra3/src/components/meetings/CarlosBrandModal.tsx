@@ -25,7 +25,7 @@ const INITIAL_BRAND: BrandIdentity = {
 // Predefined color suggestions
 const COLOR_SUGGESTIONS = [
   "#FF6B35", "#6366F1", "#2BAC76", "#DC2626", "#D97706",
-  "#7C3AED", "#EC4899", "#0891B2", "#84CC16", "#F59E0B",
+  "#000000", "#EC4899", "#0891B2", "#84CC16", "#F59E0B",
   "#000000", "#FFFFFF",
 ]
 
@@ -94,29 +94,29 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-[150] flex items-center justify-center bg-[#0a0a0b]/90 backdrop-blur-sm"
+        className="fixed inset-0 z-[150] flex items-center justify-center bg-editor-bg/90 backdrop-blur-sm"
       >
         <motion.div
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={saved ? { scale: 1.05, opacity: 0 } : { scale: 1, opacity: 1, y: 0 }}
           transition={{ type: "spring", stiffness: 300, damping: 25 }}
-          className="w-full max-w-[480px] bg-[#111] border border-white/[0.06] rounded-2xl overflow-hidden shadow-[0_0_60px_rgba(255,107,53,0.08)]"
+          className="w-full max-w-[480px] bg-editor-surface border border-editor-border  overflow-hidden shadow-[0_0_60px_rgba(255,107,53,0.08)]"
         >
           {/* Carlos header */}
           <div className="flex items-center gap-4 p-6 pb-4">
-            <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-[#D97706] to-[#F59E0B] flex items-center justify-center ring-2 ring-[#D97706]/20 flex-shrink-0">
-              <img src="/agents/Carlos.png" className="w-10 h-10 rounded-lg object-cover" alt="Carlos" />
+            <div className="w-14 h-14  bg-gradient-to-br from-[#D97706] to-[#F59E0B] flex items-center justify-center ring-2 ring-[#D97706]/20 flex-shrink-0">
+              <img src="/agents/Carlos.png" className="w-10 h-10  object-cover" alt="Carlos" />
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2">
-                <span className="text-sm font-semibold text-white/80">Carlos Lima</span>
-                <span className="text-[10px] text-white/20">Designer Senior</span>
+                <span className="text-sm font-semibold text-editor-ink">Carlos Lima</span>
+                <span className="text-[10px] text-editor-muted">Designer Senior</span>
               </div>
-              <p className="text-[12px] text-white/40 mt-1 leading-relaxed">
+              <p className="text-[12px] text-editor-muted mt-1 leading-relaxed">
                 Ei {userName || "CEO"}! Antes de criar suas artes, me conta sua identidade visual. Prometo que vai ficar incrivel! 🎨
               </p>
             </div>
-            <button onClick={onDismiss} className="p-1 rounded-lg hover:bg-white/[0.04] text-white/20 hover:text-white/40 transition-colors">
+            <button onClick={onDismiss} className="p-1  hover:bg-white/[0.04] text-editor-muted hover:text-editor-muted transition-colors">
               <X className="w-4 h-4" />
             </button>
           </div>
@@ -129,8 +129,8 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
               { num: 3, label: "Estilo", icon: Type },
             ].map(s => (
               <button key={s.num} onClick={() => setStep(s.num as 1 | 2 | 3)}
-                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-[11px] transition-colors ${
-                  step === s.num ? "bg-white/[0.06] text-white/60" : "text-white/20 hover:text-white/30"
+                className={`flex-1 flex items-center justify-center gap-1.5 py-1.5  text-[11px] transition-colors ${
+                  step === s.num ? "bg-white/[0.06] text-editor-ink" : "text-editor-muted hover:text-editor-muted"
                 }`}>
                 <s.icon className="w-3 h-3" />
                 {s.label}
@@ -142,13 +142,13 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
             {/* Step 1: Colors */}
             {step === 1 && (
               <div className="space-y-4">
-                <label className="text-[11px] font-medium text-white/30 uppercase tracking-wider">Cores da Marca</label>
+                <label className="text-[11px] font-medium text-editor-muted uppercase tracking-wider">Cores da Marca</label>
                 {/* Selected colors */}
                 <div className="flex flex-wrap gap-3">
                   {brand.colors.map((c, i) => (
                     <div key={i} className="relative group">
-                      <div className="w-14 h-14 rounded-xl border-2 border-white/[0.08] shadow-inner" style={{ backgroundColor: c }} />
-                      <span className="block text-center text-[9px] text-white/25 mt-1">{c}</span>
+                      <div className="w-14 h-14  border-2 border-editor-border shadow-inner" style={{ backgroundColor: c }} />
+                      <span className="block text-center text-[9px] text-editor-muted mt-1">{c}</span>
                       {brand.colors.length > 1 && (
                         <button onClick={() => removeColor(i)}
                           className="absolute -top-2 -right-2 w-5 h-5 rounded-full bg-[#DC2626]/20 border border-[#DC2626]/30 text-[#DC2626] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -165,21 +165,21 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
                         onChange={e => setColorInput(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter" && colorInput) { addColor(colorInput.startsWith("#") ? colorInput : "#" + colorInput) } }}
                         placeholder="#Hex"
-                        className="w-14 h-14 rounded-xl bg-white/[0.02] border border-dashed border-white/[0.08] text-[11px] text-white/40 text-center focus:outline-none focus:border-white/[0.15] placeholder-white/10"
+                        className="w-14 h-14  bg-white/[0.02] border border-dashed border-editor-border text-[11px] text-editor-muted text-center focus:outline-none focus:border-editor-border placeholder-white/10"
                         maxLength={7}
                       />
-                      <Plus className="w-3 h-3 text-white/15 absolute inset-0 m-auto pointer-events-none" />
+                      <Plus className="w-3 h-3 text-editor-muted absolute inset-0 m-auto pointer-events-none" />
                     </div>
                   )}
                 </div>
 
                 {/* Suggestions */}
                 <div>
-                  <p className="text-[10px] text-white/15 mb-2">Sugestoes:</p>
+                  <p className="text-[10px] text-editor-muted mb-2">Sugestoes:</p>
                   <div className="flex flex-wrap gap-1.5">
                     {COLOR_SUGGESTIONS.map(c => (
                       <button key={c} onClick={() => addColor(c)}
-                        className="w-7 h-7 rounded-lg border border-white/[0.06] hover:border-white/[0.15] transition-all hover:scale-110"
+                        className="w-7 h-7  border border-editor-border hover:border-editor-border transition-all hover:scale-110"
                         style={{ backgroundColor: c }} />
                     ))}
                   </div>
@@ -190,14 +190,14 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
             {/* Step 2: Logo */}
             {step === 2 && (
               <div className="space-y-4">
-                <label className="text-[11px] font-medium text-white/30 uppercase tracking-wider">Logo (PNG sem fundo)</label>
+                <label className="text-[11px] font-medium text-editor-muted uppercase tracking-wider">Logo (PNG sem fundo)</label>
 
                 {/* Drag & drop zone */}
                 <input type="file" ref={fileRef} onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(f) }} accept="image/png" className="hidden" />
                 <button onClick={() => fileRef.current?.click()}
-                  className="w-full h-32 rounded-xl border-2 border-dashed border-white/[0.06] hover:border-white/[0.12] flex flex-col items-center justify-center gap-2 transition-colors">
-                  <Upload className="w-5 h-5 text-white/15" />
-                  <span className="text-[11px] text-white/20">Soltar PNG aqui ou clicar para selecionar</span>
+                  className="w-full h-32  border-2 border-dashed border-editor-border hover:border-editor-border flex flex-col items-center justify-center gap-2 transition-colors">
+                  <Upload className="w-5 h-5 text-editor-muted" />
+                  <span className="text-[11px] text-editor-muted">Soltar PNG aqui ou clicar para selecionar</span>
                 </button>
 
                 {/* Or URL */}
@@ -207,24 +207,24 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
                     value={logoUrl}
                     onChange={e => setLogoUrl(e.target.value)}
                     placeholder="ou cole a URL da logo..."
-                    className="flex-1 px-3 py-2 rounded-lg bg-white/[0.02] border border-white/[0.05] text-[11px] text-white/40 placeholder-white/10 focus:outline-none focus:border-white/[0.1]"
+                    className="flex-1 px-3 py-2  bg-white/[0.02] border border-editor-border text-[11px] text-editor-muted placeholder-white/10 focus:outline-none focus:border-white/[0.1]"
                   />
                   <button onClick={handleUrlLogo} disabled={!logoUrl}
-                    className="px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] disabled:opacity-20 text-[11px] text-white/30 transition-colors">
+                    className="px-3 py-2  bg-white/[0.04] hover:bg-white/[0.06] disabled:opacity-20 text-[11px] text-editor-muted transition-colors">
                     Carregar
                   </button>
                 </div>
 
                 {/* Preview */}
                 {logoPreview && (
-                  <div className="flex items-center gap-3 p-3 rounded-xl bg-white/[0.02] border border-white/[0.04]">
-                    <img src={logoPreview} className="w-12 h-12 rounded-lg object-contain bg-white/[0.03]" alt="Logo preview" />
+                  <div className="flex items-center gap-3 p-3  bg-white/[0.02] border border-editor-border">
+                    <img src={logoPreview} className="w-12 h-12  object-contain bg-white/[0.03]" alt="Logo preview" />
                     <div>
-                      <p className="text-[11px] text-white/40">Preview da logo</p>
+                      <p className="text-[11px] text-editor-muted">Preview da logo</p>
                       <p className="text-[10px] text-[#2BAC76]">✓ Carregada</p>
                     </div>
                     <button onClick={() => { setLogoPreview(null); setBrand(b => ({ ...b, logoBase64: null })) }}
-                      className="ml-auto p-1 rounded hover:bg-white/[0.04] text-white/20 hover:text-white/40">
+                      className="ml-auto p-1 rounded hover:bg-white/[0.04] text-editor-muted hover:text-editor-muted">
                       <Trash2 className="w-3 h-3" />
                     </button>
                   </div>
@@ -235,15 +235,15 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
             {/* Step 3: Font Style */}
             {step === 3 && (
               <div className="space-y-3">
-                <label className="text-[11px] font-medium text-white/30 uppercase tracking-wider">Estilo Visual</label>
+                <label className="text-[11px] font-medium text-editor-muted uppercase tracking-wider">Estilo Visual</label>
                 {(Object.entries(FONT_PAIRS) as [FontStyle, typeof FONT_PAIRS[keyof typeof FONT_PAIRS]][]).map(([key, font]) => (
                   <button
                     key={key}
                     onClick={() => setBrand(b => ({ ...b, fontStyle: key }))}
-                    className={`w-full text-left p-3 rounded-xl border transition-all ${
+                    className={`w-full text-left p-3  border transition-all ${
                       brand.fontStyle === key
-                        ? "border-white/[0.12] bg-white/[0.04]"
-                        : "border-white/[0.04] hover:border-white/[0.06]"
+                        ? "border-editor-border bg-white/[0.04]"
+                        : "border-editor-border hover:border-editor-border"
                     }`}
                   >
                     <div className="flex items-center gap-3">
@@ -251,8 +251,8 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
                         {brand.fontStyle === key && <Check className="w-3 h-3 text-[#2BAC76]" />}
                       </div>
                       <div>
-                        <p className="text-[12px] font-semibold text-white/60">{font.label}</p>
-                        <p className="text-[11px] text-white/25">{font.preview}</p>
+                        <p className="text-[12px] font-semibold text-editor-ink">{font.label}</p>
+                        <p className="text-[11px] text-editor-muted">{font.preview}</p>
                       </div>
                     </div>
                   </button>
@@ -262,14 +262,14 @@ export function CarlosBrandModal({ open, userName, orgId, onSave, onDismiss }: P
           </div>
 
           {/* Bottom buttons */}
-          <div className="flex items-center gap-3 px-6 py-4 border-t border-white/[0.04]">
+          <div className="flex items-center gap-3 px-6 py-4 border-t border-editor-border">
             <button onClick={onDismiss}
-              className="flex-1 py-2 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] text-[11px] text-white/25 hover:text-white/40 transition-colors">
+              className="flex-1 py-2  bg-white/[0.02] hover:bg-white/[0.04] text-[11px] text-editor-muted hover:text-editor-muted transition-colors">
               Pular — depois
             </button>
             <button onClick={handleSave}
               disabled={!brand.name || brand.colors.length === 0}
-              className="flex-1 py-2 rounded-lg bg-[#D97706]/10 hover:bg-[#D97706]/20 disabled:opacity-20 text-[11px] text-[#D97706] font-medium transition-colors">
+              className="flex-1 py-2  bg-[#D97706]/10 hover:bg-[#D97706]/20 disabled:opacity-20 text-[11px] text-[#D97706] font-medium transition-colors">
               Salvar identidade
             </button>
           </div>

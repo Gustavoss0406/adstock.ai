@@ -64,8 +64,8 @@ export function SettingsPage({
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
-                  "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors flex items-center gap-2",
-                  activeTab === tab.id ? "bg-[#7C3AED] text-white font-bold" : "text-[#616061] hover:bg-white hover:text-[#1D1C1D]"
+                  "w-full text-left px-3 py-2  text-sm transition-colors flex items-center gap-2",
+                  activeTab === tab.id ? "bg-[#000000] text-white font-bold" : "text-[#616061] hover:bg-white hover:text-[#1D1C1D]"
                 )}
               >
                 <span>{tab.icon}</span> {tab.label}
@@ -82,15 +82,15 @@ export function SettingsPage({
                 <div className="space-y-4">
                   <div>
                     <label className="text-xs font-bold text-[#616061] block mb-1">Nome da empresa</label>
-                    <input className="w-full rounded-lg border border-[#DDDDDD] px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#7C3AED] focus:outline-none" defaultValue="Minha Agência" />
+                    <input className="w-full  border border-[#DDDDDD] px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#000000] focus:outline-none" defaultValue="Minha Agência" />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-[#616061] block mb-1">Website</label>
-                    <input className="w-full rounded-lg border border-[#DDDDDD] px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#7C3AED] focus:outline-none" placeholder="https://seusite.com" />
+                    <input className="w-full  border border-[#DDDDDD] px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#000000] focus:outline-none" placeholder="https://seusite.com" />
                   </div>
                   <div>
                     <label className="text-xs font-bold text-[#616061] block mb-1">Descrição</label>
-                    <textarea className="w-full rounded-lg border border-[#DDDDDD] px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#7C3AED] focus:outline-none h-20 resize-none" placeholder="Breve descrição da sua empresa..." />
+                    <textarea className="w-full  border border-[#DDDDDD] px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#000000] focus:outline-none h-20 resize-none" placeholder="Breve descrição da sua empresa..." />
                   </div>
                   <Button size="sm">Salvar</Button>
                 </div>
@@ -104,18 +104,18 @@ export function SettingsPage({
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-[#616061] font-bold">Daily</span>
-                    <select className="border border-[#DDDDDD] rounded-lg px-3 py-1.5 text-sm bg-white" value={dailyTime} onChange={e => setDailyTime(e.target.value)}>
+                    <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white" value={dailyTime} onChange={e => setDailyTime(e.target.value)}>
                       {["07:00","08:00","09:00","10:00","11:00"].map(t => <option key={t}>{t}</option>)}
                     </select>
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-[#616061] font-bold">Weekly</span>
                     <div className="flex items-center gap-2">
-                      <select className="border border-[#DDDDDD] rounded-lg px-3 py-1.5 text-sm bg-white" value={weeklyDay} onChange={e => setWeeklyDay(e.target.value)}>
+                      <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white" value={weeklyDay} onChange={e => setWeeklyDay(e.target.value)}>
                         {[{v:"monday",l:"Segunda"},{v:"tuesday",l:"Terça"},{v:"wednesday",l:"Quarta"},{v:"thursday",l:"Quinta"},{v:"friday",l:"Sexta"}].map(d => <option key={d.v} value={d.v}>{d.l}</option>)}
                       </select>
                       <span className="text-sm text-[#CFC3CF]">às</span>
-                      <select className="border border-[#DDDDDD] rounded-lg px-3 py-1.5 text-sm bg-white" value={weeklyTime} onChange={e => setWeeklyTime(e.target.value)}>
+                      <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white" value={weeklyTime} onChange={e => setWeeklyTime(e.target.value)}>
                         {["08:00","09:00","10:00","11:00"].map(t => <option key={t}>{t}</option>)}
                       </select>
                     </div>
@@ -124,10 +124,10 @@ export function SettingsPage({
                     <span className="text-sm text-[#616061] font-bold block mb-2">📋 Modo de trabalho</span>
                     <div className="space-y-2">
                       {[{v:"KANBAN",l:"Kanban — fluxo contínuo"},{v:"SPRINTS_1",l:"Sprint — 1 semana"},{v:"SPRINTS_2",l:"Sprint — 2 semanas"}].map(m => (
-                        <label key={m.v} className="flex items-center gap-3 p-2.5 rounded-lg cursor-pointer hover:bg-[#F8F8F8]">
+                        <label key={m.v} className="flex items-center gap-3 p-2.5  cursor-pointer hover:bg-[#F8F8F8]">
                           <input type="radio" name="workflow" className="sr-only" checked={workflow === m.v} onChange={() => setWorkflow(m.v)} />
-                          <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center", workflow === m.v ? "border-[#7C3AED]" : "border-[#DDDDDD]")}>
-                            {workflow === m.v && <div className="w-2 h-2 rounded-full bg-[#7C3AED]" />}
+                          <div className={cn("w-4 h-4 rounded-full border-2 flex items-center justify-center", workflow === m.v ? "border-[#000000]" : "border-[#DDDDDD]")}>
+                            {workflow === m.v && <div className="w-2 h-2 rounded-full bg-[#000000]" />}
                           </div>
                           <span className="text-sm text-[#616061]">{m.l}</span>
                         </label>
@@ -136,7 +136,7 @@ export function SettingsPage({
                   </div>
                   <div className="flex items-center justify-between">
                     <span className="text-sm text-[#616061] font-bold">Relatório semanal</span>
-                    <select className="border border-[#DDDDDD] rounded-lg px-3 py-1.5 text-sm bg-white">
+                    <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white">
                       <option>Domingo às 20:00</option>
                       <option>Segunda às 08:00</option>
                     </select>
@@ -168,7 +168,7 @@ export function SettingsPage({
                   <div>
                     <span className="text-sm text-[#616061] font-bold block mb-2">Tom de voz</span>
                     {["Formal e profissional","Descontraído e próximo","Jovem e irreverente","Técnico e especialista"].map(tone => (
-                      <label key={tone} className="flex items-center gap-3 p-2 rounded-lg cursor-pointer hover:bg-[#F8F8F8]">
+                      <label key={tone} className="flex items-center gap-3 p-2  cursor-pointer hover:bg-[#F8F8F8]">
                         <input type="radio" name="tone" className="sr-only" defaultChecked={tone === "Descontraído e próximo"} />
                         <div className="w-4 h-4 rounded-full border-2 border-[#DDDDDD] flex items-center justify-center" />
                         <span className="text-sm text-[#616061]">{tone}</span>
@@ -204,7 +204,7 @@ export function SettingsPage({
                           <span>{u.label}</span><span>{u.current}/{u.max}</span>
                         </div>
                         <div className="h-1.5 rounded-full bg-[#F8F8F8] overflow-hidden">
-                          <div className="h-full rounded-full bg-[#7C3AED]" style={{ width: `${(u.current/u.max)*100}%` }} />
+                          <div className="h-full rounded-full bg-[#000000]" style={{ width: `${(u.current/u.max)*100}%` }} />
                         </div>
                       </div>
                     ))}
@@ -217,13 +217,13 @@ export function SettingsPage({
                     { name: "Growth", price: "197", agents: 6, redes: 4, posts: 90, current: true },
                     { name: "Agency", price: "397", agents: 10, redes: "Ilimitado", posts: "Ilimitado" },
                   ].map(p => (
-                    <div key={p.name} className={cn("p-4 rounded-xl border text-center", (p as any).current ? "border-[#7C3AED] bg-[#7C3AED]/5" : "border-[#DDDDDD]")}>
+                    <div key={p.name} className={cn("p-4  border text-center", (p as any).current ? "border-[#000000] bg-[#000000]/5" : "border-[#DDDDDD]")}>
                       <h4 className="font-bold text-sm">{p.name}</h4>
                       <p className="text-xl font-bold mt-1">R${p.price}<span className="text-xs text-[#616061]">/mês</span></p>
                       <div className="text-[11px] text-[#616061] mt-2 space-y-0.5">
                         <p>{p.agents} agentes</p><p>{p.redes} redes</p><p>{p.posts} posts</p>
                       </div>
-                      <button className={cn("mt-3 w-full py-1.5 rounded-lg text-xs font-bold", (p as any).current ? "bg-[#7C3AED] text-white" : "border border-[#DDDDDD] text-[#616061]")}>
+                      <button className={cn("mt-3 w-full py-1.5  text-xs font-bold", (p as any).current ? "bg-[#000000] text-white" : "border border-[#DDDDDD] text-[#616061]")}>
                         {(p as any).current ? "Plano atual" : p.price < "197" ? "Downgrade" : "Upgrade"}
                       </button>
                     </div>
@@ -251,7 +251,7 @@ export function SettingsPage({
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" defaultChecked />
-                        <div className="w-9 h-5 bg-[#DDDDDD] rounded-full peer-checked:bg-[#7C3AED] after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
+                        <div className="w-9 h-5 bg-[#DDDDDD] rounded-full peer-checked:bg-[#000000] after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
                       </label>
                     </div>
                   ))}

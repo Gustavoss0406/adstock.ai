@@ -102,7 +102,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
                   <Card className="p-5 border-[#059669]/20">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className={cn("w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center text-2xl", int.color)}>
+                        <div className={cn("w-12 h-12  bg-gradient-to-br flex items-center justify-center text-2xl", int.color)}>
                           {int.emoji}
                         </div>
                         <div>
@@ -134,7 +134,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
                 <Card className="p-5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-[#F8F8F8] flex items-center justify-center text-2xl">
+                      <div className="w-12 h-12  bg-[#F8F8F8] flex items-center justify-center text-2xl">
                         {int.emoji}
                       </div>
                       <div>

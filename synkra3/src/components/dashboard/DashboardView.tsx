@@ -31,11 +31,11 @@ export function Dashboard({ data }: { data: DashboardData }) {
         <div className="flex items-center justify-between">
           <h2 className="font-bold text-xl text-[#1D1C1D] flex items-center gap-2">📊 Dashboard</h2>
           <div className="flex items-center gap-2">
-            <select className="text-xs border border-[#DDDDDD] rounded-lg px-3 py-1.5 bg-white font-bold">
+            <select className="text-xs border border-[#DDDDDD]  px-3 py-1.5 bg-white font-bold">
               <option>Janeiro 2025</option>
               <option>Dezembro 2024</option>
             </select>
-            <button className="text-xs border border-[#DDDDDD] rounded-lg px-3 py-1.5 bg-white hover:bg-[#F8F8F8] font-bold">Exportar</button>
+            <button className="text-xs border border-[#DDDDDD]  px-3 py-1.5 bg-white hover:bg-[#F8F8F8] font-bold">Exportar</button>
           </div>
         </div>
 
@@ -69,7 +69,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
                 key={i}
                 initial={{ height: 0 }}
                 animate={{ height: `${(d.value / maxReach) * 100}%` }}
-                className="flex-1 rounded-sm bg-gradient-to-t from-[#7C3AED] to-[#A78BFA] min-h-[2px] relative group cursor-pointer"
+                className="flex-1 rounded-sm bg-gradient-to-t from-[#000000] to-[#A78BFA] min-h-[2px] relative group cursor-pointer"
               >
                 <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-[#1D1C1D] text-white text-[9px] px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap pointer-events-none transition-opacity">
                   {d.date}: {d.value.toLocaleString()}
@@ -106,7 +106,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
                 <div key={i} className="flex items-center gap-2 text-xs">
                   <span className={cn("font-bold w-5", i === 0 ? "text-[#ECB22E]" : "text-[#CFC3CF]")}>#{i + 1}</span>
                   <span className="flex-1 text-[#616061] truncate">{p.title}</span>
-                  <span className="text-[#7C3AED] font-bold">{p.reach.toLocaleString()}</span>
+                  <span className="text-[#000000] font-bold">{p.reach.toLocaleString()}</span>
                   <span className="text-[#CFC3CF]">{p.agent}</span>
                 </div>
               ))}
@@ -143,7 +143,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
               {data.lenaAnalysis.recommendations.map((r, i) => (
                 <p key={i} className="text-xs text-[#1D1C1D] font-bold">{i + 1}. {r}</p>
               ))}
-              <button className="mt-3 text-xs text-[#7C3AED] font-bold hover:underline">📋 Gerar tarefa baseada nessa análise →</button>
+              <button className="mt-3 text-xs text-[#000000] font-bold hover:underline">📋 Gerar tarefa baseada nessa análise →</button>
             </div>
           </div>
         </Card>

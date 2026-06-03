@@ -24,11 +24,11 @@ const CHALLENGES = [
 const NETWORKS = ["Instagram", "LinkedIn", "Pinterest", "Blog"]
 
 const AGENTS = [
-  { name: "Maya", color: "#ff385c", steps: [0,4], img: "/agents/Maya.png" },
-  { name: "Bruno", color: "#2563eb", steps: [1,3], img: "/agents/Bruno.png" },
-  { name: "Lena", color: "#2bac76", steps: [2], img: "/agents/Lena.png" },
-  { name: "Carlos", color: "#d97706", steps: [6], img: "/agents/Carlos.png" },
-  { name: "Diego", color: "#dc2626", steps: [5], img: "/agents/Diego.png" },
+  { name: "Maya", color: "#000000", steps: [0,4], img: "/agents/Maya.png" },
+  { name: "Bruno", color: "#000000", steps: [1,3], img: "/agents/Bruno.png" },
+  { name: "Lena", color: "#000000", steps: [2], img: "/agents/Lena.png" },
+  { name: "Carlos", color: "#000000", steps: [6], img: "/agents/Carlos.png" },
+  { name: "Diego", color: "#000000", steps: [5], img: "/agents/Diego.png" },
 ]
 
 function getAgent(step: number) { return AGENTS.find(a => a.steps.includes(step)) }
@@ -122,7 +122,7 @@ export default function OnboardingPage() {
   // ── Final screen: "Sua agência está pronta!" ──
   if (showFinal) {
     return (
-      <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center p-4">
+      <div className="min-h-screen bg-editor-bg flex items-center justify-center p-4">
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -135,11 +135,11 @@ export default function OnboardingPage() {
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  className="w-14 h-14 mx-auto rounded-full border-2 border-white/10 border-t-[#ff385c]/50"
+                  className="w-14 h-14 mx-auto rounded-full border-2 border-white/10 border-t-[#000000]/50"
                 />
                 <div className="space-y-1">
-                  <p className="text-sm text-white/60">Criando sua agencia...</p>
-                  <p className="text-[11px] text-white/20">Contratando agentes, organizando escritorio, preparando a primeira daily</p>
+                  <p className="text-sm text-editor-ink">Criando sua agencia...</p>
+                  <p className="text-[11px] text-editor-muted">Contratando agentes, organizando escritorio, preparando a primeira daily</p>
                 </div>
               </div>
             ) : (
@@ -149,14 +149,14 @@ export default function OnboardingPage() {
                 transition={{ duration: 0.6 }}
                 className="space-y-6"
               >
-                <div className="w-20 h-20 mx-auto rounded-2xl bg-gradient-to-br from-[#2bac76]/20 to-[#2563eb]/20 flex items-center justify-center ring-2 ring-[#2bac76]/10">
-                  <Sparkles className="w-8 h-8 text-[#2bac76]/60" />
+                <div className="w-20 h-20 mx-auto  bg-gradient-to-br from-[#000000]/20 to-[#000000]/20 flex items-center justify-center ring-2 ring-[#000000]/10">
+                  <Sparkles className="w-8 h-8 text-[#000000]/60" />
                 </div>
                 <div className="space-y-3">
                   <h2 className="text-xl font-bold text-white">
                     ✨ Sua agencia esta pronta!
                   </h2>
-                  <p className="text-[12px] text-white/30 max-w-[280px] mx-auto leading-relaxed">
+                  <p className="text-[12px] text-editor-muted max-w-[280px] mx-auto leading-relaxed">
                     {companyName} foi criada com 5 agentes especializados.
                     Eles ja estao no escritorio te esperando para a primeira daily.
                   </p>
@@ -166,25 +166,25 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-5 gap-2 pt-2">
                   {AGENTS.map((a) => (
                     <div key={a.name} className="flex flex-col items-center gap-1">
-                      <div className="w-10 h-10 rounded-lg ring-1 ring-white/[0.04] overflow-hidden">
+                      <div className="w-10 h-10  ring-1 ring-white/[0.04] overflow-hidden">
                         {a.img ? <img src={a.img} className="w-full h-full object-cover" alt={a.name} /> :
-                        <div className="w-full h-full flex items-center justify-center text-white/60 text-[10px] font-bold" style={{ backgroundColor: a.color + "20" }}>{a.name[0]}</div>}
+                        <div className="w-full h-full flex items-center justify-center text-editor-ink text-[10px] font-bold" style={{ backgroundColor: a.color + "20" }}>{a.name[0]}</div>}
                       </div>
-                      <span className="text-[8px] text-white/15">{a.name}</span>
+                      <span className="text-[8px] text-editor-muted">{a.name}</span>
                     </div>
                   ))}
                 </div>
 
                 <div className="space-y-2 pt-2">
-                  <p className="text-[12px] text-white/30">
+                  <p className="text-[12px] text-editor-muted">
                     Vou reunir o time agora para a primeira daily.
                   </p>
-                  <p className="text-[11px] text-white/20">
+                  <p className="text-[11px] text-editor-muted">
                     Voce precisa estar presente para alinhar tudo com eles.
                   </p>
                   <button
                     onClick={enterOffice}
-                    className="mt-3 px-8 py-2.5 rounded-xl bg-[#ff385c] hover:bg-[#ff385c]/80 text-white text-sm font-medium transition-all active:scale-95"
+                    className="mt-3 px-8 py-2.5  bg-[#000000] hover:bg-[#000000]/80 text-white text-sm font-medium transition-all active:scale-95"
                   >
                     Entrar no escritorio →
                   </button>
@@ -198,7 +198,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0a0a0b] flex items-center justify-center p-4">
+    <div className="min-h-screen bg-editor-bg flex items-center justify-center p-4">
       <div className="absolute inset-0 opacity-[0.02]"><iframe src="http://localhost:3100" className="w-full h-full border-0 pointer-events-none" /></div>
 
       <motion.div key={step} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="relative z-10 w-full max-w-[440px]">
@@ -206,17 +206,17 @@ export default function OnboardingPage() {
           {Array.from({ length: TOTAL }).map((_, i) => (<div key={i} className={cn("w-1.5 h-1.5 rounded-full transition-all", i <= step ? "bg-white/40" : "bg-white/[0.06]")} />))}
         </div>
 
-        <div className="bg-[#111] border border-white/[0.04] rounded-xl p-6 shadow-[0_0_40px_rgba(255,255,255,0.015)]">
+        <div className="bg-editor-surface border border-editor-border  p-6 shadow-[0_0_40px_rgba(255,255,255,0.015)]">
           {agent && (
             <div className="flex items-end gap-2 mb-4">
               {agent.img ? (
-                <img src={agent.img} className="w-8 h-8 rounded-lg object-cover flex-shrink-0" alt={agent.name} />
+                <img src={agent.img} className="w-8 h-8  object-cover flex-shrink-0" alt={agent.name} />
               ) : (
                 <div className="w-7 h-7 rounded flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: agent.color + "30" }}>{agent.name[0]}</div>
               )}
-              <div className="bg-white/[0.03] border border-white/[0.05] rounded-lg rounded-bl-sm px-3 py-2 max-w-[300px]">
-                <p className="text-[11px] font-semibold text-white/60">{agent.name}</p>
-                <p className="text-[11px] text-white/30">
+              <div className="bg-white/[0.03] border border-editor-border  rounded-bl-sm px-3 py-2 max-w-[300px]">
+                <p className="text-[11px] font-semibold text-editor-ink">{agent.name}</p>
+                <p className="text-[11px] text-editor-muted">
                   {step === 0 && "Primeiro: me conta o nome da sua empresa!"}
                   {step === 1 && `E o que a ${companyName || "empresa"} faz?`}
                   {step === 2 && "Qual o maior problema?"}
@@ -231,13 +231,13 @@ export default function OnboardingPage() {
           )}
 
           {step === 0 && (
-            <input className="w-full bg-transparent border-0 border-b border-white/[0.08] py-2 text-lg font-semibold text-white/80 placeholder-white/10 focus:outline-none focus:border-white/20" placeholder="Nome da sua empresa" value={companyName} onChange={e => setCompanyName(e.target.value)} autoFocus />
+            <input className="w-full bg-transparent border-0 border-b border-editor-border py-2 text-lg font-semibold text-editor-ink placeholder-white/10 focus:outline-none focus:border-white/20" placeholder="Nome da sua empresa" value={companyName} onChange={e => setCompanyName(e.target.value)} autoFocus />
           )}
 
           {step === 1 && (
             <div className="grid grid-cols-4 gap-1.5">
               {INDUSTRIES.map(ind => (
-                <button key={ind} onClick={() => setIndustry(ind)} className={cn("p-2 rounded-lg border text-[11px] text-center transition-all", industry === ind ? "border-white/20 bg-white/[0.04] text-white/70" : "border-white/[0.04] bg-transparent text-white/30 hover:border-white/[0.08]")}>{ind}</button>
+                <button key={ind} onClick={() => setIndustry(ind)} className={cn("p-2  border text-[11px] text-center transition-all", industry === ind ? "border-white/20 bg-white/[0.04] text-editor-ink" : "border-editor-border bg-transparent text-editor-muted hover:border-editor-border")}>{ind}</button>
               ))}
             </div>
           )}
@@ -245,7 +245,7 @@ export default function OnboardingPage() {
           {step === 2 && (
             <div className="space-y-1">
               {CHALLENGES.map(ch => (
-                <button key={ch.id} onClick={() => setChallenge(ch.id)} className={cn("w-full text-left p-2.5 rounded-lg border text-[11px] transition-all", challenge === ch.id ? "border-white/15 bg-white/[0.03] text-white/60" : "border-white/[0.04] bg-transparent text-white/25 hover:border-white/[0.08]")}>{ch.label}</button>
+                <button key={ch.id} onClick={() => setChallenge(ch.id)} className={cn("w-full text-left p-2.5  border text-[11px] transition-all", challenge === ch.id ? "border-white/15 bg-white/[0.03] text-editor-ink" : "border-editor-border bg-transparent text-editor-muted hover:border-editor-border")}>{ch.label}</button>
               ))}
             </div>
           )}
@@ -253,7 +253,7 @@ export default function OnboardingPage() {
           {step === 3 && (
             <div className="flex flex-wrap gap-1.5">
               {NETWORKS.map(nw => { const sel = networks.includes(nw); return (
-                <button key={nw} onClick={() => setNetworks(prev => prev.includes(nw) ? prev.filter(n => n !== nw) : [...prev, nw])} className={cn("px-3 py-1.5 rounded-lg border text-[11px] transition-all", sel ? "border-white/20 bg-white/[0.04] text-white/60" : "border-white/[0.04] bg-transparent text-white/25 hover:border-white/[0.08]")}>{nw}</button>
+                <button key={nw} onClick={() => setNetworks(prev => prev.includes(nw) ? prev.filter(n => n !== nw) : [...prev, nw])} className={cn("px-3 py-1.5  border text-[11px] transition-all", sel ? "border-white/20 bg-white/[0.04] text-editor-ink" : "border-editor-border bg-transparent text-editor-muted hover:border-editor-border")}>{nw}</button>
               )})}
             </div>
           )}
@@ -261,28 +261,28 @@ export default function OnboardingPage() {
           {step === 4 && (
             <div className="space-y-3">
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                <label className="text-[10px] text-white/20 block mb-1">O que voce vende?</label>
-                <input className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-xs text-white/60 placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: Roupas femininas artesanais..." value={whatYouSell} onChange={e => setWhatYouSell(e.target.value)} />
+                <label className="text-[10px] text-editor-muted block mb-1">O que voce vende?</label>
+                <input className="w-full bg-white/[0.02] border border-editor-border  px-3 py-2 text-xs text-editor-ink placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: Roupas femininas artesanais..." value={whatYouSell} onChange={e => setWhatYouSell(e.target.value)} />
               </motion.div>
               <AnimatePresence>
                 {whatYouSell && (
                   <motion.div initial={{ opacity: 0, y: 12, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }} exit={{ opacity: 0, y: -8, height: 0 }} transition={{ duration: 0.25 }}>
-                    <label className="text-[10px] text-white/20 block mb-1">Cliente ideal</label>
-                    <input className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-xs text-white/60 placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: Mulheres 25-40..." value={idealCustomer} onChange={e => setIdealCustomer(e.target.value)} />
+                    <label className="text-[10px] text-editor-muted block mb-1">Cliente ideal</label>
+                    <input className="w-full bg-white/[0.02] border border-editor-border  px-3 py-2 text-xs text-editor-ink placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: Mulheres 25-40..." value={idealCustomer} onChange={e => setIdealCustomer(e.target.value)} />
                   </motion.div>
                 )}
               </AnimatePresence>
               <AnimatePresence>
                 {idealCustomer && (
                   <motion.div initial={{ opacity: 0, y: 12, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }} exit={{ opacity: 0, y: -8, height: 0 }} transition={{ duration: 0.25 }}>
-                    <label className="text-[10px] text-white/20 block mb-1">Tom da marca</label>
-                    <input className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-xs text-white/60 placeholder-white/10 focus:outline-none focus:border-white/15" placeholder='Ex: "descontraido e proximo"' value={brandTone} onChange={e => setBrandTone(e.target.value)} />
+                    <label className="text-[10px] text-editor-muted block mb-1">Tom da marca</label>
+                    <input className="w-full bg-white/[0.02] border border-editor-border  px-3 py-2 text-xs text-editor-ink placeholder-white/10 focus:outline-none focus:border-white/15" placeholder='Ex: "descontraido e proximo"' value={brandTone} onChange={e => setBrandTone(e.target.value)} />
                   </motion.div>
                 )}
                 {brandTone && (
                   <motion.div initial={{ opacity: 0, y: 12, height: 0 }} animate={{ opacity: 1, y: 0, height: "auto" }} exit={{ opacity: 0, y: -8, height: 0 }} transition={{ duration: 0.25 }}>
-                    <label className="text-[10px] text-white/20 block mb-1">Objetivos (separados por virgula)</label>
-                    <input className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-xs text-white/60 placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: aumentar vendas, fidelizar clientes, lancar produto" value={goals} onChange={e => setGoals(e.target.value)} />
+                    <label className="text-[10px] text-editor-muted block mb-1">Objetivos (separados por virgula)</label>
+                    <input className="w-full bg-white/[0.02] border border-editor-border  px-3 py-2 text-xs text-editor-ink placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: aumentar vendas, fidelizar clientes, lancar produto" value={goals} onChange={e => setGoals(e.target.value)} />
                   </motion.div>
                 )}
               </AnimatePresence>
@@ -292,22 +292,22 @@ export default function OnboardingPage() {
           {step === 5 && (
             <div className="space-y-3">
               <div className="flex gap-2">
-                <input className="flex-1 bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-xs text-white/60 placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="https://seusite.com" value={website} onChange={e => setWebsite(e.target.value)} />
-                <button onClick={scanSite} disabled={!website || scanning || scanDone} className={cn("px-3 py-2 rounded-lg text-[11px] font-medium transition-all", scanDone ? "bg-white/[0.04] text-white/30" : scanning ? "bg-white/[0.02] text-white/10" : "bg-white/[0.05] text-white/50 hover:bg-white/[0.08]")}>
+                <input className="flex-1 bg-white/[0.02] border border-editor-border  px-3 py-2 text-xs text-editor-ink placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="https://seusite.com" value={website} onChange={e => setWebsite(e.target.value)} />
+                <button onClick={scanSite} disabled={!website || scanning || scanDone} className={cn("px-3 py-2  text-[11px] font-medium transition-all", scanDone ? "bg-white/[0.04] text-editor-muted" : scanning ? "bg-white/[0.02] text-editor-muted" : "bg-white/[0.05] text-editor-muted hover:bg-white/[0.08]")}>
                   {scanDone ? <CheckCircle2 className="w-3.5 h-3.5" /> : scanning ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Ler"}
                 </button>
               </div>
               {scanning && (
                 <div className="space-y-1">
                   {["Acessando...", "Identificando...", "Mapeando...", "Extraindo..."].map((s, i) => (
-                    <div key={i} className="flex items-center gap-2 text-[10px]">{scanSteps.includes(i) ? <CheckCircle2 className="w-3 h-3 text-white/20" /> : i === scanSteps.length ? <Loader2 className="w-3 h-3 text-white/30 animate-spin" /> : <div className="w-3 h-3 rounded-full border border-white/[0.06]" />}<span className={scanSteps.includes(i) ? "text-white/20" : i === scanSteps.length ? "text-white/40" : "text-white/10"}>{s}</span></div>
+                    <div key={i} className="flex items-center gap-2 text-[10px]">{scanSteps.includes(i) ? <CheckCircle2 className="w-3 h-3 text-editor-muted" /> : i === scanSteps.length ? <Loader2 className="w-3 h-3 text-editor-muted animate-spin" /> : <div className="w-3 h-3 rounded-full border border-editor-border" />}<span className={scanSteps.includes(i) ? "text-editor-muted" : i === scanSteps.length ? "text-editor-muted" : "text-editor-muted"}>{s}</span></div>
                   ))}
                 </div>
               )}
-              <button onClick={() => { setScanDone(true); next() }} className="text-white/10 text-[10px] hover:text-white/25">Nao tenho site — pular</button>
+              <button onClick={() => { setScanDone(true); next() }} className="text-editor-muted text-[10px] hover:text-editor-muted">Nao tenho site — pular</button>
               <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                <label className="text-[10px] text-white/20 block mb-1 mt-3">Concorrentes (opcional)</label>
-                <input className="w-full bg-white/[0.02] border border-white/[0.05] rounded-lg px-3 py-2 text-xs text-white/60 placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: concorrente1.com.br, concorrente2.com.br" value={competitors} onChange={e => setCompetitors(e.target.value)} />
+                <label className="text-[10px] text-editor-muted block mb-1 mt-3">Concorrentes (opcional)</label>
+                <input className="w-full bg-white/[0.02] border border-editor-border  px-3 py-2 text-xs text-editor-ink placeholder-white/10 focus:outline-none focus:border-white/15" placeholder="Ex: concorrente1.com.br, concorrente2.com.br" value={competitors} onChange={e => setCompetitors(e.target.value)} />
               </motion.div>
             </div>
           )}
@@ -315,31 +315,31 @@ export default function OnboardingPage() {
           {step === 6 && (
             <div className="space-y-2">
               {["Instagram","Google Search Console","LinkedIn","Canva"].map(int => (
-                <div key={int} className="flex items-center justify-between p-2.5 rounded-lg border border-white/[0.04]">
-                  <span className="text-[11px] text-white/40">{int}</span>
-                  <button className="px-3 py-1 rounded border border-white/[0.06] text-[10px] text-white/20 hover:bg-white/[0.03]">Conectar</button>
+                <div key={int} className="flex items-center justify-between p-2.5  border border-editor-border">
+                  <span className="text-[11px] text-editor-muted">{int}</span>
+                  <button className="px-3 py-1 rounded border border-editor-border text-[10px] text-editor-muted hover:bg-white/[0.03]">Conectar</button>
                 </div>
               ))}
-              <button onClick={next} className="text-white/10 text-[10px] hover:text-white/25 block mx-auto mt-3">Fazer depois</button>
+              <button onClick={next} className="text-editor-muted text-[10px] hover:text-editor-muted block mx-auto mt-3">Fazer depois</button>
             </div>
           )}
 
           {step === 7 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between"><span className="text-[11px] text-white/30">Daily</span><select className="bg-white/[0.02] border border-white/[0.05] rounded px-2 py-1 text-[11px] text-white/50" value={dailyTime} onChange={e => setDailyTime(e.target.value)}>{["07:00","08:00","09:00","10:00"].map(t => <option key={t}>{t}</option>)}</select></div>
-              <div className="flex items-center justify-between"><span className="text-[11px] text-white/30">Weekly</span><select className="bg-white/[0.02] border border-white/[0.05] rounded px-2 py-1 text-[11px] text-white/50" value={weeklyDay} onChange={e => setWeeklyDay(e.target.value)}>{[{v:"monday",l:"Segunda"},{v:"tuesday",l:"Terca"}].map(d => <option key={d.v} value={d.v}>{d.l}</option>)}</select></div>
+              <div className="flex items-center justify-between"><span className="text-[11px] text-editor-muted">Daily</span><select className="bg-white/[0.02] border border-editor-border rounded px-2 py-1 text-[11px] text-editor-muted" value={dailyTime} onChange={e => setDailyTime(e.target.value)}>{["07:00","08:00","09:00","10:00"].map(t => <option key={t}>{t}</option>)}</select></div>
+              <div className="flex items-center justify-between"><span className="text-[11px] text-editor-muted">Weekly</span><select className="bg-white/[0.02] border border-editor-border rounded px-2 py-1 text-[11px] text-editor-muted" value={weeklyDay} onChange={e => setWeeklyDay(e.target.value)}>{[{v:"monday",l:"Segunda"},{v:"tuesday",l:"Terca"}].map(d => <option key={d.v} value={d.v}>{d.l}</option>)}</select></div>
               <div>
-                <span className="text-[11px] text-white/30 block mb-1">Metodo</span>
+                <span className="text-[11px] text-editor-muted block mb-1">Metodo</span>
                 {[{v:"KANBAN",l:"Kanban"},{v:"SPRINTS",l:"Sprints"}].map(m => (
-                  <button key={m.v} onClick={() => setWorkMode(m.v)} className={cn("w-full text-left p-2 rounded border text-[11px] mt-1", workMode === m.v ? "border-white/15 bg-white/[0.03] text-white/50" : "border-white/[0.04] text-white/25")}>{m.l}</button>
+                  <button key={m.v} onClick={() => setWorkMode(m.v)} className={cn("w-full text-left p-2 rounded border text-[11px] mt-1", workMode === m.v ? "border-white/15 bg-white/[0.03] text-editor-muted" : "border-editor-border text-editor-muted")}>{m.l}</button>
                 ))}
               </div>
             </div>
           )}
 
-          <div className="flex items-center justify-between mt-5 pt-4 border-t border-white/[0.06]">
-            {step > 0 ? <button onClick={() => setStep(step - 1)} className="text-white/15 hover:text-white/30 text-[11px] flex items-center gap-1"><ArrowLeft className="w-3 h-3" />Voltar</button> : <div />}
-            <button onClick={step === 0 ? createOrg : next} disabled={loading || (step === 0 && !companyName)} className={cn("px-6 py-2 rounded-lg text-[11px] font-medium transition-all flex items-center gap-2", (step === TOTAL - 1 || step === 0) ? "bg-white/10 text-white/70 hover:bg-white/15" : "bg-white/[0.04] text-white/40 hover:bg-white/[0.08]", (loading || (step === 0 && !companyName)) && "opacity-30")}>
+          <div className="flex items-center justify-between mt-5 pt-4 border-t border-editor-border">
+            {step > 0 ? <button onClick={() => setStep(step - 1)} className="text-editor-muted hover:text-editor-muted text-[11px] flex items-center gap-1"><ArrowLeft className="w-3 h-3" />Voltar</button> : <div />}
+            <button onClick={step === 0 ? createOrg : next} disabled={loading || (step === 0 && !companyName)} className={cn("px-6 py-2  text-[11px] font-medium transition-all flex items-center gap-2", (step === TOTAL - 1 || step === 0) ? "bg-white/10 text-editor-ink hover:bg-white/15" : "bg-white/[0.04] text-editor-muted hover:bg-white/[0.08]", (loading || (step === 0 && !companyName)) && "opacity-30")}>
               {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
               {step === 0 ? "Comecar" : step === TOTAL - 1 ? "Criar agencia" : "Proximo"}
               <ArrowRight className="w-3 h-3" />

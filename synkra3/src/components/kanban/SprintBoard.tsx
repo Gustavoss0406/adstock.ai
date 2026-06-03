@@ -18,20 +18,20 @@ export function SprintBoard({ tasks, agents, sprintName, startDate, endDate, onC
   const pct = tasks.length > 0 ? Math.round((completed / tasks.length) * 100) : 0
 
   return (
-    <div className="h-full flex flex-col bg-[#0a0a0b]">
-      <div className="flex items-center justify-between px-5 py-3 border-b border-white/[0.04] flex-shrink-0">
+    <div className="h-full flex flex-col bg-editor-bg">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-editor-border flex-shrink-0">
         <div>
-          <h2 className="text-xs font-bold text-white/50">{sprintName || "Sprint Atual"}</h2>
-          {startDate && <p className="text-[9px] text-white/15 mt-0.5">{startDate} → {endDate || "..."}</p>}
+          <h2 className="text-xs font-bold text-editor-muted">{sprintName || "Sprint Atual"}</h2>
+          {startDate && <p className="text-[9px] text-editor-muted mt-0.5">{startDate} → {endDate || "..."}</p>}
         </div>
         <div className="flex items-center gap-3">
           <div className="text-right">
             <div className="h-1 w-28 rounded-full bg-white/[0.04] overflow-hidden">
               <motion.div className="h-full rounded-full bg-white/25" initial={{ width: 0 }} animate={{ width: `${pct}%` }} />
             </div>
-            <p className="text-[9px] text-white/15 mt-0.5">{completed}/{tasks.length} · {pct}%</p>
+            <p className="text-[9px] text-editor-muted mt-0.5">{completed}/{tasks.length} · {pct}%</p>
           </div>
-          <button onClick={onCreateTask} className="flex items-center gap-1 px-2.5 py-1.5 rounded text-[10px] font-medium text-white/35 hover:text-white/60 hover:bg-white/[0.04] transition-colors">
+          <button onClick={onCreateTask} className="flex items-center gap-1 px-2.5 py-1.5 rounded text-[10px] font-medium text-white/35 hover:text-editor-ink hover:bg-white/[0.04] transition-colors">
             <Plus className="w-3 h-3" />Tarefa
           </button>
         </div>
@@ -42,21 +42,21 @@ export function SprintBoard({ tasks, agents, sprintName, startDate, endDate, onC
             const dayTasks = tasks.filter(t => (t.day || 0) === di || (t.day === undefined && di === 0))
             return (
               <div key={day} className="flex flex-col min-h-0">
-                <div className="text-center pb-2 mb-2 border-b border-white/[0.04] flex-shrink-0">
-                  <p className="text-[10px] font-semibold text-white/20 uppercase tracking-wider">{day}</p>
-                  <p className="text-[9px] text-white/10">{dayTasks.length}</p>
+                <div className="text-center pb-2 mb-2 border-b border-editor-border flex-shrink-0">
+                  <p className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider">{day}</p>
+                  <p className="text-[9px] text-editor-muted">{dayTasks.length}</p>
                 </div>
-                <div className="flex-1 rounded-lg border border-white/[0.04] bg-white/[0.01] p-2 space-y-1.5 overflow-y-auto">
+                <div className="flex-1  border border-editor-border bg-white/[0.01] p-2 space-y-1.5 overflow-y-auto">
                   {dayTasks.map(task => (
                     <motion.div key={task.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                       className={cn(
-                        "p-2 rounded-lg border border-white/[0.04] bg-[#111]",
-                        task.priority === "CRITICAL" && "border-l-2 border-l-[#ff385c]"
+                        "p-2  border border-editor-border bg-editor-surface",
+                        task.priority === "CRITICAL" && "border-l-2 border-l-[#000000]"
                       )}
                     >
-                      <p className="text-[11px] text-white/50 truncate">{task.title}</p>
+                      <p className="text-[11px] text-editor-muted truncate">{task.title}</p>
                       <div className="flex items-center justify-between mt-1.5">
-                        <span className={cn("text-[8px]", task.priority === "CRITICAL" ? "text-[#ff385c]/60" : task.priority === "HIGH" ? "text-[#ecb22e]/60" : "text-white/10")}>{task.priority}</span>
+                        <span className={cn("text-[8px]", task.priority === "CRITICAL" ? "text-[#000000]/60" : task.priority === "HIGH" ? "text-[#000000]/60" : "text-editor-muted")}>{task.priority}</span>
                         {task.assignedTo && (
                           <div className="flex -space-x-1">
                             {agents.filter(a => a.id === task.assignedTo).slice(0, 1).map(a => (

@@ -77,7 +77,7 @@ export function ChatMessage({ msg, onReact }: { msg: AgentMessage; onReact?: (ms
   const initials = getAgentInitials(msg.agent.name)
 
   return (
-    <div className="group flex gap-3 py-1 px-2 -mx-2 rounded-lg hover:bg-[#F8F8F8] transition-colors">
+    <div className="group flex gap-3 py-1 px-2 -mx-2  hover:bg-[#F8F8F8] transition-colors">
       <div className={cn("w-8 h-8 rounded-md bg-gradient-to-br flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5", gradient)}>
         {initials}
       </div>
@@ -129,7 +129,7 @@ function ApprovalCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
         </div>
         <p className="text-[15px] text-[#1D1C1D] font-bold mb-2">Arte pronta para aprovação! 🎨</p>
 
-        <div className="rounded-lg border border-[#DDDDDD] bg-[#F8F8F8] p-4 mb-3">
+        <div className=" border border-[#DDDDDD] bg-[#F8F8F8] p-4 mb-3">
           <div className="text-center text-[#CFC3CF] text-sm mb-2">📐 {msg.approvalData.specs}</div>
           <p className="text-sm text-[#616061] italic mb-2">"{msg.approvalData.copy}"</p>
           <p className="text-xs text-[#CFC3CF]">📅 Publicação sugerida: {msg.approvalData.publishDate}</p>
@@ -151,9 +151,9 @@ function ApprovalCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
 
         {/* CEO approval buttons */}
         <div className="flex gap-2">
-          <button onClick={() => setVote("approve")} className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", vote === "approve" ? "bg-[#059669] text-white" : "border border-[#DDDDDD] text-[#059669] hover:bg-[#059669]/5")}>✅ Aprovar</button>
-          <button onClick={() => setVote("review")} className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", vote === "review" ? "bg-[#2563EB] text-white" : "border border-[#DDDDDD] text-[#2563EB] hover:bg-[#2563EB]/5")}>✏️ Revisão</button>
-          <button onClick={() => setVote("reject")} className={cn("flex-1 py-2 rounded-lg text-xs font-bold transition-all", vote === "reject" ? "bg-[#E01E5A] text-white" : "border border-[#DDDDDD] text-[#E01E5A] hover:bg-[#E01E5A]/5")}>❌ Reprovar</button>
+          <button onClick={() => setVote("approve")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "approve" ? "bg-[#059669] text-white" : "border border-[#DDDDDD] text-[#059669] hover:bg-[#059669]/5")}>✅ Aprovar</button>
+          <button onClick={() => setVote("review")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "review" ? "bg-[#2563EB] text-white" : "border border-[#DDDDDD] text-[#2563EB] hover:bg-[#2563EB]/5")}>✏️ Revisão</button>
+          <button onClick={() => setVote("reject")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "reject" ? "bg-[#E01E5A] text-white" : "border border-[#DDDDDD] text-[#E01E5A] hover:bg-[#E01E5A]/5")}>❌ Reprovar</button>
         </div>
       </div>
     </div>
@@ -167,7 +167,7 @@ function ConflictCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
   const { agentA, agentB } = msg.conflictData
 
   return (
-    <div className="my-3 p-4 rounded-lg border border-[#ECB22E]/20 bg-[#ECB22E]/5">
+    <div className="my-3 p-4  border border-[#ECB22E]/20 bg-[#ECB22E]/5">
       <div className="flex items-center gap-2 mb-3">
         <AlertTriangle className="w-4 h-4 text-[#ECB22E]" />
         <span className="text-sm font-bold text-[#1D1C1D]">Conflito Detectado</span>
@@ -175,7 +175,7 @@ function ConflictCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="p-3 rounded-lg bg-white border border-[#DDDDDD]">
+        <div className="p-3  bg-white border border-[#DDDDDD]">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-3 h-3 rounded-full" style={{ backgroundColor: agentA.color }} />
             <span className="text-sm font-bold text-[#1D1C1D]">{agentA.name} diz:</span>
@@ -183,7 +183,7 @@ function ConflictCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
           <p className="text-xs text-[#616061] italic leading-relaxed">"{agentA.quote}"</p>
           <p className="text-[10px] text-[#CFC3CF] mt-2">Peso: {agentA.weight}/100</p>
         </div>
-        <div className="p-3 rounded-lg bg-white border border-[#DDDDDD]">
+        <div className="p-3  bg-white border border-[#DDDDDD]">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-3 h-3 rounded-full" style={{ backgroundColor: agentB.color }} />
             <span className="text-sm font-bold text-[#1D1C1D]">{agentB.name} diz:</span>
@@ -195,9 +195,9 @@ function ConflictCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
 
       <p className="text-xs font-bold text-[#1D1C1D] mb-2">Com quem você concorda?</p>
       <div className="flex gap-2">
-        <button className="flex-1 py-2 rounded-lg text-xs font-bold border border-[#7C3AED] text-[#7C3AED] hover:bg-[#7C3AED]/5">🟣 {agentA.name} está certa</button>
-        <button className="flex-1 py-2 rounded-lg text-xs font-bold border border-[#059669] text-[#059669] hover:bg-[#059669]/5">🟢 {agentB.name} está certa</button>
-        <button className="flex-1 py-2 rounded-lg text-xs font-bold border border-[#DDDDDD] text-[#616061] hover:bg-[#F8F8F8]">🤝 Meio a meio</button>
+        <button className="flex-1 py-2  text-xs font-bold border border-[#000000] text-[#000000] hover:bg-[#000000]/5">🟣 {agentA.name} está certa</button>
+        <button className="flex-1 py-2  text-xs font-bold border border-[#059669] text-[#059669] hover:bg-[#059669]/5">🟢 {agentB.name} está certa</button>
+        <button className="flex-1 py-2  text-xs font-bold border border-[#DDDDDD] text-[#616061] hover:bg-[#F8F8F8]">🤝 Meio a meio</button>
       </div>
     </div>
   )
@@ -219,14 +219,14 @@ function AlertCard({ msg }: { msg: AgentMessage }) {
           <span className="text-[11px] text-[#CFC3CF]">{formatDate(msg.timestamp, "relative")}</span>
         </div>
 
-        <div className="p-3 rounded-lg border border-[#E01E5A]/10 bg-[#E01E5A]/5">
+        <div className="p-3  border border-[#E01E5A]/10 bg-[#E01E5A]/5">
           <p className="text-sm font-bold text-[#E01E5A] mb-1">⚠️ Alerta de Métricas</p>
           <p className="text-xs text-[#616061]">{msg.alertData.metric}</p>
           <p className="text-xs text-[#616061] mt-1">{msg.alertData.impact}</p>
           <p className="text-xs text-[#1D1C1D] font-bold mt-2">{msg.alertData.recommendation}</p>
           <div className="flex gap-2 mt-3">
-            <button className="px-3 py-1.5 rounded-lg border border-[#DDDDDD] text-xs font-bold hover:bg-[#F8F8F8]">📊 Ver Dashboard</button>
-            <button className="px-3 py-1.5 rounded-lg border border-[#DDDDDD] text-xs font-bold hover:bg-[#F8F8F8]">🔔 Notificar {msg.alertData.link}</button>
+            <button className="px-3 py-1.5  border border-[#DDDDDD] text-xs font-bold hover:bg-[#F8F8F8]">📊 Ver Dashboard</button>
+            <button className="px-3 py-1.5  border border-[#DDDDDD] text-xs font-bold hover:bg-[#F8F8F8]">🔔 Notificar {msg.alertData.link}</button>
           </div>
         </div>
       </div>
@@ -279,7 +279,7 @@ export function ChatComposer({ channel, onSend, agentColors }: { channel: string
   return (
     <div className="relative">
       {showMentions && (
-        <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-[#DDDDDD] rounded-lg shadow-elevated p-1 z-10">
+        <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-[#DDDDDD]  shadow-elevated p-1 z-10">
           {agents.filter(a => a.toLowerCase().startsWith((text.split("@").pop() || "").toLowerCase())).map(name => (
             <button key={name} onClick={() => handleMention(name)} className="w-full text-left px-3 py-2 rounded-md hover:bg-[#F8F8F8] text-sm font-bold flex items-center gap-2">
               <span className="w-3 h-3 rounded-full" style={{ backgroundColor: agentColors[name] }} /> {name}
@@ -298,7 +298,7 @@ export function ChatComposer({ channel, onSend, agentColors }: { channel: string
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend() } }}
         />
-        <button onClick={handleSend} disabled={!text.trim()} className="w-8 h-8 rounded-md bg-[#7C3AED] text-white flex items-center justify-center disabled:opacity-30 hover:bg-[#6D28D9] transition-colors">
+        <button onClick={handleSend} disabled={!text.trim()} className="w-8 h-8 rounded-md bg-[#000000] text-white flex items-center justify-center disabled:opacity-30 hover:bg-[#6D28D9] transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
         </button>
       </div>
