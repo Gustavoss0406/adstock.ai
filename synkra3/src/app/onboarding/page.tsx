@@ -153,7 +153,7 @@ export default function OnboardingPage() {
                   <Sparkles className="w-8 h-8 text-[#000000]/60" />
                 </div>
                 <div className="space-y-3">
-                  <h2 className="text-xl font-bold text-white">
+                  <h2 className="text-xl font-bold text-black">
                     ✨ Sua agencia esta pronta!
                   </h2>
                   <p className="text-[12px] text-editor-muted max-w-[280px] mx-auto leading-relaxed">
@@ -184,7 +184,7 @@ export default function OnboardingPage() {
                   </p>
                   <button
                     onClick={enterOffice}
-                    className="mt-3 px-8 py-2.5  bg-[#000000] hover:bg-[#000000]/80 text-white text-sm font-medium transition-all active:scale-95"
+                    className="mt-3 px-8 py-2.5  bg-[#000000] hover:bg-[#000000]/80 text-black text-sm font-medium transition-all active:scale-95"
                   >
                     Entrar no escritorio →
                   </button>
@@ -212,7 +212,7 @@ export default function OnboardingPage() {
               {agent.img ? (
                 <img src={agent.img} className="w-8 h-8  object-cover flex-shrink-0" alt={agent.name} />
               ) : (
-                <div className="w-7 h-7 rounded flex items-center justify-center text-white text-[10px] font-bold" style={{ backgroundColor: agent.color + "30" }}>{agent.name[0]}</div>
+                <div className="w-7 h-7 rounded flex items-center justify-center text-black text-[10px] font-bold" style={{ backgroundColor: agent.color + "30" }}>{agent.name[0]}</div>
               )}
               <div className="bg-white/[0.03] border border-editor-border  rounded-bl-sm px-3 py-2 max-w-[300px]">
                 <p className="text-[11px] font-semibold text-editor-ink">{agent.name}</p>

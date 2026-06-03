@@ -141,7 +141,7 @@ function ApprovalCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
             <div key={i} className="flex items-center gap-2 text-xs">
               <span className={cn("w-2 h-2 rounded-pill")} style={{ backgroundColor: v.color }} />
               <span className="font-bold text-[#1D1C1D]">{v.name}</span>
-              <span className={v.vote === "approve" ? "text-[#059669]" : v.vote === "warn" ? "text-[#ECB22E]" : "text-[#CFC3CF]"}>
+              <span className={v.vote === "approve" ? "text-black" : v.vote === "warn" ? "text-[#ECB22E]" : "text-[#CFC3CF]"}>
                 {v.vote === "approve" ? "✅" : v.vote === "warn" ? "⚠️" : "—"}
               </span>
               <span className="text-[#616061]">{v.comment}</span>
@@ -151,9 +151,9 @@ function ApprovalCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
 
         {/* CEO approval buttons */}
         <div className="flex gap-2">
-          <button onClick={() => setVote("approve")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "approve" ? "bg-[#059669] text-white" : "border border-[#DDDDDD] text-[#059669] hover:bg-[#059669]/5")}>✅ Aprovar</button>
-          <button onClick={() => setVote("review")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "review" ? "bg-[#2563EB] text-white" : "border border-[#DDDDDD] text-[#2563EB] hover:bg-[#2563EB]/5")}>✏️ Revisão</button>
-          <button onClick={() => setVote("reject")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "reject" ? "bg-[#E01E5A] text-white" : "border border-[#DDDDDD] text-[#E01E5A] hover:bg-[#E01E5A]/5")}>❌ Reprovar</button>
+          <button onClick={() => setVote("approve")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "approve" ? "bg-black text-white" : "border border-[#DDDDDD] text-black hover:bg-black/5")}>✅ Aprovar</button>
+          <button onClick={() => setVote("review")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "review" ? "bg-black text-white" : "border border-[#DDDDDD] text-black hover:bg-black/5")}>✏️ Revisão</button>
+          <button onClick={() => setVote("reject")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "reject" ? "bg-black text-white" : "border border-[#DDDDDD] text-black hover:bg-black/5")}>❌ Reprovar</button>
         </div>
       </div>
     </div>
@@ -196,7 +196,7 @@ function ConflictCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
       <p className="text-xs font-bold text-[#1D1C1D] mb-2">Com quem você concorda?</p>
       <div className="flex gap-2">
         <button className="flex-1 py-2  text-xs font-bold border border-[#000000] text-[#000000] hover:bg-[#000000]/5">🟣 {agentA.name} está certa</button>
-        <button className="flex-1 py-2  text-xs font-bold border border-[#059669] text-[#059669] hover:bg-[#059669]/5">🟢 {agentB.name} está certa</button>
+        <button className="flex-1 py-2  text-xs font-bold border border-[#059669] text-black hover:bg-black/5">🟢 {agentB.name} está certa</button>
         <button className="flex-1 py-2  text-xs font-bold border border-[#DDDDDD] text-[#616061] hover:bg-[#F8F8F8]">🤝 Meio a meio</button>
       </div>
     </div>
@@ -219,8 +219,8 @@ function AlertCard({ msg }: { msg: AgentMessage }) {
           <span className="text-[11px] text-[#CFC3CF]">{formatDate(msg.timestamp, "relative")}</span>
         </div>
 
-        <div className="p-3  border border-[#E01E5A]/10 bg-[#E01E5A]/5">
-          <p className="text-sm font-bold text-[#E01E5A] mb-1">⚠️ Alerta de Métricas</p>
+        <div className="p-3  border border-[#E01E5A]/10 bg-black/5">
+          <p className="text-sm font-bold text-black mb-1">⚠️ Alerta de Métricas</p>
           <p className="text-xs text-[#616061]">{msg.alertData.metric}</p>
           <p className="text-xs text-[#616061] mt-1">{msg.alertData.impact}</p>
           <p className="text-xs text-[#1D1C1D] font-bold mt-2">{msg.alertData.recommendation}</p>

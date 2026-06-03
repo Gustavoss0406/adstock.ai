@@ -98,10 +98,10 @@ export function AgentProfile({ agent, orgId, onClose, onPromote, onFire }: Agent
               {charImage(agent.name) ? (
                 <img src={charImage(agent.name)!} className="w-16 h-16  object-cover border-2 border-white/20" alt={agent.name} />
               ) : (
-                <div className="w-16 h-16  bg-white/20 flex items-center justify-center text-white font-bold text-2xl">{initials}</div>
+                <div className="w-16 h-16  bg-white/20 flex items-center justify-center {agent.name} font-bold text-2xl">{initials}</div>
               )}
               <div className="pb-0.5">
-                <h2 className="text-xl font-bold text-white">{agent.name}</h2>
+                <h2 className="text-xl font-bold {agent.name}">{agent.name}</h2>
                 <p className="text-editor-muted text-xs">{getRoleLabel(agent.role)}</p>
               </div>
             </div>
@@ -115,7 +115,7 @@ export function AgentProfile({ agent, orgId, onClose, onPromote, onFire }: Agent
             </div>
 
             {/* Status + Time */}
-            <div className="flex items-center gap-4 text-xs text-white/35">
+            <div className="flex items-center gap-4 text-xs {agent.name}/35">
               <span className="flex items-center gap-1"><span className={cn("w-1.5 h-1.5 rounded-pill", agent.status === "WORKING" ? "bg-[#000000]" : agent.status === "ACTIVE" ? "bg-[#000000]" : "bg-[#444]")} />{agent.status === "WORKING" ? "Trabalhando" : agent.status === "ACTIVE" ? "Online" : "Offline"}</span>
               <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{timeLabel} na equipe</span>
             </div>
@@ -154,7 +154,7 @@ export function AgentProfile({ agent, orgId, onClose, onPromote, onFire }: Agent
                 <div className="space-y-1">
                   {colleagues.slice(0, 4).map(c => (
                     <div key={c.id} className="flex items-center gap-2 text-xs">
-                      {charImage(c.name) ? <img src={charImage(c.name)!} className="w-5 h-5 rounded object-cover" alt={c.name} /> : <div className={cn("w-5 h-5 rounded flex items-center justify-center text-white text-[7px] font-bold", getAgentGradient(c.role))}>{getAgentInitials(c.name)}</div>}
+                      {charImage(c.name) ? <img src={charImage(c.name)!} className="w-5 h-5 rounded object-cover" alt={c.name} /> : <div className={cn("w-5 h-5 rounded flex items-center justify-center {agent.name} text-[7px] font-bold", getAgentGradient(c.role))}>{getAgentInitials(c.name)}</div>}
                       <span className="text-editor-muted">{c.name}</span>
                       <span className="text-editor-muted text-[10px]">{getRoleLabel(c.role)}</span>
                     </div>
@@ -199,7 +199,7 @@ export function AgentProfile({ agent, orgId, onClose, onPromote, onFire }: Agent
                 <div className="absolute inset-0 bg-black/50" onClick={() => setShowFire(false)} />
                 <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="relative bg-editor-surface border border-editor-border  p-5 max-w-sm w-full mx-4">
                   <div className="text-center mb-4">
-                    {charImage(agent.name) ? <img src={charImage(agent.name)!} className="w-12 h-12  object-cover mx-auto mb-2 opacity-50" alt={agent.name} /> : <div className={cn("w-12 h-12  flex items-center justify-center text-white font-bold text-lg mx-auto mb-2 opacity-50", gradient)}>{initials}</div>}
+                    {charImage(agent.name) ? <img src={charImage(agent.name)!} className="w-12 h-12  object-cover mx-auto mb-2 opacity-50" alt={agent.name} /> : <div className={cn("w-12 h-12  flex items-center justify-center {agent.name} font-bold text-lg mx-auto mb-2 opacity-50", gradient)}>{initials}</div>}
                     <h3 className="font-semibold text-sm text-editor-ink">Demitir {agent.name}?</h3>
                     <p className="text-xs text-editor-muted mt-1">Performance: {Math.round(agent.performance)}%</p>
                   </div>
