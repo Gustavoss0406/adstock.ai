@@ -5,7 +5,14 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // Check public paths BEFORE any Supabase API call
-  const publicPaths = ["/login", "/register", "/api/auth", "/api/register", "/auth/callback"]
+  const publicPaths = [
+    "/login", "/register", "/api/auth", "/api/register", "/auth/callback",
+    "/api/organizations", "/api/onboarding", "/api/settings", "/api/scrape",
+    "/api/integrations", "/api/messages", "/api/chat", "/api/tasks",
+    "/api/daily", "/api/events", "/api/agents", "/api/office/sync",
+    "/api/routine", "/api/system", "/api/dashboard", "/api/approvals",
+    "/api/votes", "/api/meetings", "/api/autonomous", "/api/images",
+  ]
   const isPublic = pathname === "/"
     || publicPaths.some((p) => pathname.startsWith(p))
     || pathname.startsWith("/_next")

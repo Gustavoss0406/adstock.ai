@@ -94,8 +94,14 @@ export default function OnboardingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
+        redirect: "manual",
         body: JSON.stringify({ name: companyName, slug, description: `Agencia da ${companyName}` }),
       })
+      if (res.type === "opaqueredirect" || res.status === 0) {
+        toast.error("Sessao expirada. Faca login novamente.")
+        router.push("/login")
+        return
+      }
       const text = await res.text()
       let data: any = {}
       try { data = JSON.parse(text) } catch { console.error("[Create Org] Invalid JSON response:", text) }
