@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { ArrowRight, ArrowLeft, Loader2, CheckCircle2, Search, Sparkles } from "lucide-react"
 import { toast } from "sonner"
+import { createClient } from "@/lib/supabase/client"
 
 const TOTAL = 8
 
@@ -36,6 +37,7 @@ function getAgent(step: number) { return AGENTS.find(a => a.steps.includes(step)
 export default function OnboardingPage() {
   const router = useRouter()
   const { user: session, loading: authLoading } = useAuth()
+  const supabase = createClient()
   const [step, setStep] = useState(0)
   const [orgId, setOrgId] = useState("")
   const [loading, setLoading] = useState(false)
@@ -79,12 +81,27 @@ export default function OnboardingPage() {
   const createOrg = async () => {
     if (!companyName) return; setLoading(true)
     try {
+      // Verify session first
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        toast.error("Sessao expirada. Faca login novamente.")
+        router.push("/login")
+        return
+      }
+
       const slug = companyName.toLowerCase().replace(/[^a-z0-9]/g, "-") + "-" + Date.now().toString(36)
-      const res = await fetch("/api/organizations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: companyName, slug, description: `Agencia da ${companyName}` }) })
-      const data = await res.json()
+      const res = await fetch("/api/organizations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ name: companyName, slug, description: `Agencia da ${companyName}` }),
+      })
+      const text = await res.text()
+      let data: any = {}
+      try { data = JSON.parse(text) } catch { console.error("[Create Org] Invalid JSON response:", text) }
       if (!res.ok) {
-        console.error("[Create Org Error]", data)
-        throw new Error(data.error || "Erro ao criar")
+        console.error("[Create Org Error]", res.status, data)
+        throw new Error(data.error || `Erro ${res.status}`)
       }
       setOrgId(data.id); setStep(1)
       localStorage.setItem("onboarding_orgId", data.id)
