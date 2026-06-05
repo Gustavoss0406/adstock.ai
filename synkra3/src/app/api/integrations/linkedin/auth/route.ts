@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     client_id: clientId!,
     redirect_uri: redirectUri,
     response_type: "code",
-    scope: "openid profile email w_member_social",
+    scope: "r_liteprofile r_emailaddress",
     state,
   })
 

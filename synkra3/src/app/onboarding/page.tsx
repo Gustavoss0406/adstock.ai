@@ -62,6 +62,20 @@ export default function OnboardingPage() {
 
   useEffect(() => { if (!authLoading && !session) router.push("/login") }, [authLoading, session, router])
 
+  useEffect(() => {
+    const savedOrgId = localStorage.getItem("onboarding_orgId")
+    const savedStep = localStorage.getItem("onboarding_step")
+    if (savedOrgId) {
+      setOrgId(savedOrgId)
+      if (savedStep) {
+        const stepNum = parseInt(savedStep, 10)
+        if (stepNum > 0 && stepNum < TOTAL) {
+          setStep(stepNum)
+        }
+      }
+    }
+  }, [])
+
   const createOrg = async () => {
     if (!companyName) return; setLoading(true)
     try {
@@ -69,6 +83,7 @@ export default function OnboardingPage() {
       const res = await fetch("/api/organizations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: companyName, slug, description: `Agencia da ${companyName}` }) })
       if (!res.ok) throw new Error("Erro")
       const org = await res.json(); setOrgId(org.id); setStep(1)
+      localStorage.setItem("onboarding_orgId", org.id)
     } catch (err: any) { toast.error("Erro ao criar agencia") }
     finally { setLoading(false) }
   }
@@ -82,6 +97,7 @@ export default function OnboardingPage() {
     if (ns >= 5) { data.brandVoice = brandTone; data.targetAudience = idealCustomer; data.goals = goals ? goals.split(",").map((g: string) => g.trim()) : [] }
     if (ns >= 6) { data.website = website; data.competitors = competitors }
     await fetch("/api/onboarding", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, ...data }) })
+    localStorage.setItem("onboarding_step", ns.toString())
   }
 
   useEffect(() => {
@@ -125,6 +141,8 @@ export default function OnboardingPage() {
   }
 
   const enterOffice = () => {
+    localStorage.removeItem("onboarding_orgId")
+    localStorage.removeItem("onboarding_step")
     router.push(`/workspace/${orgId}`)
   }
 

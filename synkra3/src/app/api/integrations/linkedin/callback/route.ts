@@ -42,19 +42,25 @@ export async function GET(request: NextRequest) {
 
     const expiresAt = tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null
 
-    const profileRes = await fetch("https://api.linkedin.com/v2/userinfo", {
+    const profileRes = await fetch("https://api.linkedin.com/v2/me?projection=(id,localizedFirstName,localizedLastName,profilePicture(displayImage~digitalmediaAsset:playableStreams))", {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
     })
     const profile = await profileRes.json()
+
+    const emailRes = await fetch("https://api.linkedin.com/v2/emailAddress?q=members&projection=(elements*(handle~))", {
+      headers: { Authorization: `Bearer ${tokens.access_token}` },
+    })
+    const emailData = await emailRes.json()
+    const email = emailData.elements?.[0]?.["handle~"]?.emailAddress || ""
 
     const existing = await prisma.integration.findUnique({
       where: { organizationId_platform: { organizationId: orgId, platform: "linkedin" } },
     })
 
     const metadata = {
-      linkedinId: profile.sub,
-      name: profile.name,
-      email: profile.email,
+      linkedinId: profile.id,
+      name: `${profile.localizedFirstName || ""} ${profile.localizedLastName || ""}`.trim(),
+      email,
     }
 
     if (existing) {
