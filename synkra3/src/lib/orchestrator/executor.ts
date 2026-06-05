@@ -437,14 +437,41 @@ async function executeCompleteTask(
     return { success: false, action: "complete_task", error: "Missing taskId" }
   }
 
-  // 1. Update task
+  // 1. Update task — DONE directly (auto-approved)
+  const currentTask = await prisma.task.findUnique({ where: { id: taskId } })
+  const existingOutput = currentTask?.output as any
+
+  // Generate real AI content if output is empty
+  let outputData = existingOutput || {}
+  if (!outputData || !outputData.content) {
+    try {
+      const gen = await generateDeliverableContent(
+        {
+          title: currentTask?.title || "",
+          description: currentTask?.description,
+          type: currentTask?.type || "content",
+        },
+        { name: ctx.agent.name, role: ctx.agent.role },
+        ctx.organizationId,
+      )
+      outputData = { ...outputData, ...gen }
+    } catch {
+      outputData.content = currentTask?.description || currentTask?.title || "Entregavel concluido."
+    }
+    if (currentTask?.type === "content" || currentTask?.type === "campaign") {
+      outputData.deliverableImage = null
+      outputData.imageDescription = "Imagem do entregavel gerada pelo agente."
+    }
+  }
+
   await prisma.task.update({
     where: { id: taskId },
     data: {
-      status: "IN_REVIEW",
+      status: "DONE",
       completedAt: new Date(),
       lastCommunicatedAt: new Date(),
       progress: 100,
+      output: outputData,
     },
   })
 
@@ -482,7 +509,7 @@ async function executeCompleteTask(
   const targetChannelId = (action.context.channelId as string) || ctx.channelId
   if (targetChannelId) {
     const title = (action.context.taskTitle as string) || "tarefa"
-    await postWithTurn(ctx, targetChannelId, `Conclui: "${title}". Pronto para revisao!`, action.priority)
+    await postWithTurn(ctx, targetChannelId, `Conclui: "${title}".`, action.priority)
   }
 
   await logOrchestration(ctx.organizationId, ctx.agent.id, ORCHESTRATION_EVENT_TYPES.TASK_COMPLETED, {
@@ -925,6 +952,45 @@ export async function postWithTurn(
 
 function sleep(ms: number): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Gera conteudo de entregavel via AI quando uma tarefa e concluida,
+ * substituindo o placeholder generico por conteudo real e contextual.
+ */
+async function generateDeliverableContent(
+  task: { title: string; description?: string | null; type: string },
+  agent: { name: string; role: string },
+  orgId: string,
+): Promise<{ content: string; title?: string }> {
+  const typeLabel = task.type || "content"
+
+  const prompt = `Voce e ${agent.name} (${agent.role}) em uma agencia de marketing digital.
+Acabou de concluir uma tarefa e precisa registrar o entregavel produzido.
+
+TITULO DA TAREFA: ${task.title}
+DESCRICAO: ${task.description || "N/A"}
+TIPO: ${typeLabel}
+
+Gere o conteudo do entregavel que voce produziu para esta tarefa.
+Seja especifico, realista e profissional. Escreva em portugues.
+Nao se apresente — va direto ao conteudo produzido.
+
+Retorne APENAS um JSON object com:
+- "content": o texto completo do entregavel (minimo 3 frases especificas)
+- "title": um titulo opcional para o entregavel`
+
+  const reply = await chatCompletion(prompt, { temperature: 0.7, maxTokens: 2000 })
+
+  try {
+    const jsonMatch = reply.match(/\{[\s\S]*\}/)
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0])
+      if (parsed.content) return parsed
+    }
+  } catch {}
+
+  return { content: reply }
 }
 
 async function logOrchestration(

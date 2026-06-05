@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
+import { getSupabaseSession } from "@/lib/auth/server"
 import { NextRequest, NextResponse } from "next/server"
-import { authOptions } from "@/lib/auth"
 import { chatCompletion } from "@/lib/ai/client"
 import { requestTurn, releaseTurn, calculateResponseDelay, calculateTypingTime, getPersonality } from "@/lib/orchestrator/turns"
 import { detectConflict } from "@/lib/orchestrator/conflict"
@@ -53,7 +52,7 @@ async function handleUpdateTaskStatus(organizationId: string, taskTitle: string,
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getSupabaseSession()
   if (!session?.user?.id) return NextResponse.json({ error: "Nao autorizado" }, { status: 401 })
 
   try {

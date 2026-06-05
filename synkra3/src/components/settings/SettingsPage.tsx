@@ -54,7 +54,7 @@ export function SettingsPage({
   return (
     <div className="h-full overflow-y-auto bg-[#F8F8F8]">
       <div className="max-w-3xl mx-auto p-6">
-        <h2 className="font-bold text-xl text-black mb-6 flex items-center gap-2">⚙️ Configurações</h2>
+        <h2 className="font-bold text-xl text-foreground mb-6 flex items-center gap-2">⚙️ Configurações</h2>
 
         <div className="flex gap-6">
           {/* Tabs sidebar */}
@@ -65,7 +65,7 @@ export function SettingsPage({
                 onClick={() => setActiveTab(tab.id)}
                 className={cn(
                   "w-full text-left px-3 py-2  text-sm transition-colors flex items-center gap-2",
-                  activeTab === tab.id ? "bg-[#000000] text-white font-bold" : "text-[#616061] hover:bg-white hover:text-black"
+                  activeTab === tab.id ? "bg-primary text-primary-foreground font-bold" : "text-muted-foreground hover:bg-white hover:text-foreground"
                 )}
               >
                 <span>{tab.icon}</span> {tab.label}
@@ -78,19 +78,19 @@ export function SettingsPage({
             {/* Company */}
             {activeTab === "company" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-black mb-4">Perfil da Empresa</h3>
+                <h3 className="font-bold text-lg text-foreground mb-4">Perfil da Empresa</h3>
                 <div className="space-y-4">
                   <div>
-                    <label className="text-xs font-bold text-[#616061] block mb-1">Nome da empresa</label>
-                    <input className="w-full  border border-[#DDDDDD] px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#000000] focus:outline-none" defaultValue="Minha Agência" />
+                    <label className="text-xs font-bold text-muted-foreground block mb-1">Nome da empresa</label>
+                    <input className="w-full  border border-border px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#000000] focus:outline-none" defaultValue="Minha Agência" />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-[#616061] block mb-1">Website</label>
-                    <input className="w-full  border border-[#DDDDDD] px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#000000] focus:outline-none" placeholder="https://seusite.com" />
+                    <label className="text-xs font-bold text-muted-foreground block mb-1">Website</label>
+                    <input className="w-full  border border-border px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#000000] focus:outline-none" placeholder="https://seusite.com" />
                   </div>
                   <div>
-                    <label className="text-xs font-bold text-[#616061] block mb-1">Descrição</label>
-                    <textarea className="w-full  border border-[#DDDDDD] px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#000000] focus:outline-none h-20 resize-none" placeholder="Breve descrição da sua empresa..." />
+                    <label className="text-xs font-bold text-muted-foreground block mb-1">Descrição</label>
+                    <textarea className="w-full  border border-border px-3 py-2 text-sm bg-white focus:ring-2 focus:ring-[#000000] focus:outline-none h-20 resize-none" placeholder="Breve descrição da sua empresa..." />
                   </div>
                   <Button size="sm">Salvar</Button>
                 </div>
@@ -100,43 +100,43 @@ export function SettingsPage({
             {/* Routines */}
             {activeTab === "routines" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-black mb-4">⏰ Rotinas da Agência</h3>
+                <h3 className="font-bold text-lg text-foreground mb-4">⏰ Rotinas da Agência</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-[#616061] font-bold">Daily</span>
-                    <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white" value={dailyTime} onChange={e => setDailyTime(e.target.value)}>
+                    <span className="text-sm text-muted-foreground font-bold">Daily</span>
+                    <select className="border border-border  px-3 py-1.5 text-sm bg-white" value={dailyTime} onChange={e => setDailyTime(e.target.value)}>
                       {["07:00","08:00","09:00","10:00","11:00"].map(t => <option key={t}>{t}</option>)}
                     </select>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-[#616061] font-bold">Weekly</span>
+                    <span className="text-sm text-muted-foreground font-bold">Weekly</span>
                     <div className="flex items-center gap-2">
-                      <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white" value={weeklyDay} onChange={e => setWeeklyDay(e.target.value)}>
+                      <select className="border border-border  px-3 py-1.5 text-sm bg-white" value={weeklyDay} onChange={e => setWeeklyDay(e.target.value)}>
                         {[{v:"monday",l:"Segunda"},{v:"tuesday",l:"Terça"},{v:"wednesday",l:"Quarta"},{v:"thursday",l:"Quinta"},{v:"friday",l:"Sexta"}].map(d => <option key={d.v} value={d.v}>{d.l}</option>)}
                       </select>
                       <span className="text-sm text-[#999]">às</span>
-                      <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white" value={weeklyTime} onChange={e => setWeeklyTime(e.target.value)}>
+                      <select className="border border-border  px-3 py-1.5 text-sm bg-white" value={weeklyTime} onChange={e => setWeeklyTime(e.target.value)}>
                         {["08:00","09:00","10:00","11:00"].map(t => <option key={t}>{t}</option>)}
                       </select>
                     </div>
                   </div>
                   <div>
-                    <span className="text-sm text-[#616061] font-bold block mb-2">📋 Modo de trabalho</span>
+                    <span className="text-sm text-muted-foreground font-bold block mb-2">📋 Modo de trabalho</span>
                     <div className="space-y-2">
                       {[{v:"KANBAN",l:"Kanban — fluxo contínuo"},{v:"SPRINTS_1",l:"Sprint — 1 semana"},{v:"SPRINTS_2",l:"Sprint — 2 semanas"}].map(m => (
                         <label key={m.v} className="flex items-center gap-3 p-2.5  cursor-pointer hover:bg-[#F8F8F8]">
                           <input type="radio" name="workflow" className="sr-only" checked={workflow === m.v} onChange={() => setWorkflow(m.v)} />
-                          <div className={cn("w-4 h-4 rounded-pill border-2 flex items-center justify-center", workflow === m.v ? "border-[#000000]" : "border-[#DDDDDD]")}>
+                          <div className={cn("w-4 h-4 rounded-pill border-2 flex items-center justify-center", workflow === m.v ? "border-[#000000]" : "border-border")}>
                             {workflow === m.v && <div className="w-2 h-2 rounded-pill bg-[#000000]" />}
                           </div>
-                          <span className="text-sm text-[#616061]">{m.l}</span>
+                          <span className="text-sm text-muted-foreground">{m.l}</span>
                         </label>
                       ))}
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-[#616061] font-bold">Relatório semanal</span>
-                    <select className="border border-[#DDDDDD]  px-3 py-1.5 text-sm bg-white">
+                    <span className="text-sm text-muted-foreground font-bold">Relatório semanal</span>
+                    <select className="border border-border  px-3 py-1.5 text-sm bg-white">
                       <option>Domingo às 20:00</option>
                       <option>Segunda às 08:00</option>
                     </select>
@@ -149,29 +149,29 @@ export function SettingsPage({
             {/* Identity */}
             {activeTab === "identity" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-black mb-4">🎨 Identidade Visual</h3>
+                <h3 className="font-bold text-lg text-foreground mb-4">🎨 Identidade Visual</h3>
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-[#616061] font-bold">Cor primária</span>
+                    <span className="text-sm text-muted-foreground font-bold">Cor primária</span>
                     <div className="flex items-center gap-2">
                       <input type="color" defaultValue="#7C3AED" className="w-8 h-8 rounded cursor-pointer border-0" />
                       <span className="text-xs text-[#999]">#7C3AED</span>
                     </div>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-[#616061] font-bold">Cor secundária</span>
+                    <span className="text-sm text-muted-foreground font-bold">Cor secundária</span>
                     <div className="flex items-center gap-2">
                       <input type="color" defaultValue="#2563EB" className="w-8 h-8 rounded cursor-pointer border-0" />
                       <span className="text-xs text-[#999]">#2563EB</span>
                     </div>
                   </div>
                   <div>
-                    <span className="text-sm text-[#616061] font-bold block mb-2">Tom de voz</span>
+                    <span className="text-sm text-muted-foreground font-bold block mb-2">Tom de voz</span>
                     {["Formal e profissional","Descontraído e próximo","Jovem e irreverente","Técnico e especialista"].map(tone => (
                       <label key={tone} className="flex items-center gap-3 p-2  cursor-pointer hover:bg-[#F8F8F8]">
                         <input type="radio" name="tone" className="sr-only" defaultChecked={tone === "Descontraído e próximo"} />
-                        <div className="w-4 h-4 rounded-pill border-2 border-[#DDDDDD] flex items-center justify-center" />
-                        <span className="text-sm text-[#616061]">{tone}</span>
+                        <div className="w-4 h-4 rounded-pill border-2 border-border flex items-center justify-center" />
+                        <span className="text-sm text-muted-foreground">{tone}</span>
                       </label>
                     ))}
                   </div>
@@ -184,12 +184,12 @@ export function SettingsPage({
             {/* Billing */}
             {activeTab === "billing" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-black mb-4">💳 Plano e Faturamento</h3>
+                <h3 className="font-bold text-lg text-foreground mb-4">💳 Plano e Faturamento</h3>
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-3">
                     <div>
-                      <p className="text-sm font-bold text-black">Growth · R$197/mês</p>
-                      <p className="text-xs text-[#616061]">Próxima cobrança: 15 de Fevereiro</p>
+                      <p className="text-sm font-bold text-foreground">Growth · R$197/mês</p>
+                      <p className="text-xs text-muted-foreground">Próxima cobrança: 15 de Fevereiro</p>
                     </div>
                     <Badge variant="success" className="text-[10px]">Ativo</Badge>
                   </div>
@@ -200,7 +200,7 @@ export function SettingsPage({
                       { label: "Redes conectadas", current: 3, max: 4 },
                     ].map(u => (
                       <div key={u.label}>
-                        <div className="flex justify-between text-xs text-[#616061] mb-0.5">
+                        <div className="flex justify-between text-xs text-muted-foreground mb-0.5">
                           <span>{u.label}</span><span>{u.current}/{u.max}</span>
                         </div>
                         <div className="h-1.5 rounded-pill bg-[#F8F8F8] overflow-hidden">
@@ -217,13 +217,13 @@ export function SettingsPage({
                     { name: "Growth", price: "197", agents: 6, redes: 4, posts: 90, current: true },
                     { name: "Agency", price: "397", agents: 10, redes: "Ilimitado", posts: "Ilimitado" },
                   ].map(p => (
-                    <div key={p.name} className={cn("p-4  border text-center", (p as any).current ? "border-[#000000] bg-[#000000]/5" : "border-[#DDDDDD]")}>
+                    <div key={p.name} className={cn("p-4  border text-center", (p as any).current ? "border-[#000000] bg-[#000000]/5" : "border-border")}>
                       <h4 className="font-bold text-sm">{p.name}</h4>
-                      <p className="text-xl font-bold mt-1">R${p.price}<span className="text-xs text-[#616061]">/mês</span></p>
-                      <div className="text-[11px] text-[#616061] mt-2 space-y-0.5">
+                      <p className="text-xl font-bold mt-1">R${p.price}<span className="text-xs text-muted-foreground">/mês</span></p>
+                      <div className="text-[11px] text-muted-foreground mt-2 space-y-0.5">
                         <p>{p.agents} agentes</p><p>{p.redes} redes</p><p>{p.posts} posts</p>
                       </div>
-                      <button className={cn("mt-3 w-full py-1.5  text-xs font-bold", (p as any).current ? "bg-[#000000] text-white" : "border border-[#DDDDDD] text-[#616061]")}>
+                      <button className={cn("mt-3 w-full py-1.5  text-xs font-bold", (p as any).current ? "bg-primary text-primary-foreground" : "border border-border text-muted-foreground")}>
                         {(p as any).current ? "Plano atual" : p.price < "197" ? "Downgrade" : "Upgrade"}
                       </button>
                     </div>
@@ -235,7 +235,7 @@ export function SettingsPage({
             {/* Notifications */}
             {activeTab === "notifications" && (
               <Card className="p-6">
-                <h3 className="font-bold text-lg text-black mb-4">🔔 Notificações</h3>
+                <h3 className="font-bold text-lg text-foreground mb-4">🔔 Notificações</h3>
                 <div className="space-y-3">
                   {[
                     { label: "Daily iniciada", desc: "Notificar quando a daily começar" },
@@ -246,12 +246,12 @@ export function SettingsPage({
                   ].map(n => (
                     <div key={n.label} className="flex items-center justify-between py-2">
                       <div>
-                        <p className="text-sm font-bold text-black">{n.label}</p>
-                        <p className="text-xs text-[#616061]">{n.desc}</p>
+                        <p className="text-sm font-bold text-foreground">{n.label}</p>
+                        <p className="text-xs text-muted-foreground">{n.desc}</p>
                       </div>
                       <label className="relative inline-flex items-center cursor-pointer">
                         <input type="checkbox" className="sr-only peer" defaultChecked />
-                        <div className="w-9 h-5 bg-[#DDDDDD] rounded-pill peer-checked:bg-[#000000] after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-pill after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
+                        <div className="w-9 h-5 bg-border rounded-pill peer-checked:bg-[#000000] after:content-[''] after:absolute after:top-0.5 after:left-0.5 after:bg-white after:rounded-pill after:h-4 after:w-4 after:transition-all peer-checked:after:translate-x-4" />
                       </label>
                     </div>
                   ))}
@@ -262,7 +262,7 @@ export function SettingsPage({
             {/* Default for integrations tab */}
             {activeTab === "integrations" && (
               <Card className="p-6 text-center">
-                <p className="text-[#616061] text-sm">Acesse a página de Integrações para gerenciar suas conexões.</p>
+                <p className="text-muted-foreground text-sm">Acesse a página de Integrações para gerenciar suas conexões.</p>
               </Card>
             )}
           </div>
@@ -273,6 +273,6 @@ export function SettingsPage({
 }
 
 function Badge({ children, variant, className }: any) {
-  const colors: Record<string, string> = { success: "bg-black/10 text-black", outline: "border border-[#DDDDDD] text-[#616061]" }
+  const colors: Record<string, string> = { success: "bg-black/10 text-foreground", outline: "border border-border text-muted-foreground" }
   return <span className={cn("inline-flex items-center rounded-pill px-2.5 py-0.5 text-xs font-bold", colors[variant] || "", className)}>{children}</span>
 }

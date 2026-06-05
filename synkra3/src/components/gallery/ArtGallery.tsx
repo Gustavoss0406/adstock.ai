@@ -21,7 +21,7 @@ const MOCK_ARTWORKS: Artwork[] = [
 ]
 
 const STATUS_ICONS: Record<string, string> = { published: "publicado", pending: "pendente", review: "revisao" }
-const STATUS_COLORS: Record<string, string> = { published: "text-[#000000]", pending: "text-[#000000]", review: "text-[#000000]" }
+const STATUS_COLORS: Record<string, string> = { published: "text-success", pending: "text-warning", review: "text-primary" }
 
 export function ArtGallery() {
   const [selected, setSelected] = useState<Artwork | null>(null)

@@ -129,7 +129,7 @@ export const PERSONALITY_MODIFIERS: Record<string, PersonalityModifiers> = {
     typingSpeed: 80,       // Digita 80 palavras/min (rápida)
     participation: 0.9,    // 90% de chance de participar (muito participativa)
     minDelay: 3000,        // Mínimo 3s entre ações
-    workSpeed: 0.9,        // 10% mais rápida em tarefas (decisiva)
+    workSpeed: 1.2,        // 20% mais rápida em tarefas
     description: "Visionária, entusiasmada, impulsiva. Responde rápido e participa de tudo.",
   },
 
@@ -149,7 +149,7 @@ export const PERSONALITY_MODIFIERS: Record<string, PersonalityModifiers> = {
     typingSpeed: 60,       // 60 wpm
     participation: 0.6,    // 60% de participação (só fala com dados)
     minDelay: 8000,        // Mínimo 8s
-    workSpeed: 1.1,        // 10% mais lenta (analisa tudo profundamente)
+    workSpeed: 0.8,        // 20% mais lenta (analisa tudo profundamente)
     description: "Analítica, cética, direta. Só fala quando tem dados. Lenta mas precisa.",
   },
 
@@ -159,7 +159,7 @@ export const PERSONALITY_MODIFIERS: Record<string, PersonalityModifiers> = {
     typingSpeed: 45,       // 45 wpm (mais devagar)
     participation: 0.5,    // 50% de participação (quieto, focado)
     minDelay: 10000,       // Mínimo 10s
-    workSpeed: 1.3,        // 30% mais lento (perfeccionista)
+    workSpeed: 0.7,        // 30% mais lento (perfeccionista)
     description: "Criativo, perfeccionista, quieto. Fala pouco, trabalha com calma e precisão.",
   },
 
@@ -179,7 +179,7 @@ export const PERSONALITY_MODIFIERS: Record<string, PersonalityModifiers> = {
     typingSpeed: 70,       // 70 wpm
     participation: 0.75,   // 75% de participação
     minDelay: 4000,        // Mínimo 4s
-    workSpeed: 0.95,       // 5% mais rápida
+    workSpeed: 1.05,       // 5% mais rápida
     description: "Competitiva, analítica, ousada. Focada em performance e resultado.",
   },
 
@@ -460,12 +460,11 @@ export const ORCHESTRATION_EVENT_TYPES = {
  * porque o agente foca nelas; tasks normais levam o tempo padrão.
  */
 export const TASK_DURATION_ESTIMATES: Record<string, Record<string, number>> = {
-  content:   { LOW: 120, MEDIUM: 90, HIGH: 60, CRITICAL: 30 },
-  analysis:  { LOW: 150, MEDIUM: 120, HIGH: 90, CRITICAL: 45 },
-  technical: { LOW: 180, MEDIUM: 120, HIGH: 75, CRITICAL: 40 },
-  campaign:  { LOW: 240, MEDIUM: 180, HIGH: 120, CRITICAL: 60 },
-  // Default fallback
-  default:   { LOW: 120, MEDIUM: 90, HIGH: 60, CRITICAL: 30 },
+  content:   { LOW: 8, MEDIUM: 5, HIGH: 3, CRITICAL: 2 },
+  analysis:  { LOW: 10, MEDIUM: 6, HIGH: 4, CRITICAL: 3 },
+  technical: { LOW: 12, MEDIUM: 8, HIGH: 5, CRITICAL: 3 },
+  campaign:  { LOW: 15, MEDIUM: 10, HIGH: 6, CRITICAL: 4 },
+  default:   { LOW: 8, MEDIUM: 5, HIGH: 3, CRITICAL: 2 },
 }
 
 /**

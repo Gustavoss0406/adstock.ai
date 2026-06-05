@@ -1,11 +1,11 @@
 "use client"
 
-import { useSession } from "next-auth/react"
 import { useRouter } from "next/navigation"
 import { useQuery } from "@tanstack/react-query"
+import { useAuth } from "@/lib/auth/useAuth"
 
 export default function WorkspaceRouter() {
-  const { data: session, status } = useSession()
+  const { user, loading } = useAuth()
   const router = useRouter()
 
   const { data: orgs, isLoading } = useQuery({
@@ -14,18 +14,18 @@ export default function WorkspaceRouter() {
       const res = await fetch("/api/organizations")
       return res.json()
     },
-    enabled: status === "authenticated",
+    enabled: !!user,
   })
 
-  if (status === "loading" || isLoading) {
+  if (loading || isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="w-8 h-8 rounded-pill border-2 border-primary/30 border-t-primary animate-spin" />
+      <div className="min-h-screen bg-editor-bg flex items-center justify-center">
+        <div className="w-8 h-8 rounded-xl border-2 border-primary/30 border-t-primary animate-spin" />
       </div>
     )
   }
 
-  if (status === "unauthenticated") { router.push("/login"); return null }
+  if (!user) { router.push("/login"); return null }
   if (orgs?.length > 0) { router.push(`/workspace/${orgs[0].id}`); return null }
   router.push("/onboarding")
   return null

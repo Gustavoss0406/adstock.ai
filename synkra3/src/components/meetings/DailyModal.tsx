@@ -5,6 +5,20 @@ import { motion, AnimatePresence } from "framer-motion"
 import { cn, getAgentGradient, getAgentInitials, getRoleLabel } from "@/lib/utils"
 import { Agent } from "@prisma/client"
 import { X, PhoneOff, Mic, MicOff, Users, MessageSquare, Send, Sparkles, Check, PenLine } from "lucide-react"
+
+function AudioBars({ color }: { color: string }) {
+  const heights = [4, 8, 5, 10, 6, 9, 5, 11, 7, 8, 4, 7]
+  return (
+    <div className="flex items-end justify-center gap-[2px] h-5">
+      {heights.map((h, i) => (
+        <motion.div key={i} className={cn("w-[2px] rounded-pill", color)}
+          animate={{ height: [3, h, 3] }}
+          transition={{ duration: 0.5 + Math.random() * 0.3, repeat: Infinity, delay: i * 0.06 }}
+          style={{ minHeight: 3 }} />
+      ))}
+    </div>
+  )
+}
 import { toast } from "sonner"
 
 const AGENT_CHARS: Record<string, string> = {
@@ -432,25 +446,16 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
 
   // Meeting room seats: Maya in front, others around table
   const meetingSeats = [0, 1, 2, 3, 4]
-  const tableW = 480
-  const tableH = 240
-  const seats = [
-    { x: tableW / 2, y: -20 },         // top center — Maya (standing)
-    { x: tableW / 2, y: tableH + 20 },  // bottom center — CEO
-    { x: -20, y: tableH / 2 },          // left — agent
-    { x: tableW + 20, y: tableH / 2 },  // right — agent
-    { x: tableW / 2 + 60, y: tableH / 2 }, // right side — extra agent
-  ]
+  const gridCols = agentsActive.length <= 2 ? 2 : agentsActive.length <= 4 ? 3 : Math.min(agentsActive.length + 1, 4)
 
   return (
     <AnimatePresence>
-      {open && (
+      {open && !closing && (
         <motion.div
-          initial={isFirstDaily ? { opacity: 0, scale: 0.98 } : { opacity: 1 }}
-          animate={exitPhase === "leaving" ? { opacity: 0, scale: 1.03 } : { opacity: 1, scale: 1 }}
+          initial={{ opacity: 0 }} animate={exitPhase === "leaving" ? { opacity: 0, scale: 1.03 } : { opacity: 1, scale: 1 }}
           exit={{ opacity: 0 }}
           transition={{ duration: 0.6 }}
-          className="fixed inset-0 z-[100] bg-[#0a0a0a] flex flex-col"
+          className="fixed inset-0 z-[100] bg-editor-bg flex flex-col"
         >
           {/* Cinematic entry */}
           {isFirstDaily && cinematicPhase === "entering" && (
@@ -461,7 +466,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
               <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.5 }}
                 className="text-center space-y-6">
                 <motion.div
-                  className="w-20 h-20 mx-auto  bg-gradient-to-br from-[#000000] to-[#000000] flex items-center justify-center ring-4 ring-[#000000]/10"
+                  className="w-20 h-20 mx-auto  bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center ring-4 ring-primary/20"
                   animate={{ scale: [1, 1.05, 1] }} transition={{ duration: 1.5, repeat: Infinity }}
                 >
                   <img src="/agents/Maya.png" className="w-14 h-14  object-cover" alt="Maya" />
@@ -488,7 +493,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-12 h-12 mx-auto rounded-pill border-2 border-white/10 border-t-[#000000]/50"
+                  className="w-12 h-12 mx-auto rounded-pill border-2 border-white/10 border-t-primary/60"
                 />
                 <p className="text-sm text-editor-muted">Voltando ao escritorio...</p>
                 <p className="text-[11px] text-editor-muted">Agentes indo para suas mesas</p>
@@ -497,25 +502,25 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
           )}
 
           {/* Top bar */}
-          <div className="flex items-center justify-between px-4 py-2 border-b border-editor-border flex-shrink-0">
+          <div className="flex items-center justify-between px-4 py-2 border-b border-editor-border flex-shrink-0 rounded-t-xl">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-1.5">
                 <Users className="w-3.5 h-3.5 text-editor-muted" />
                 <span className="text-[11px] text-editor-muted">{agentsActive.length + 1} participantes</span>
               </div>
               {phase === "entering" && (
-                <span className="flex items-center gap-1 text-[10px] text-[#000000]/60">
+                <span className="flex items-center gap-1 text-[10px] text-primary/70">
                   <Sparkles className="w-3 h-3" /> Primeira Daily
                 </span>
               )}
               {phase === "awaiting_approval" && (
-                <span className="flex items-center gap-1 text-[10px] text-[#000000]/60">
-                  <span className="w-1.5 h-1.5 rounded-pill bg-[#000000] animate-pulse" /> Aguardando voce
+                <span className="flex items-center gap-1 text-[10px] text-warning/80">
+                  <span className="w-1.5 h-1.5 rounded-pill bg-warning animate-pulse" /> Aguardando voce
                 </span>
               )}
               {phase === "discussing" && (
-                <span className="flex items-center gap-1 text-[10px] text-[#000000]/60">
-                  <span className="w-1.5 h-1.5 rounded-pill bg-[#000000] animate-pulse" /> Em reuniao
+                <span className="flex items-center gap-1 text-[10px] text-primary/70">
+                  <span className="w-1.5 h-1.5 rounded-pill bg-primary animate-pulse" /> Em reuniao
                 </span>
               )}
               {phase === "completed" && <span className="text-[10px] text-editor-muted">Reuniao encerrada</span>}
@@ -533,7 +538,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
               {(phase === "joining") && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
                   <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                    className="w-10 h-10 border-2 border-white/10 border-t-[#000000]/50 rounded-pill" />
+                    className="w-10 h-10 border-2 border-white/10 border-t-primary/60 rounded-pill" />
                   <motion.p key={loadingStep} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                     className="text-[12px] text-editor-muted max-w-[250px] text-center">{LOADING_MESSAGES[loadingStep]}</motion.p>
                 </div>
@@ -541,108 +546,126 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
 
               {phase === "error" && (
                 <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
-                  <p className="text-[12px] text-[#000000]/60 text-center max-w-[250px]">Nao foi possivel iniciar a daily.</p>
+                  <p className="text-[12px] text-danger/70 text-center max-w-[250px]">Nao foi possivel iniciar a daily.</p>
                   <button onClick={() => { setPhase("joining"); runRef.current = false }}
                     className="px-4 py-2  bg-white/[0.06] hover:bg-white/[0.08] text-[11px] text-editor-muted transition-colors">Tentar novamente</button>
                 </div>
               )}
 
-              {/* Conference table + surrounding agents */}
+              {/* Meet-style participant grid */}
               {phase !== "joining" && (
-                <div className="relative" style={{ width: tableW + 80, height: tableH + 80 }}>
-                  {/* Table */}
-                  <motion.div
-                    initial={{ opacity: 0, scaleY: 0 }}
-                    animate={{ opacity: 1, scaleY: 1 }}
-                    transition={{ duration: 0.6 }}
-                    className="absolute rounded-pill border border-editor-border bg-white/[0.01]"
-                    style={{ left: 40, top: 40, width: tableW, height: tableH }}
-                  >
-                    <div className="absolute inset-0 rounded-pill bg-gradient-to-r from-transparent via-white/[0.015] to-transparent" />
-                    <div className="absolute inset-x-6 top-1/2 h-px bg-white/[0.03]" />
-                  </motion.div>
-
-                  {/* Whiteboard */}
-                  <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 0.4 }} transition={{ delay: 0.4 }}
-                    className="absolute  border border-editor-border bg-white/[0.01]"
-                    style={{ left: tableW / 2 - 60, top: -60, width: 120, height: 50 }}
-                  >
-                    <div className="p-1.5">
-                      <div className="w-full h-0.5 bg-white/[0.08] rounded-pill mb-1" />
-                      <div className="w-3/4 h-0.5 bg-white/[0.05] rounded-pill" />
-                    </div>
-                  </motion.div>
-
-                  {/* Agents at their seats */}
-                  {agentsActive.map((agent, idx) => {
-                    const isSpeaking = (phase === "discussing") && speakingIdx === agentsActive.indexOf(agent)
-                    const hasSpoken = speeches.some(s => s.agent === agent.name)
-                    const isThinking = isSpeaking && !hasSpoken
-                    const img = getAgentImage(agent.name)
-                    const gradient = getAgentGradient(agent.role)
-                    const isMaya = idx === 0
-
-                    // Maya stands at the top (front of room)
-                    const pos = isMaya
-                      ? { x: tableW / 2 - 32, y: -90 }
-                      : idx === 1 ? { x: 10, y: tableH / 2 - 32 }
-                      : idx === 2 ? { x: tableW - 20, y: tableH / 2 + 10 }
-                      : idx === 3 ? { x: tableW / 2 - 60, y: tableH + 10 }
-                      : { x: tableW / 2 + 10, y: tableH + 10 }
-
-                    return (
+                <div className="flex-1 p-6 flex items-center justify-center">
+                  <div className={cn("grid gap-4 w-full max-w-3xl", gridCols === 2 ? "grid-cols-2 max-w-md" : gridCols === 3 ? "grid-cols-3 max-w-xl" : "grid-cols-4")}>
+                    {/* CEO (user) card */}
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+                      className="relative flex flex-col items-center gap-2 p-6 rounded-2xl border-2 border-primary/30 bg-primary/[0.03] backdrop-blur-sm"
+                    >
                       <motion.div
-                        key={agent.id}
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: hasSpoken || isSpeaking ? 1 : 0.5, y: 0 }}
-                        transition={{ delay: 0.2 + idx * 0.1, type: "spring", stiffness: 200 }}
-                        className={cn(
-                          "absolute flex flex-col items-center gap-1 p-2  transition-all duration-500",
-                          isMaya && "p-3",
-                          isThinking ? "border border-[#000000]/30 bg-[#000000]/[0.04]" :
-                          isSpeaking ? "border border-[#000000]/30 bg-[#000000]/[0.04]" :
-                          hasSpoken ? "border border-editor-border bg-white/[0.01]" : ""
-                        )}
-                        style={{ left: pos.x + 40, top: pos.y + 40 }}
-                      >
-                        {isThinking && <motion.div className="absolute inset-0 " animate={{ boxShadow: ["0 0 15px rgba(37,99,235,0.1)", "0 0 25px rgba(37,99,235,0.15)", "0 0 15px rgba(37,99,235,0.1)"] }} transition={{ duration: 2, repeat: Infinity }} />}
-                        {isSpeaking && !isThinking && <motion.div className="absolute inset-0 " animate={{ boxShadow: ["0 0 15px rgba(43,172,118,0.1)", "0 0 25px rgba(43,172,118,0.15)", "0 0 15px rgba(43,172,118,0.1)"] }} transition={{ duration: 2, repeat: Infinity }} />}
-                        <div className="relative">
-                          {img ? <img src={img} className={cn(" object-cover", isMaya ? "w-16 h-16 ring-2 ring-[#000000]/20" : "w-12 h-12", isThinking && "ring-2 ring-[#000000] ring-offset-2 ring-offset-[#0a0a0a]", isSpeaking && !isThinking && "ring-2 ring-[#000000] ring-offset-2 ring-offset-[#0a0a0a]")} alt={agent.name} /> :
-                          <div className={cn(" flex items-center justify-center text-white font-bold", gradient, isMaya ? "w-16 h-16 text-lg" : "w-12 h-12 text-sm")}>{getAgentInitials(agent.name)}</div>}
-                          {isMaya && phase === "discussing" && <span className="absolute -top-1 -right-1 text-[8px]">🎤</span>}
-                          <span className={cn("absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-pill border border-[#0a0a0a]",
-                            isThinking ? "bg-[#000000] animate-pulse" : isSpeaking ? "bg-[#000000] animate-pulse" : hasSpoken ? "bg-[#000000]" : "bg-white/10")} />
+                        className="absolute inset-0 rounded-2xl"
+                        animate={{ boxShadow: ["0 0 15px rgba(99,102,241,0.08)", "0 0 30px rgba(99,102,241,0.12)", "0 0 15px rgba(99,102,241,0.08)"] }}
+                        transition={{ duration: 3, repeat: Infinity }}
+                      />
+                      <div className="relative w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center">
+                        <span className="text-2xl">👤</span>
+                        <motion.div
+                          className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-primary border-2 border-editor-bg"
+                          animate={{ scale: [1, 1.2, 1] }} transition={{ duration: 2, repeat: Infinity }}
+                        />
+                      </div>
+                      <span className="text-sm font-semibold text-editor-ink">Voce</span>
+                      <span className="text-[10px] text-editor-muted">CEO</span>
+                      {micActive && (
+                        <div className="flex items-end gap-[1.5px] h-4">
+                          {[3, 5, 4, 7, 4, 5, 3].map((h, i) => (
+                            <motion.div key={i} className="w-[2px] rounded-pill bg-primary"
+                              animate={{ height: [2, h, 2] }}
+                              transition={{ duration: 0.6, repeat: Infinity, delay: i * 0.08 }}
+                              style={{ minHeight: 2 }} />
+                          ))}
                         </div>
-                        <div className="text-center">
-                          <p className={cn("font-semibold text-editor-ink truncate", isMaya ? "text-[11px]" : "text-[9px]")}>{agent.name.split(" ")[0]}</p>
-                        </div>
-                        {isThinking && (
-                          <div className="flex items-center gap-1">
-                            {[0, 1, 2].map(i => <motion.span key={i} className="w-1 h-1 rounded-pill bg-[#000000]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />)}
-                          </div>
-                        )}
-                        {isSpeaking && !isThinking && (
-                          <div className="flex items-center gap-1">
-                            {[0, 1, 2].map(i => <motion.span key={i} className="w-1 h-1 rounded-pill bg-[#000000]" animate={{ opacity: [0.3, 1, 0.3] }} transition={{ duration: 0.8, repeat: Infinity, delay: i * 0.15 }} />)}
-                          </div>
-                        )}
-                      </motion.div>
-                    )
-                  })}
+                      )}
+                    </motion.div>
 
-                  {/* CEO chair (empty, user's position) */}
-                  <motion.div
-                    initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}
-                    className="absolute flex flex-col items-center gap-1"
-                    style={{ left: tableW / 2 - 24 + 40, top: tableH + 20 + 40 }}
-                  >
-                    <div className="w-12 h-12  border-2 border-dashed border-editor-border bg-transparent flex items-center justify-center">
-                      <span className="text-editor-muted text-[18px]">👤</span>
-                    </div>
-                    <span className="text-[9px] font-semibold text-editor-muted">CEO</span>
-                  </motion.div>
+                    {/* Agent cards */}
+                    {agentsActive.map((agent, idx) => {
+                      const isSpeaking = (phase === "discussing") && speakingIdx === agentsActive.indexOf(agent)
+                      const hasSpoken = speeches.some(s => s.agent === agent.name)
+                      const isThinking = isSpeaking && !hasSpoken
+                      const img = getAgentImage(agent.name)
+                      const gradient = getAgentGradient(agent.role)
+
+                      return (
+                        <motion.div
+                          key={agent.id}
+                          initial={{ opacity: 0, y: 20 }}
+                          animate={{ opacity: hasSpoken || isSpeaking ? 1 : 0.5, y: 0 }}
+                          transition={{ delay: 0.15 + idx * 0.1, type: "spring", stiffness: 200 }}
+                          className={cn(
+                            "relative flex flex-col items-center gap-2 p-6 rounded-2xl backdrop-blur-sm transition-all duration-500",
+                            isThinking ? "border-2 border-info/50 bg-info/[0.04] shadow-[0_0_30px_rgba(59,130,246,0.15)]" :
+                            isSpeaking && !isThinking ? "border-2 border-green-500/50 bg-green-500/[0.04] shadow-[0_0_30px_rgba(34,197,94,0.15)]" :
+                            hasSpoken ? "border border-editor-border bg-white/[0.01]" :
+                            "border border-editor-border bg-white/[0.01]"
+                          )}
+                        >
+                          {/* Glow animations */}
+                          {isThinking && (
+                            <motion.div className="absolute inset-0 rounded-2xl"
+                              animate={{ boxShadow: ["0 0 20px rgba(59,130,246,0.15)", "0 0 35px rgba(59,130,246,0.25)", "0 0 20px rgba(59,130,246,0.15)"] }}
+                              transition={{ duration: 2, repeat: Infinity }} />
+                          )}
+                          {isSpeaking && !isThinking && (
+                            <motion.div className="absolute inset-0 rounded-2xl"
+                              animate={{ boxShadow: ["0 0 20px rgba(34,197,94,0.15)", "0 0 35px rgba(34,197,94,0.25)", "0 0 20px rgba(34,197,94,0.15)"] }}
+                              transition={{ duration: 2, repeat: Infinity }} />
+                          )}
+
+                          {/* Avatar */}
+                          <div className="relative">
+                            {img ? (
+                              <img src={img} className={cn("rounded-full object-cover ring-2 ring-offset-2 ring-offset-editor-bg",
+                                isThinking ? "w-16 h-16 ring-info" :
+                                isSpeaking && !isThinking ? "w-16 h-16 ring-green-500" :
+                                idx === 0 ? "w-16 h-16 ring-primary/40" : "w-12 h-12 ring-transparent"
+                              )} alt={agent.name} />
+                            ) : (
+                              <div className={cn("rounded-full flex items-center justify-center text-white font-bold",
+                                gradient, idx === 0 ? "w-16 h-16 text-lg" : "w-12 h-12 text-sm"
+                              )}>{getAgentInitials(agent.name)}</div>
+                            )}
+                            {idx === 0 && phase === "discussing" && (
+                              <span className="absolute -top-1 -right-1 text-xs">🎤</span>
+                            )}
+                            {/* Status dot */}
+                            <motion.span
+                              className={cn("absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full border-2 border-editor-bg",
+                                isThinking ? "bg-info" : isSpeaking ? "bg-green-500" : hasSpoken ? "bg-success" : "bg-white/10"
+                              )}
+                              animate={isThinking || isSpeaking ? { scale: [1, 1.3, 1] } : {}}
+                              transition={{ duration: 1, repeat: Infinity }}
+                            />
+                          </div>
+
+                          {/* Name + role */}
+                          <div className="text-center">
+                            <p className={cn("font-semibold text-editor-ink truncate", idx === 0 ? "text-xs" : "text-[10px]")}>
+                              {agent.name.split(" ")[0]}
+                            </p>
+                            <p className="text-[9px] text-editor-muted">{getRoleLabel(agent.role)}</p>
+                          </div>
+
+                          {/* Animated audio bars */}
+                          {isThinking && (
+                            <AudioBars color="bg-info" />
+                          )}
+                          {isSpeaking && !isThinking && (
+                            <AudioBars color="bg-green-500" />
+                          )}
+                        </motion.div>
+                      )
+                    })}
+                  </div>
                 </div>
               )}
             </div>
@@ -650,7 +673,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
             {/* Chat panel */}
             {showChat && (
               <motion.div initial={{ x: 100, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: 100, opacity: 0 }}
-                className="w-[360px] bg-editor-panel border-l border-editor-border flex flex-col">
+                className="w-[360px] bg-editor-panel border-l border-editor-border flex flex-col rounded-xl">
                 <div className="px-4 py-2.5 border-b border-editor-border">
                   <p className="text-[11px] font-semibold text-editor-muted uppercase tracking-wider">#daily-standup</p>
                 </div>
@@ -673,7 +696,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                         <div>
                           <div className="flex items-center gap-1.5">
                             <span className="text-[11px] font-semibold text-editor-muted">{speech.agent}</span>
-                            {isSystem && <span className="text-[9px] text-[#000000]/60">sistema</span>}
+                            {isSystem && <span className="text-[9px] text-info/70">sistema</span>}
                           </div>
                           <p className="text-[11px] text-white/35 leading-relaxed mt-0.5 whitespace-pre-wrap">{speech.content}</p>
                         </div>
@@ -684,15 +707,15 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                   {/* Approval buttons */}
                   {phase === "awaiting_approval" && !approving && (
                     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-                      className="p-4  bg-white/[0.02] border border-editor-border space-y-3">
+                      className="p-4 rounded-xl bg-white/[0.02] border border-editor-border space-y-3">
                       <p className="text-[11px] text-editor-muted text-center">Aprovar as prioridades?</p>
                       <div className="flex gap-2">
                         <button onClick={handleApprove}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2  bg-[#000000]/10 hover:bg-[#000000]/20 text-[11px] text-[#000000] font-medium transition-colors">
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-[11px] text-primary font-medium transition-colors">
                           <Check className="w-3.5 h-3.5" />Sim, pode criar
                         </button>
                         <button onClick={handleAdjust}
-                          className="flex-1 flex items-center justify-center gap-1.5 py-2  bg-white/[0.04] hover:bg-white/[0.06] text-[11px] text-white/35 font-medium transition-colors">
+                          className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.06] text-[11px] text-white/35 font-medium transition-colors">
                           <PenLine className="w-3.5 h-3.5" />Quero ajustar
                         </button>
                       </div>
@@ -702,7 +725,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                   {/* Creating tasks spinner */}
                   {phase === "creating_tasks" && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="flex items-center gap-2 py-2">
-                      <div className="w-5 h-5 rounded-pill border-2 border-white/10 border-t-[#000000]/50 animate-spin" />
+                      <div className="w-5 h-5 rounded-pill border-2 border-white/10 border-t-primary/60 animate-spin" />
                       <span className="text-[11px] text-editor-muted">Maya esta criando os cards...</span>
                     </motion.div>
                   )}
@@ -710,19 +733,19 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                   {/* Tasks created notification */}
                   {phase === "discussing" && tasksCreated > 0 && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      className="p-3  bg-[#000000]/[0.03] border border-[#000000]/10 text-center">
-                      <span className="text-[11px] text-[#000000]/60">✨ {tasksCreated} cards criados e distribuidos!</span>
+                      className="p-3 rounded-xl bg-success/5 border border-success/20 text-center">
+                      <span className="text-[11px] text-success">✨ {tasksCreated} cards criados e distribuidos!</span>
                     </motion.div>
                   )}
 
                   {/* Quick replies */}
                   {quickReplies.length > 0 && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      className="p-3  bg-white/[0.02] border border-editor-border space-y-2">
+                      className="p-3 rounded-xl bg-white/[0.02] border border-editor-border space-y-2">
                       <p className="text-[10px] text-editor-muted">{quickReplyFor} pergunta:</p>
                       {quickReplies.map((reply, i) => (
                         <button key={i} onClick={() => handleQuickReply(reply)}
-                          className="w-full text-left px-3 py-1.5  bg-white/[0.03] hover:bg-white/[0.05] text-[11px] text-editor-muted hover:text-editor-ink transition-colors">
+                          className="w-full text-left px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.05] text-[11px] text-editor-muted hover:text-editor-ink transition-colors">
                           🎯 {reply}
                         </button>
                       ))}
@@ -732,7 +755,7 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                   {/* Summary + completion */}
                   {phase === "completed" && summary && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}
-                      className="p-3  bg-white/[0.02] border border-editor-border mt-2">
+                      className="p-3 rounded-xl bg-white/[0.02] border border-editor-border mt-2">
                       <p className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider mb-2">Resumo da Daily</p>
                       <div className="text-[10px] text-white/35 leading-relaxed whitespace-pre-wrap">
                         {summary.split("\n").map((line, i) => {
@@ -747,12 +770,12 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                   {phase === "completed" && (
                     <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="text-center pt-2 space-y-2">
                       <button onClick={handleClose}
-                        className="px-4 py-2  bg-[#000000]/10 hover:bg-[#000000]/20 text-[11px] font-medium text-[#000000] transition-colors">
+                        className="px-4 py-2 rounded-xl bg-primary/10 hover:bg-primary/20 text-[11px] font-medium text-primary transition-colors">
                         Ver Kanban
                       </button>
                       <br />
                       <button onClick={handleClose}
-                        className="px-4 py-2  bg-white/[0.04] hover:bg-white/[0.06] text-[11px] font-medium text-editor-muted hover:text-editor-ink transition-colors">
+                        className="px-4 py-2 rounded-xl bg-white/[0.04] hover:bg-white/[0.06] text-[11px] font-medium text-editor-muted hover:text-editor-ink transition-colors">
                         Voltar ao escritorio
                       </button>
                     </motion.div>
@@ -766,9 +789,9 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
                       <input type="text" value={commentInput} onChange={e => setCommentInput(e.target.value)}
                         onKeyDown={e => { if (e.key === "Enter") handleSendComment() }}
                         placeholder="Intervir na daily..."
-                        className="flex-1 px-2.5 py-1.5  bg-white/[0.03] border border-editor-border text-[11px] text-editor-muted placeholder-white/15 focus:outline-none focus:border-white/[0.1]" />
+                        className="flex-1 px-2.5 py-1.5 rounded-lg bg-white/[0.03] border border-editor-border text-[11px] text-editor-muted placeholder-white/15 focus:outline-none focus:border-white/[0.1]" />
                       <button onClick={handleSendComment} disabled={!commentInput.trim() || sendingComment}
-                        className="px-3 py-1.5  bg-white/[0.06] hover:bg-white/[0.1] disabled:opacity-20 text-[11px] text-editor-muted transition-colors">
+                        className="px-3 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] disabled:opacity-20 text-[11px] text-editor-muted transition-colors">
                         <Send className="w-3.5 h-3.5" />
                       </button>
                     </div>
@@ -779,13 +802,13 @@ export function DailyModal({ open, agents, orgId, onClose, isFirstDaily }: Daily
           </div>
 
           {/* Bottom bar */}
-          <div className="flex items-center justify-center gap-3 px-4 py-3 border-t border-editor-border flex-shrink-0">
+          <div className="flex items-center justify-center gap-3 px-4 py-3 border-t border-editor-border flex-shrink-0 rounded-b-xl">
             <button onClick={() => setMicActive(!micActive)}
-              className={cn("p-3 rounded-pill transition-all", micActive ? "bg-white/[0.06] text-editor-muted" : "bg-[#000000]/10 text-[#000000]/60")}>
+              className={cn("p-3 rounded-pill transition-all", micActive ? "bg-primary/10 text-primary" : "bg-muted text-muted-foreground")}>
               {micActive ? <Mic className="w-4 h-4" /> : <MicOff className="w-4 h-4" />}
             </button>
             <button onClick={handleClose}
-              className="p-3 rounded-pill bg-[#000000]/10 hover:bg-[#000000]/20 text-[#000000]/60 transition-colors">
+              className="p-3 rounded-pill bg-danger/10 hover:bg-danger/20 text-danger/70 transition-colors">
               <PhoneOff className="w-5 h-5" />
             </button>
           </div>

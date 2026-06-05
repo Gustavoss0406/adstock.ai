@@ -2,11 +2,9 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { Card } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
 import { cn, formatCurrency } from "@/lib/utils"
-import { Sparkles, UserPlus, Star, Zap, Brain, Loader2, Check } from "lucide-react"
+import { getAgentGradient, getAgentInitials } from "@/lib/utils"
+import { UserPlus, Loader2, Check, X, DollarSign, MapPin, Clock, Briefcase, ChevronLeft, ChevronRight } from "lucide-react"
 import { toast } from "sonner"
 
 interface Profile {
@@ -22,41 +20,78 @@ interface Profile {
 interface HireModalProps {
   orgId: string
   onHired?: () => void
-  onClose?: () => void
 }
 
-const roleIcons: Record<string, React.ReactNode> = {
-  SEO: <Zap className="w-4 h-4" />,
-  CREATIVE_DIRECTOR: <Star className="w-4 h-4" />,
-  MEDIA_BUYER: <Brain className="w-4 h-4" />,
-  COMMUNITY_MANAGER: <Sparkles className="w-4 h-4" />,
+const AGENT_CHARS: Record<string, string> = {
+  "Maya Ferreira": "/characters/Maya.png",
+  "Bruno Costa": "/characters/Bruno.png",
+  "Lena Souza": "/characters/Lena.png",
+  "Carlos Lima": "/characters/Carlos.png",
+  "Diego Ramos": "/characters/Diego.png",
 }
 
-const roleColors: Record<string, string> = {
-  SEO: "bg-black",
-  CREATIVE_DIRECTOR: "bg-black",
-  MEDIA_BUYER: "bg-black",
-  COMMUNITY_MANAGER: "bg-black",
+const ROLE_LABELS: Record<string, string> = {
+  STRATEGIST: "Estrategista",
+  DESIGNER: "Designer",
+  COPYWRITER: "Redator",
+  ANALYST: "Analista",
+  SOCIAL_MEDIA: "Social Media",
+  SEO: "Especialista SEO",
+  MEDIA_BUYER: "Midia Paga",
+  COMMUNITY_MANAGER: "Community Manager",
+  CREATIVE_DIRECTOR: "Dir. Criativo",
+  TRAFFIC_MANAGER: "Gestor de Trafego",
 }
 
-export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
+const ROLE_CATEGORIES: Record<string, string> = {
+  STRATEGIST: "Estrategia",
+  DESIGNER: "Criacao",
+  COPYWRITER: "Conteudo",
+  ANALYST: "Dados",
+  SOCIAL_MEDIA: "Redes Sociais",
+  SEO: "SEO",
+  MEDIA_BUYER: "Midia",
+  COMMUNITY_MANAGER: "Relacionamento",
+  CREATIVE_DIRECTOR: "Criacao",
+  TRAFFIC_MANAGER: "Performance",
+}
+
+export function HireModal({ orgId, onHired }: HireModalProps) {
+  const [open, setOpen] = useState(false)
   const [profiles, setProfiles] = useState<Profile[]>([])
   const [selected, setSelected] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [step, setStep] = useState<"browse" | "confirm" | "done">("browse")
-  const [hiredName, setHiredName] = useState("")
+  const [hiring, setHiring] = useState(false)
+  const [step, setStep] = useState<"browse" | "confirm" | "hired">("browse")
+  const [hiredProfile, setHiredProfile] = useState<Profile | null>(null)
 
-  const openModal = async () => {
+  const close = () => {
+    setOpen(false)
     setStep("browse")
     setSelected(null)
+    setProfiles([])
+    setHiredProfile(null)
+  }
+
+  const openModal = async () => {
+    setOpen(true)
+    setStep("browse")
+    setSelected(null)
+    setProfiles([])
+    setHiredProfile(null)
     const res = await fetch("/api/agents/hire")
     const data = await res.json()
     setProfiles(data)
   }
 
+  const selectProfile = (profile: Profile) => {
+    setSelected(profile.key)
+    setStep("confirm")
+  }
+
   const handleHire = async () => {
     if (!selected) return
-    setLoading(true)
+    setHiring(true)
+    const profile = profiles.find(p => p.key === selected)
     try {
       const res = await fetch("/api/agents/hire", {
         method: "POST",
@@ -64,11 +99,10 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
         body: JSON.stringify({ organizationId: orgId, profileKey: selected }),
       })
       const agent = await res.json()
-      setHiredName(agent.name)
-      setStep("done")
-      toast.success(`${agent.name} contratado! 🎉`)
+      setHiredProfile(profile || null)
+      setStep("hired")
+      toast.success(`${agent.name} contratado!`)
       onHired?.()
-      // Create pixel office session for new agent immediately
       fetch("/api/agents/bridge", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -77,137 +111,237 @@ export function HireModal({ orgId, onHired, onClose }: HireModalProps) {
     } catch {
       toast.error("Erro ao contratar")
     } finally {
-      setLoading(false)
+      setHiring(false)
     }
   }
 
+  const selectedProfile = profiles.find(p => p.key === selected)
+  const charImg = selectedProfile?.name ? AGENT_CHARS[selectedProfile.name] : null
+
   return (
     <>
-      <Button size="sm" variant="outline" onClick={openModal} className="text-black border-[#4A154B]/30 hover:bg-black/5">
-        <UserPlus className="w-3.5 h-3.5 mr-1" />Contratar
-      </Button>
+      <button
+        onClick={openModal}
+        className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium transition-all text-editor-muted hover:text-editor-ink hover:bg-white/[0.04]"
+      >
+        <UserPlus className="w-3 h-3" />Contratar
+      </button>
 
-      {/* Modal overlay */}
       <AnimatePresence>
-        {step !== "browse" || profiles.length > 0 ? (
-          <div className="fixed inset-0 z-50 flex items-center justify-center">
+        {open && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="absolute inset-0 bg-black/40"
-              onClick={step === "done" ? onClose : undefined}
+              className="absolute inset-0 bg-black/60"
+              onClick={close}
             />
+
             <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              initial={{ opacity: 0, scale: 0.97, y: 10 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white  shadow-2xl max-w-3xl w-full mx-4 max-h-[80vh] overflow-y-auto"
+              exit={{ opacity: 0, scale: 0.97, y: 10 }}
+              transition={{ duration: 0.2 }}
+              className="relative bg-editor-panel border border-editor-border max-w-2xl w-full max-h-[85vh] overflow-hidden flex flex-col"
+              onClick={(e) => e.stopPropagation()}
             >
               {/* Header */}
-              <div className="p-6 border-b border-[#DDDDDD]">
-                <div className="flex items-center gap-2 mb-1">
-                  <UserPlus className="w-5 h-5 text-black" />
-                  <h2 className="font-bold text-xl text-black">
-                    {step === "done" ? "Contratação concluída!" : "Abrir Vaga — Contratar Agente"}
+              <div className="flex items-center justify-between px-5 py-4 border-b border-editor-border flex-shrink-0">
+                <div>
+                  <h2 className="text-sm font-semibold text-editor-ink">
+                    {step === "hired" ? "Contratado" : step === "confirm" ? "Revisar Candidato" : "Abrir Vaga"}
                   </h2>
+                  <p className="text-[11px] text-editor-muted mt-0.5">
+                    {step === "hired" ? `${hiredProfile?.name || ""} agora faz parte da equipe.` :
+                     step === "confirm" ? "Revise o perfil antes de confirmar." :
+                     `${profiles.length} candidato${profiles.length !== 1 ? "s" : ""} disponivel${profiles.length !== 1 ? "s" : ""}`}
+                  </p>
                 </div>
-                <p className="text-sm text-[#616061]">
-                  {step === "browse" ? "Escolha um perfil para sua agência. Cada agente tem personalidade própria." :
-                   step === "confirm" ? "Confirme a contratação. O agente se juntará imediatamente à sua equipe." :
-                   `${hiredName} agora faz parte da sua agência!`}
-                </p>
+                <button onClick={close} className="p-1.5 rounded-lg hover:bg-white/[0.04] text-editor-muted hover:text-editor-ink transition-colors">
+                  <X className="w-4 h-4" />
+                </button>
               </div>
 
-              {step === "browse" && (
-                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {profiles.map(profile => (
+              {/* Body */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Step: Browse */}
+                {step === "browse" && (
+                  <div className="p-5">
+                    {profiles.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16 gap-3">
+                        <motion.div animate={{ rotate: 360 }} transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                          className="w-6 h-6 border-2 border-editor-border border-t-primary rounded-full" />
+                        <p className="text-xs text-editor-muted">Buscando candidatos...</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {profiles.map((profile) => (
+                          <button
+                            key={profile.key}
+                            onClick={() => selectProfile(profile)}
+                            className="w-full flex items-start gap-4 p-4 border border-editor-border hover:border-primary/30 hover:bg-white/[0.02] transition-colors text-left group"
+                          >
+                            {/* Photo */}
+                            <div className="w-12 h-12 bg-editor-surface border border-editor-border flex-shrink-0 overflow-hidden">
+                              {AGENT_CHARS[profile.name] ? (
+                                <img src={AGENT_CHARS[profile.name]} className="w-full h-full object-cover" alt={profile.name} />
+                              ) : (
+                                <div className={cn("w-full h-full flex items-center justify-center text-white text-sm font-bold", getAgentGradient(profile.role))}>
+                                  {getAgentInitials(profile.name)}
+                                </div>
+                              )}
+                            </div>
+
+                            {/* Info */}
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-0.5">
+                                <h3 className="text-sm font-semibold text-editor-ink group-hover:text-primary transition-colors">{profile.name}</h3>
+                                <span className="text-[10px] text-editor-muted">{ROLE_LABELS[profile.role] || profile.role}</span>
+                              </div>
+                              <p className="text-[11px] text-editor-muted/70 leading-relaxed line-clamp-2">{profile.preview}</p>
+                              <div className="flex items-center gap-3 mt-2">
+                                <span className="text-[10px] text-editor-muted flex items-center gap-1">
+                                  <DollarSign className="w-3 h-3" />{formatCurrency(profile.salary)}/mes
+                                </span>
+                                <span className="text-[10px] text-editor-muted flex items-center gap-1">
+                                  <Briefcase className="w-3 h-3" />{ROLE_CATEGORIES[profile.role] || profile.role}
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Arrow */}
+                            <ChevronRight className="w-4 h-4 text-editor-muted/30 group-hover:text-primary transition-colors mt-4 flex-shrink-0" />
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Step: Confirm */}
+                {step === "confirm" && selectedProfile && (
+                  <div className="p-5 space-y-5">
+                    {/* Top card: photo + name + role */}
+                    <div className="flex items-start gap-4 pb-5 border-b border-editor-border">
+                      <div className="w-16 h-16 bg-editor-surface border border-editor-border overflow-hidden flex-shrink-0">
+                        {charImg ? (
+                          <img src={charImg} className="w-full h-full object-cover" alt={selectedProfile.name} />
+                        ) : (
+                          <div className={cn("w-full h-full flex items-center justify-center text-white text-xl font-bold", getAgentGradient(selectedProfile.role))}>
+                            {getAgentInitials(selectedProfile.name)}
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        <h3 className="text-base font-semibold text-editor-ink">{selectedProfile.name}</h3>
+                        <p className="text-xs text-editor-muted mt-0.5">{ROLE_LABELS[selectedProfile.role] || selectedProfile.role}</p>
+                        <p className="text-[11px] text-editor-muted/70 mt-1">{selectedProfile.personality}</p>
+                      </div>
+                    </div>
+
+                    {/* Skills */}
+                    <div>
+                      <h4 className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider mb-2">Habilidades</h4>
+                      <div className="flex flex-wrap gap-1.5">
+                        {selectedProfile.strengths.map((s) => (
+                          <span key={s} className="text-[10px] bg-editor-surface border border-editor-border px-2 py-1 text-editor-muted">{s}</span>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* About */}
+                    <div>
+                      <h4 className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider mb-2">Sobre</h4>
+                      <p className="text-[11px] text-editor-muted/70 leading-relaxed">{selectedProfile.preview}</p>
+                    </div>
+
+                    {/* Details grid */}
+                    <div className="grid grid-cols-3 gap-2">
+                      <div className="bg-editor-surface border border-editor-border p-3">
+                        <DollarSign className="w-3.5 h-3.5 text-editor-muted mb-1" />
+                        <p className="text-xs font-semibold text-editor-ink">{formatCurrency(selectedProfile.salary)}</p>
+                        <p className="text-[9px] text-editor-muted">Salario mensal</p>
+                      </div>
+                      <div className="bg-editor-surface border border-editor-border p-3">
+                        <Briefcase className="w-3.5 h-3.5 text-editor-muted mb-1" />
+                        <p className="text-xs font-semibold text-editor-ink">{ROLE_CATEGORIES[selectedProfile.role] || "—"}</p>
+                        <p className="text-[9px] text-editor-muted">Departamento</p>
+                      </div>
+                      <div className="bg-editor-surface border border-editor-border p-3">
+                        <Clock className="w-3.5 h-3.5 text-editor-muted mb-1" />
+                        <p className="text-xs font-semibold text-editor-ink">Imediato</p>
+                        <p className="text-[9px] text-editor-muted">Inicio</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step: Hired */}
+                {step === "hired" && (
+                  <div className="p-5 flex flex-col items-center justify-center py-16">
                     <motion.div
-                      key={profile.key}
-                      whileHover={{ y: -2 }}
-                      className={cn(
-                        "p-4  border-2 cursor-pointer transition-all",
-                        selected === profile.key
-                          ? "border-[#4A154B] bg-black/5 shadow-elevated"
-                          : "border-[#DDDDDD] hover:border-[#4A154B]/30"
-                      )}
-                      onClick={() => setSelected(profile.key)}
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, delay: 0.1 }}
                     >
-                      <div className="flex items-start gap-3">
-                        <div className={cn(
-                          "w-12 h-12 rounded-md bg-gradient-to-br flex items-center justify-center text-white font-bold text-lg flex-shrink-0",
-                          roleColors[profile.role] || "from-[#616061] to-[#4a4a4a]"
-                        )}>
-                          {profile.name[0]}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-black">{profile.name}</h3>
-                            <Badge variant="outline" className="text-[10px]">{profile.role}</Badge>
-                          </div>
-                          <p className="text-[11px] text-black font-medium mt-0.5">{profile.personality}</p>
-                          <p className="text-xs text-[#616061] mt-2 line-clamp-3">{profile.preview}</p>
-                          <div className="flex flex-wrap gap-1 mt-2">
-                            {profile.strengths.slice(0, 3).map(s => (
-                              <span key={s} className="text-[10px] bg-[#F8F8F8] px-1.5 py-0.5 rounded-sm text-[#616061]">{s}</span>
-                            ))}
-                          </div>
-                          <div className="flex items-center justify-between mt-3 pt-2 border-t border-[#DDDDDD]">
-                            <span className="text-sm font-bold text-black">{formatCurrency(profile.salary)}/mês</span>
-                            {selected === profile.key && <Check className="w-4 h-4 text-black" />}
-                          </div>
-                        </div>
+                      <div className="w-16 h-16 bg-success/10 border border-success/30 flex items-center justify-center">
+                        <Check className="w-8 h-8 text-success" />
                       </div>
                     </motion.div>
-                  ))}
-                </div>
-              )}
 
-              {step === "confirm" && (
-                <div className="p-6 text-center">
-                  <p className="text-[#616061] text-sm mb-4">O agente será adicionado à sua equipe com status ativo e poderá participar das dailys, tarefas e conversas imediatamente.</p>
-                </div>
-              )}
-
-              {step === "done" && (
-                <div className="p-6 text-center">
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{ type: "spring", stiffness: 200 }}
-                    className="w-16 h-16 rounded-pill bg-black/10 flex items-center justify-center mx-auto mb-4"
-                  >
-                    <Check className="w-8 h-8 text-black" />
-                  </motion.div>
-                  <p className="text-black font-bold text-lg">{hiredName} contratado!</p>
-                  <p className="text-[#616061] text-sm mt-1">Ele já está disponível no seu time.</p>
-                </div>
-              )}
+                    <motion.div
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.25 }}
+                      className="text-center mt-4"
+                    >
+                      <h3 className="text-sm font-semibold text-editor-ink">{hiredProfile?.name || "Agente"} contratado!</h3>
+                      <p className="text-xs text-editor-muted mt-1.5 max-w-xs">
+                        O agente ja esta disponivel na sua equipe e participara das dailys, tarefas e decisoes.
+                      </p>
+                    </motion.div>
+                  </div>
+                )}
+              </div>
 
               {/* Footer */}
-              <div className="p-4 border-t border-[#DDDDDD] flex items-center justify-between">
-                {step === "browse" ? (
+              <div className="p-4 border-t border-editor-border flex-shrink-0 flex items-center gap-2">
+                {step === "browse" && (
+                  <button onClick={close} className="flex-1 py-2 text-xs text-editor-muted hover:text-editor-ink hover:bg-white/[0.03] transition-colors">
+                    Cancelar
+                  </button>
+                )}
+
+                {step === "confirm" && (
                   <>
-                    <Button variant="ghost" onClick={onClose}>Cancelar</Button>
-                    <Button onClick={() => setStep("confirm")} disabled={!selected}>
-                      Continuar
-                    </Button>
+                    <button onClick={() => setStep("browse")} className="flex items-center gap-1 py-2 px-3 text-xs text-editor-muted hover:text-editor-ink hover:bg-white/[0.03] transition-colors">
+                      <ChevronLeft className="w-3.5 h-3.5" />Voltar
+                    </button>
+                    <div className="flex-1" />
+                    <button
+                      onClick={handleHire}
+                      disabled={hiring}
+                      className="py-2 px-6 bg-primary text-primary-foreground text-xs font-medium hover:bg-primary-hover disabled:opacity-50 transition-colors flex items-center gap-2"
+                    >
+                      {hiring ? (
+                        <><Loader2 className="w-3.5 h-3.5 animate-spin" />Contratando...</>
+                      ) : (
+                        <><UserPlus className="w-3.5 h-3.5" />Contratar {selectedProfile?.name.split(" ")[0]}</>
+                      )}
+                    </button>
                   </>
-                ) : step === "confirm" ? (
-                  <>
-                    <Button variant="ghost" onClick={() => setStep("browse")}>Voltar</Button>
-                    <Button onClick={handleHire} disabled={loading}>
-                      {loading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : null}
-                      Confirmar Contratação
-                    </Button>
-                  </>
-                ) : (
-                  <Button className="w-full" onClick={onClose}>Fechar</Button>
+                )}
+
+                {step === "hired" && (
+                  <button onClick={close} className="flex-1 py-2 bg-primary text-primary-foreground text-xs font-medium hover:bg-primary-hover transition-colors">
+                    Fechar
+                  </button>
                 )}
               </div>
             </motion.div>
           </div>
-        ) : null}
+        )}
       </AnimatePresence>
     </>
   )

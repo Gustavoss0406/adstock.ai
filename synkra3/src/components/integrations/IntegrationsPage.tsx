@@ -85,17 +85,17 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
   const available = merged.filter(i => !i.connected)
 
   return (
-    <div className="h-full overflow-y-auto bg-[#F8F8F8]">
+    <div className="h-full overflow-y-auto bg-card">
       <div className="max-w-3xl mx-auto p-6 space-y-8">
         <div>
           <h2 className="font-bold text-xl text-black flex items-center gap-2">🔗 Integrações</h2>
-          <p className="text-sm text-[#616061] mt-1">Quanto mais conectado, mais os agentes conseguem fazer por você.</p>
+          <p className="text-sm text-muted-foreground mt-1">Quanto mais conectado, mais os agentes conseguem fazer por você.</p>
         </div>
 
         {/* Connected */}
         {connected.length > 0 && (
           <div>
-            <h3 className="text-xs font-bold text-[#616061] uppercase tracking-wider mb-3">Conectadas</h3>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Conectadas</h3>
             <div className="space-y-3">
               {connected.map(int => (
                 <motion.div key={int.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
@@ -110,7 +110,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
                             <h3 className="font-bold text-black">{int.name}</h3>
                             <Badge variant="success" className="text-[10px]">Conectado</Badge>
                           </div>
-                          <p className="text-xs text-[#616061]">{int.accountName || "Conectado"} · {int.stats || "Sincronizado"} · Última sync: agora</p>
+                          <p className="text-xs text-muted-foreground">{int.accountName || "Conectado"} · {int.stats || "Sincronizado"} · Última sync: agora</p>
                         </div>
                       </div>
                       <div className="flex gap-2">
@@ -127,19 +127,19 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
 
         {/* Available */}
         <div>
-          <h3 className="text-xs font-bold text-[#616061] uppercase tracking-wider mb-3">Disponíveis</h3>
+          <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Disponíveis</h3>
           <div className="space-y-3">
             {available.map(int => (
               <motion.div key={int.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
                 <Card className="p-5">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-4">
-                      <div className="w-12 h-12  bg-[#F8F8F8] flex items-center justify-center text-2xl">
+                      <div className="w-12 h-12  bg-card flex items-center justify-center text-2xl">
                         {int.emoji}
                       </div>
                       <div>
                         <h3 className="font-bold text-black">{int.name}</h3>
-                        <p className="text-xs text-[#616061]">{int.features[0]}</p>
+                        <p className="text-xs text-muted-foreground">{int.features[0]}</p>
                       </div>
                     </div>
                     <Button
@@ -157,7 +157,7 @@ export function IntegrationsPage({ orgIntegrations }: { orgIntegrations?: Array<
                   </div>
                   <div className="flex flex-wrap gap-1.5 mt-3 pl-16">
                     {int.features.map((f, i) => (
-                      <span key={i} className="text-[10px] text-[#999] flex items-center gap-1">
+                      <span key={i} className="text-[10px] text-muted-foreground flex items-center gap-1">
                         <CheckCircle2 className="w-2.5 h-2.5" /> {f}
                       </span>
                     ))}

@@ -31,9 +31,9 @@ const TYPE_COLORS: Record<string, string> = {
   conflict: "text-black",
   report: "text-black",
   seo: "text-[#DC2626]",
-  hire: "text-[#000000]",
-  system: "text-[#999]",
-  daily: "text-[#000000]",
+  hire: "text-foreground",
+  system: "text-muted-foreground",
+  daily: "text-foreground",
 }
 
 export function NotificationBell({ orgId }: { orgId: string }) {
@@ -74,7 +74,7 @@ export function NotificationBell({ orgId }: { orgId: string }) {
 
   return (
     <div className="relative">
-      <button onClick={() => setOpen(!open)} className="relative p-2  hover:bg-[#F8F8F8] transition-colors">
+      <button onClick={() => setOpen(!open)} className="relative p-2  hover:bg-muted transition-colors">
         <Bell className="w-5 h-5 text-[#616061]" />
         {unreadCount > 0 && (
           <motion.span
@@ -95,28 +95,28 @@ export function NotificationBell({ orgId }: { orgId: string }) {
               initial={{ opacity: 0, y: -8, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.95 }}
-              className="absolute right-0 top-full mt-2 w-96 bg-white  border border-[#DDDDDD] shadow-2xl z-50 overflow-hidden"
+              className="absolute right-0 top-full mt-2 w-96 bg-white  border border-border shadow-2xl z-50 overflow-hidden"
             >
-              <div className="flex items-center justify-between px-4 py-3 border-b border-[#DDDDDD]">
+              <div className="flex items-center justify-between px-4 py-3 border-b border-border">
                 <h3 className="font-bold text-sm text-black">🔔 Notificações</h3>
-                <button onClick={markAllRead} className="text-[11px] text-[#000000] hover:underline font-bold">Marcar todas lidas</button>
+                <button onClick={markAllRead} className="text-[11px] text-foreground hover:underline font-bold">Marcar todas lidas</button>
               </div>
 
               <div className="max-h-[400px] overflow-y-auto">
                 {notifications.length === 0 ? (
-                  <div className="p-8 text-center text-[#999] text-sm">Nenhuma notificação ainda</div>
+                  <div className="p-8 text-center text-muted-foreground text-sm">Nenhuma notificação ainda</div>
                 ) : (
                   notifications.map(n => (
-                    <div key={n.id} className={cn("px-4 py-3 hover:bg-[#F8F8F8] transition-colors cursor-pointer", !n.read && "bg-[#000000]/3")}>
+                    <div key={n.id} className={cn("px-4 py-3 hover:bg-muted transition-colors cursor-pointer", !n.read && "bg-[#000000]/3")}>
                       <div className="flex items-start gap-3">
                         <span className="text-lg flex-shrink-0 mt-0.5">{TYPE_ICONS[n.type]}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-xs font-bold text-black">{n.title}</p>
                           <p className="text-[11px] text-[#616061] truncate">{n.description}</p>
-                          {n.channel && <p className="text-[10px] text-[#000000] font-bold mt-0.5">#{n.channel}</p>}
+                          {n.channel && <p className="text-[10px] text-foreground font-bold mt-0.5">#{n.channel}</p>}
                         </div>
                         <div className="flex-shrink-0 flex flex-col items-end gap-1">
-                          <span className="text-[10px] text-[#999]">{n.time ? new Date(n.time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : ""}</span>
+                          <span className="text-[10px] text-muted-foreground">{n.time ? new Date(n.time).toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }) : ""}</span>
                           {!n.read && <span className="w-2 h-2 rounded-pill bg-[#000000]" />}
                         </div>
                       </div>
@@ -125,8 +125,8 @@ export function NotificationBell({ orgId }: { orgId: string }) {
                 )}
               </div>
 
-              <div className="px-4 py-2 border-t border-[#DDDDDD]">
-                <button className="w-full text-center text-xs text-[#000000] font-bold hover:underline py-1">Ver todas as notificações</button>
+              <div className="px-4 py-2 border-t border-border">
+                <button className="w-full text-center text-xs text-foreground font-bold hover:underline py-1">Ver todas as notificações</button>
               </div>
             </motion.div>
           </>

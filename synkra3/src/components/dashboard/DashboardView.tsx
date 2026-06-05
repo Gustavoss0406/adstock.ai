@@ -25,17 +25,17 @@ export function Dashboard({ data }: { data: DashboardData }) {
   const maxReach = Math.max(...data.reachData.map(d => d.value), 1)
 
   return (
-    <div className="h-full overflow-y-auto bg-[#F8F8F8]">
+    <div className="h-full overflow-y-auto bg-card">
       <div className="max-w-[1200px] mx-auto p-6 space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <h2 className="font-bold text-xl text-black flex items-center gap-2">📊 Dashboard</h2>
+          <h2 className="font-bold text-xl text-foreground flex items-center gap-2">📊 Dashboard</h2>
           <div className="flex items-center gap-2">
-            <select className="text-xs border border-[#DDDDDD]  px-3 py-1.5 bg-white font-bold">
+            <select className="text-xs border border-border  px-3 py-1.5 bg-card font-bold">
               <option>Janeiro 2025</option>
               <option>Dezembro 2024</option>
             </select>
-            <button className="text-xs border border-[#DDDDDD]  px-3 py-1.5 bg-white hover:bg-[#F8F8F8] font-bold">Exportar</button>
+            <button className="text-xs border border-border  px-3 py-1.5 bg-card hover:bg-card font-bold">Exportar</button>
           </div>
         </div>
 
@@ -49,12 +49,12 @@ export function Dashboard({ data }: { data: DashboardData }) {
           ].map(kpi => (
             <Card key={kpi.label} className="p-4">
               <div className="flex items-start justify-between mb-1">
-                <span className="text-[11px] text-[#616061]">{kpi.label}</span>
+                <span className="text-[11px] text-muted-foreground">{kpi.label}</span>
                 <span className="text-lg">{kpi.icon}</span>
               </div>
-              <p className="text-2xl font-bold text-black">{kpi.value}</p>
+              <p className="text-2xl font-bold text-foreground">{kpi.value}</p>
               {kpi.change && (
-                <span className={cn("text-[11px] font-bold", kpi.up ? "text-black" : "text-black")}>{kpi.change}</span>
+                <span className={cn("text-[11px] font-bold", kpi.up ? "text-foreground" : "text-foreground")}>{kpi.change}</span>
               )}
             </Card>
           ))}
@@ -62,7 +62,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
 
         {/* Reach Chart */}
         <Card className="p-6">
-          <h3 className="text-sm font-bold text-black mb-4">📈 Alcance ao longo do mês</h3>
+          <h3 className="text-sm font-bold text-foreground mb-4">📈 Alcance ao longo do mês</h3>
           <div className="flex items-end gap-1 h-32">
             {data.reachData.map((d, i) => (
               <motion.div
@@ -77,7 +77,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
               </motion.div>
             ))}
           </div>
-          <div className="flex justify-between mt-2 text-[9px] text-[#999]">
+          <div className="flex justify-between mt-2 text-[9px] text-muted-foreground">
             {data.reachData.filter((_, i) => i % 7 === 0).map((d, i) => <span key={i}>{d.date}</span>)}
           </div>
         </Card>
@@ -85,29 +85,29 @@ export function Dashboard({ data }: { data: DashboardData }) {
         {/* By Network + Top Posts */}
         <div className="grid grid-cols-2 gap-4">
           <Card className="p-5">
-            <h3 className="text-sm font-bold text-black mb-3">📱 Por Rede Social</h3>
+            <h3 className="text-sm font-bold text-foreground mb-3">📱 Por Rede Social</h3>
             <div className="space-y-3">
               {data.byNetwork.map(n => (
                 <div key={n.network} className="flex items-center gap-3">
-                  <span className="text-sm w-20 text-[#616061]">{n.network}</span>
-                  <div className="flex-1 h-5 rounded-pill bg-[#F8F8F8] overflow-hidden">
+                  <span className="text-sm w-20 text-muted-foreground">{n.network}</span>
+                  <div className="flex-1 h-5 rounded-pill bg-card overflow-hidden">
                     <motion.div initial={{ width: 0 }} animate={{ width: `${n.pct}%` }} className="h-full rounded-pill" style={{ backgroundColor: n.color }} />
                   </div>
-                  <span className="text-xs font-bold text-[#616061] w-10 text-right">{n.pct}%</span>
+                  <span className="text-xs font-bold text-muted-foreground w-10 text-right">{n.pct}%</span>
                 </div>
               ))}
             </div>
           </Card>
 
           <Card className="p-5">
-            <h3 className="text-sm font-bold text-black mb-3">🏆 Top 5 Posts</h3>
+            <h3 className="text-sm font-bold text-foreground mb-3">🏆 Top 5 Posts</h3>
             <div className="space-y-2">
               {data.topPosts.map((p, i) => (
                 <div key={i} className="flex items-center gap-2 text-xs">
-                  <span className={cn("font-bold w-5", i === 0 ? "text-black" : "text-[#999]")}>#{i + 1}</span>
-                  <span className="flex-1 text-[#616061] truncate">{p.title}</span>
+                  <span className={cn("font-bold w-5", i === 0 ? "text-foreground" : "text-muted-foreground")}>#{i + 1}</span>
+                  <span className="flex-1 text-muted-foreground truncate">{p.title}</span>
                   <span className="text-[#000000] font-bold">{p.reach.toLocaleString()}</span>
-                  <span className="text-[#999]">{p.agent}</span>
+                  <span className="text-muted-foreground">{p.agent}</span>
                 </div>
               ))}
             </div>
@@ -116,7 +116,7 @@ export function Dashboard({ data }: { data: DashboardData }) {
 
         {/* SEO Section */}
         <Card className="p-5">
-          <h3 className="text-sm font-bold text-black mb-3 flex items-center gap-2"><Search className="w-4 h-4" /> SEO — Google Search Console</h3>
+          <h3 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2"><Search className="w-4 h-4" /> SEO — Google Search Console</h3>
           <div className="grid grid-cols-4 gap-4 text-center">
             {[
               { label: "Cliques orgânicos", value: data.seo.clicks.toLocaleString(), change: "↑8%" },
@@ -125,9 +125,9 @@ export function Dashboard({ data }: { data: DashboardData }) {
               { label: "Posição média", value: data.seo.position, change: "" },
             ].map(s => (
               <div key={s.label}>
-                <p className="text-xl font-bold text-black">{s.value}</p>
-                <p className="text-[11px] text-[#616061]">{s.label}</p>
-                {s.change && <p className="text-[10px] text-black font-bold">{s.change}</p>}
+                <p className="text-xl font-bold text-foreground">{s.value}</p>
+                <p className="text-[11px] text-muted-foreground">{s.label}</p>
+                {s.change && <p className="text-[10px] text-foreground font-bold">{s.change}</p>}
               </div>
             ))}
           </div>
@@ -138,10 +138,10 @@ export function Dashboard({ data }: { data: DashboardData }) {
           <div className="flex items-start gap-3">
             <div className="w-8 h-8 rounded-md bg-gradient-to-br bg-black flex items-center justify-center text-white font-bold text-xs flex-shrink-0">LS</div>
             <div>
-              <p className="text-xs font-bold text-black mb-1">🟢 Lena Souza · Análise de Performance</p>
-              <p className="text-sm text-[#616061] leading-relaxed mb-2">{data.lenaAnalysis.text}</p>
+              <p className="text-xs font-bold text-foreground mb-1">🟢 Lena Souza · Análise de Performance</p>
+              <p className="text-sm text-muted-foreground leading-relaxed mb-2">{data.lenaAnalysis.text}</p>
               {data.lenaAnalysis.recommendations.map((r, i) => (
-                <p key={i} className="text-xs text-black font-bold">{i + 1}. {r}</p>
+                <p key={i} className="text-xs text-foreground font-bold">{i + 1}. {r}</p>
               ))}
               <button className="mt-3 text-xs text-[#000000] font-bold hover:underline">📋 Gerar tarefa baseada nessa análise →</button>
             </div>

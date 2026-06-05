@@ -51,12 +51,12 @@ export function SprintBoard({ tasks, agents, sprintName, startDate, endDate, onC
                     <motion.div key={task.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }}
                       className={cn(
                         "p-2  border border-editor-border bg-editor-surface",
-                        task.priority === "CRITICAL" && "border-l-2 border-l-[#000000]"
+                        task.priority === "CRITICAL" && "border-l-2 border-l-destructive"
                       )}
                     >
                       <p className="text-[11px] text-editor-muted truncate">{task.title}</p>
                       <div className="flex items-center justify-between mt-1.5">
-                        <span className={cn("text-[8px]", task.priority === "CRITICAL" ? "text-[#000000]/60" : task.priority === "HIGH" ? "text-[#000000]/60" : "text-editor-muted")}>{task.priority}</span>
+                        <span className={cn("text-[8px]", task.priority === "CRITICAL" ? "text-destructive/80" : task.priority === "HIGH" ? "text-warning/80" : "text-editor-muted")}>{task.priority}</span>
                         {task.assignedTo && (
                           <div className="flex -space-x-1">
                             {agents.filter(a => a.id === task.assignedTo).slice(0, 1).map(a => (

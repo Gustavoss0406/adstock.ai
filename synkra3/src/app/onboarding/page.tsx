@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
+import { useAuth } from "@/lib/auth/useAuth"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { ArrowRight, ArrowLeft, Loader2, CheckCircle2, Search, Sparkles } from "lucide-react"
@@ -35,7 +35,7 @@ function getAgent(step: number) { return AGENTS.find(a => a.steps.includes(step)
 
 export default function OnboardingPage() {
   const router = useRouter()
-  const { data: session, status } = useSession()
+  const { user: session, loading: authLoading } = useAuth()
   const [step, setStep] = useState(0)
   const [orgId, setOrgId] = useState("")
   const [loading, setLoading] = useState(false)
@@ -59,7 +59,7 @@ export default function OnboardingPage() {
   const [finalLoading, setFinalLoading] = useState(false)
   const [finalReady, setFinalReady] = useState(false)
 
-  useEffect(() => { if (status === "unauthenticated") router.push("/login") }, [status, router])
+  useEffect(() => { if (!authLoading && !session) router.push("/login") }, [authLoading, session, router])
 
   const createOrg = async () => {
     if (!companyName) return; setLoading(true)
@@ -132,14 +132,16 @@ export default function OnboardingPage() {
           >
             {!finalReady ? (
               <div className="space-y-6">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
-                  className="w-14 h-14 mx-auto rounded-pill border-2 border-white/10 border-t-[#000000]/50"
-                />
+                <div className="relative w-14 h-14 mx-auto">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+                    className="absolute inset-0 rounded-xl border-2 border-white/[0.04] border-t-primary/60"
+                  />
+                </div>
                 <div className="space-y-1">
-                  <p className="text-sm text-editor-ink">Criando sua agencia...</p>
-                  <p className="text-[11px] text-editor-muted">Contratando agentes, organizando escritorio, preparando a primeira daily</p>
+                  <p className="text-sm font-medium text-editor-ink">Criando sua agencia...</p>
+                  <p className="text-[11px] text-editor-muted/60">Contratando agentes, organizando escritorio, preparando a primeira daily</p>
                 </div>
               </div>
             ) : (
@@ -149,12 +151,12 @@ export default function OnboardingPage() {
                 transition={{ duration: 0.6 }}
                 className="space-y-6"
               >
-                <div className="w-20 h-20 mx-auto  bg-gradient-to-br from-[#000000]/20 to-[#000000]/20 flex items-center justify-center ring-2 ring-[#000000]/10">
-                  <Sparkles className="w-8 h-8 text-[#000000]/60" />
+                <div className="w-20 h-20 mx-auto rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                  <Sparkles className="w-8 h-8 text-primary/80" />
                 </div>
                 <div className="space-y-3">
-                  <h2 className="text-xl font-bold text-black">
-                    ✨ Sua agencia esta pronta!
+                  <h2 className="text-xl font-bold text-editor-ink">
+                    Sua agencia esta pronta!
                   </h2>
                   <p className="text-[12px] text-editor-muted max-w-[280px] mx-auto leading-relaxed">
                     {companyName} foi criada com 5 agentes especializados.
@@ -166,9 +168,9 @@ export default function OnboardingPage() {
                 <div className="grid grid-cols-5 gap-2 pt-2">
                   {AGENTS.map((a) => (
                     <div key={a.name} className="flex flex-col items-center gap-1">
-                      <div className="w-10 h-10  ring-1 ring-white/[0.04] overflow-hidden">
+                      <div className="w-10 h-10 rounded-xl ring-1 ring-white/[0.06] overflow-hidden">
                         {a.img ? <img src={a.img} className="w-full h-full object-cover" alt={a.name} /> :
-                        <div className="w-full h-full flex items-center justify-center text-editor-ink text-[10px] font-bold" style={{ backgroundColor: a.color + "20" }}>{a.name[0]}</div>}
+                        <div className="w-full h-full rounded-xl flex items-center justify-center text-editor-ink text-[10px] font-bold bg-white/[0.04]">{a.name[0]}</div>}
                       </div>
                       <span className="text-[8px] text-editor-muted">{a.name}</span>
                     </div>
@@ -176,7 +178,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="space-y-2 pt-2">
-                  <p className="text-[12px] text-editor-muted">
+                  <p className="text-[12px] text-editor-ink/70">
                     Vou reunir o time agora para a primeira daily.
                   </p>
                   <p className="text-[11px] text-editor-muted">
@@ -184,7 +186,7 @@ export default function OnboardingPage() {
                   </p>
                   <button
                     onClick={enterOffice}
-                    className="mt-3 px-8 py-2.5  bg-[#000000] hover:bg-[#000000]/80 text-black text-sm font-medium transition-all active:scale-95"
+                    className="mt-3 px-8 py-2.5 rounded-xl bg-primary/80 backdrop-blur-sm border border-primary/30 hover:bg-primary text-primary-foreground text-sm font-medium transition-all active:scale-[0.97]"
                   >
                     Entrar no escritorio →
                   </button>

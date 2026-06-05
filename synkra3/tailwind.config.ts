@@ -10,8 +10,9 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ['Graphik', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+        sans: ['Inter', 'Graphik', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
         display: ['Graphik', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'sans-serif'],
+        mono: ['Roboto Mono', 'JetBrains Mono', 'Fira Code', 'monospace'],
       },
       colors: {
         border: "var(--border)",
@@ -78,17 +79,19 @@ const config: Config = {
         info: { DEFAULT: "var(--info)" },
       },
       borderRadius: {
-        xs: "0px",
-        sm: "0px",
-        md: "0px",
-        lg: "4px",
-        xl: "4px",
+        xs: "4px",
+        sm: "6px",
+        md: "8px",
+        lg: "12px",
+        xl: "16px",
         pill: "9999px",
         full: "9999px",
       },
       boxShadow: {
-        card: "none",
-        elevated: "0 4px 24px rgba(0,0,0,0.1)",
+        card: "0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.08)",
+        elevated: "0 4px 24px rgba(0,0,0,0.15)",
+        "glow-primary": "0 0 20px rgba(99,102,241,0.15)",
+        "glow-success": "0 0 20px rgba(16,185,129,0.15)",
       },
       spacing: {
         section: "128px",

@@ -52,9 +52,9 @@ export function ChatMessage({ msg, onReact }: { msg: AgentMessage; onReact?: (ms
   if (msg.type === "system") {
     return (
       <div className="flex items-center gap-3 my-4">
-        <div className="flex-1 border-t border-[#DDDDDD]" />
-        <div className="text-xs text-[#999] font-bold whitespace-nowrap">{msg.content}</div>
-        <div className="flex-1 border-t border-[#DDDDDD]" />
+        <div className="flex-1 border-t border-border" />
+        <div className="text-xs text-muted-foreground font-bold whitespace-nowrap">{msg.content}</div>
+        <div className="flex-1 border-t border-border" />
       </div>
     )
   }
@@ -77,32 +77,32 @@ export function ChatMessage({ msg, onReact }: { msg: AgentMessage; onReact?: (ms
   const initials = getAgentInitials(msg.agent.name)
 
   return (
-    <div className="group flex gap-3 py-1 px-2 -mx-2  hover:bg-[#F8F8F8] transition-colors">
+    <div className="group flex gap-3 py-1 px-2 -mx-2  hover:bg-muted transition-colors">
       <div className={cn("w-8 h-8 rounded-md bg-gradient-to-br flex items-center justify-center text-white font-bold text-xs flex-shrink-0 mt-0.5", gradient)}>
         {initials}
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-bold text-sm text-black">{msg.agent.name}</span>
-          <span className="text-[11px] text-[#999]">{msg.agent.role?.replace(/_/g, " ")}</span>
-          <span className="text-[11px] text-[#999]">{formatDate(msg.timestamp, "relative")}</span>
+          <span className="font-bold text-sm text-foreground">{msg.agent.name}</span>
+          <span className="text-[11px] text-muted-foreground">{msg.agent.role?.replace(/_/g, " ")}</span>
+          <span className="text-[11px] text-muted-foreground">{formatDate(msg.timestamp, "relative")}</span>
         </div>
-        <p className="text-[15px] text-black leading-relaxed whitespace-pre-wrap">{msg.content}</p>
+        <p className="text-[15px] text-foreground leading-relaxed whitespace-pre-wrap">{msg.content}</p>
 
         {/* Reactions + Actions */}
         <div className="flex items-center gap-2 mt-1 opacity-0 group-hover:opacity-100 transition-opacity">
           {msg.reactions?.map(r => (
-            <button key={r.emoji} onClick={() => onReact?.(msg.id, r.emoji)} className="px-2 py-0.5 rounded-pill border border-[#DDDDDD] text-[13px] hover:bg-[#F8F8F8] transition-colors">{r.emoji} {r.count}</button>
+            <button key={r.emoji} onClick={() => onReact?.(msg.id, r.emoji)} className="px-2 py-0.5 rounded-pill border border-border text-[13px] hover:bg-muted transition-colors">{r.emoji} {r.count}</button>
           ))}
-          <button className="text-[11px] text-[#999] hover:text-black">Responder</button>
-          <button className="text-[11px] text-[#999] hover:text-black">Thread</button>
-          <button onClick={() => setShowReactions(!showReactions)} className="text-[11px] text-[#999] hover:text-black">+</button>
+          <button className="text-[11px] text-muted-foreground hover:text-foreground">Responder</button>
+          <button className="text-[11px] text-muted-foreground hover:text-foreground">Thread</button>
+          <button onClick={() => setShowReactions(!showReactions)} className="text-[11px] text-muted-foreground hover:text-foreground">+</button>
         </div>
 
         {showReactions && (
           <div className="flex gap-1 mt-1">
             {["🔥","❤️","📊","✅","👀","💡"].map(emoji => (
-              <button key={emoji} onClick={() => { onReact?.(msg.id, emoji); setShowReactions(false) }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-[#F8F8F8] text-sm">{emoji}</button>
+              <button key={emoji} onClick={() => { onReact?.(msg.id, emoji); setShowReactions(false) }} className="w-7 h-7 flex items-center justify-center rounded hover:bg-muted text-sm">{emoji}</button>
             ))}
           </div>
         )}
@@ -124,15 +124,15 @@ function ApprovalCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-sm text-black">{msg.agent.name}</span>
-          <span className="text-[11px] text-[#999]">{formatDate(msg.timestamp, "relative")}</span>
+          <span className="font-bold text-sm text-foreground">{msg.agent.name}</span>
+          <span className="text-[11px] text-muted-foreground">{formatDate(msg.timestamp, "relative")}</span>
         </div>
-        <p className="text-[15px] text-black font-bold mb-2">Arte pronta para aprovação! 🎨</p>
+        <p className="text-[15px] text-foreground font-bold mb-2">Arte pronta para aprovação! 🎨</p>
 
-        <div className=" border border-[#DDDDDD] bg-[#F8F8F8] p-4 mb-3">
-          <div className="text-center text-[#999] text-sm mb-2">📐 {msg.approvalData.specs}</div>
-          <p className="text-sm text-[#616061] italic mb-2">"{msg.approvalData.copy}"</p>
-          <p className="text-xs text-[#999]">📅 Publicação sugerida: {msg.approvalData.publishDate}</p>
+        <div className=" border border-border bg-muted p-4 mb-3">
+          <div className="text-center text-muted-foreground text-sm mb-2">📐 {msg.approvalData.specs}</div>
+          <p className="text-sm text-muted-foreground italic mb-2">"{msg.approvalData.copy}"</p>
+          <p className="text-xs text-muted-foreground">📅 Publicação sugerida: {msg.approvalData.publishDate}</p>
         </div>
 
         {/* Team votes */}
@@ -140,20 +140,20 @@ function ApprovalCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
           {msg.approvalData.votes.map((v, i) => (
             <div key={i} className="flex items-center gap-2 text-xs">
               <span className={cn("w-2 h-2 rounded-pill")} style={{ backgroundColor: v.color }} />
-              <span className="font-bold text-black">{v.name}</span>
-              <span className={v.vote === "approve" ? "text-black" : v.vote === "warn" ? "text-black" : "text-[#999]"}>
+              <span className="font-bold text-foreground">{v.name}</span>
+              <span className={v.vote === "approve" ? "text-foreground" : v.vote === "warn" ? "text-foreground" : "text-muted-foreground"}>
                 {v.vote === "approve" ? "✅" : v.vote === "warn" ? "⚠️" : "—"}
               </span>
-              <span className="text-[#616061]">{v.comment}</span>
+              <span className="text-muted-foreground">{v.comment}</span>
             </div>
           ))}
         </div>
 
         {/* CEO approval buttons */}
         <div className="flex gap-2">
-          <button onClick={() => setVote("approve")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "approve" ? "bg-black text-white" : "border border-[#DDDDDD] text-black hover:bg-black/5")}>✅ Aprovar</button>
-          <button onClick={() => setVote("review")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "review" ? "bg-black text-white" : "border border-[#DDDDDD] text-black hover:bg-black/5")}>✏️ Revisão</button>
-          <button onClick={() => setVote("reject")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "reject" ? "bg-black text-white" : "border border-[#DDDDDD] text-black hover:bg-black/5")}>❌ Reprovar</button>
+          <button onClick={() => setVote("approve")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "approve" ? "bg-primary text-primary-foreground" : "border border-border text-foreground hover:bg-muted-foreground/10")}>✅ Aprovar</button>
+          <button onClick={() => setVote("review")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "review" ? "bg-primary text-primary-foreground" : "border border-border text-foreground hover:bg-muted-foreground/10")}>✏️ Revisão</button>
+          <button onClick={() => setVote("reject")} className={cn("flex-1 py-2  text-xs font-bold transition-all", vote === "reject" ? "bg-primary text-primary-foreground" : "border border-border text-foreground hover:bg-muted-foreground/10")}>❌ Reprovar</button>
         </div>
       </div>
     </div>
@@ -167,37 +167,37 @@ function ConflictCard({ msg, onReact }: { msg: AgentMessage; onReact?: (msgId: s
   const { agentA, agentB } = msg.conflictData
 
   return (
-    <div className="my-3 p-4  border border-[#ECB22E]/20 bg-black/5">
+    <div className="my-3 p-4  border border-[#ECB22E]/20 bg-muted">
       <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle className="w-4 h-4 text-black" />
-        <span className="text-sm font-bold text-black">Conflito Detectado</span>
-        <span className="text-[11px] text-[#999]">{msg.content}</span>
+        <AlertTriangle className="w-4 h-4 text-foreground" />
+        <span className="text-sm font-bold text-foreground">Conflito Detectado</span>
+        <span className="text-[11px] text-muted-foreground">{msg.content}</span>
       </div>
 
       <div className="grid grid-cols-2 gap-4 mb-4">
-        <div className="p-3  bg-white border border-[#DDDDDD]">
+        <div className="p-3  bg-card border border-border">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-3 h-3 rounded-pill" style={{ backgroundColor: agentA.color }} />
-            <span className="text-sm font-bold text-black">{agentA.name} diz:</span>
+            <span className="text-sm font-bold text-foreground">{agentA.name} diz:</span>
           </div>
-          <p className="text-xs text-[#616061] italic leading-relaxed">"{agentA.quote}"</p>
-          <p className="text-[10px] text-[#999] mt-2">Peso: {agentA.weight}/100</p>
+          <p className="text-xs text-muted-foreground italic leading-relaxed">"{agentA.quote}"</p>
+          <p className="text-[10px] text-muted-foreground mt-2">Peso: {agentA.weight}/100</p>
         </div>
-        <div className="p-3  bg-white border border-[#DDDDDD]">
+        <div className="p-3  bg-card border border-border">
           <div className="flex items-center gap-2 mb-2">
             <span className="w-3 h-3 rounded-pill" style={{ backgroundColor: agentB.color }} />
-            <span className="text-sm font-bold text-black">{agentB.name} diz:</span>
+            <span className="text-sm font-bold text-foreground">{agentB.name} diz:</span>
           </div>
-          <p className="text-xs text-[#616061] italic leading-relaxed">"{agentB.quote}"</p>
-          <p className="text-[10px] text-[#999] mt-2">Peso: {agentB.weight}/100</p>
+          <p className="text-xs text-muted-foreground italic leading-relaxed">"{agentB.quote}"</p>
+          <p className="text-[10px] text-muted-foreground mt-2">Peso: {agentB.weight}/100</p>
         </div>
       </div>
 
-      <p className="text-xs font-bold text-black mb-2">Com quem você concorda?</p>
+      <p className="text-xs font-bold text-foreground mb-2">Com quem você concorda?</p>
       <div className="flex gap-2">
-        <button className="flex-1 py-2  text-xs font-bold border border-[#000000] text-[#000000] hover:bg-[#000000]/5">🟣 {agentA.name} está certa</button>
-        <button className="flex-1 py-2  text-xs font-bold border border-black text-black hover:bg-black/5">🟢 {agentB.name} está certa</button>
-        <button className="flex-1 py-2  text-xs font-bold border border-[#DDDDDD] text-[#616061] hover:bg-[#F8F8F8]">🤝 Meio a meio</button>
+        <button className="flex-1 py-2  text-xs font-bold border border-primary text-primary hover:bg-primary/10">🟣 {agentA.name} está certa</button>
+        <button className="flex-1 py-2  text-xs font-bold border border-primary text-primary hover:bg-primary/10">🟢 {agentB.name} está certa</button>
+        <button className="flex-1 py-2  text-xs font-bold border border-border text-muted-foreground hover:bg-muted">🤝 Meio a meio</button>
       </div>
     </div>
   )
@@ -215,18 +215,18 @@ function AlertCard({ msg }: { msg: AgentMessage }) {
       </div>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-2 mb-1">
-          <span className="font-bold text-sm text-black">{msg.agent.name}</span>
-          <span className="text-[11px] text-[#999]">{formatDate(msg.timestamp, "relative")}</span>
+          <span className="font-bold text-sm text-foreground">{msg.agent.name}</span>
+          <span className="text-[11px] text-muted-foreground">{formatDate(msg.timestamp, "relative")}</span>
         </div>
 
-        <div className="p-3  border border-black/10 bg-black/5">
-          <p className="text-sm font-bold text-black mb-1">⚠️ Alerta de Métricas</p>
-          <p className="text-xs text-[#616061]">{msg.alertData.metric}</p>
-          <p className="text-xs text-[#616061] mt-1">{msg.alertData.impact}</p>
-          <p className="text-xs text-black font-bold mt-2">{msg.alertData.recommendation}</p>
+        <div className="p-3  border border-border bg-muted">
+          <p className="text-sm font-bold text-foreground mb-1">⚠️ Alerta de Métricas</p>
+          <p className="text-xs text-muted-foreground">{msg.alertData.metric}</p>
+          <p className="text-xs text-muted-foreground mt-1">{msg.alertData.impact}</p>
+          <p className="text-xs text-foreground font-bold mt-2">{msg.alertData.recommendation}</p>
           <div className="flex gap-2 mt-3">
-            <button className="px-3 py-1.5  border border-[#DDDDDD] text-xs font-bold hover:bg-[#F8F8F8]">📊 Ver Dashboard</button>
-            <button className="px-3 py-1.5  border border-[#DDDDDD] text-xs font-bold hover:bg-[#F8F8F8]">🔔 Notificar {msg.alertData.link}</button>
+            <button className="px-3 py-1.5  border border-border text-xs font-bold hover:bg-muted">📊 Ver Dashboard</button>
+            <button className="px-3 py-1.5  border border-border text-xs font-bold hover:bg-muted">🔔 Notificar {msg.alertData.link}</button>
           </div>
         </div>
       </div>
@@ -239,17 +239,17 @@ function AlertCard({ msg }: { msg: AgentMessage }) {
 export function SystemMessage({ text, action, onClick }: { text: string; action?: string; onClick?: () => void }) {
   return (
     <div className="flex gap-3 py-2 my-2">
-      <div className="w-8 h-8 rounded-md bg-[#F8F8F8] flex items-center justify-center flex-shrink-0 mt-0.5">
+      <div className="w-8 h-8 rounded-md bg-muted flex items-center justify-center flex-shrink-0 mt-0.5">
         <span className="text-sm">🤖</span>
       </div>
       <div className="flex-1">
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="font-bold text-sm text-black">AgencyOS</span>
-          <span className="text-[11px] text-[#999]">Sistema</span>
+          <span className="font-bold text-sm text-foreground">AgencyOS</span>
+          <span className="text-[11px] text-muted-foreground">Sistema</span>
         </div>
-        <p className="text-[15px] text-black">{text}</p>
+        <p className="text-[15px] text-foreground">{text}</p>
         {action && (
-          <button onClick={onClick} className="mt-1.5 text-xs text-black font-bold hover:underline">
+          <button onClick={onClick} className="mt-1.5 text-xs text-foreground font-bold hover:underline">
             {action} →
           </button>
         )}
@@ -279,26 +279,26 @@ export function ChatComposer({ channel, onSend, agentColors }: { channel: string
   return (
     <div className="relative">
       {showMentions && (
-        <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-[#DDDDDD]  shadow-elevated p-1 z-10">
+        <div className="absolute bottom-full left-0 mb-1 w-48 bg-card border border-border  shadow-elevated p-1 z-10">
           {agents.filter(a => a.toLowerCase().startsWith((text.split("@").pop() || "").toLowerCase())).map(name => (
-            <button key={name} onClick={() => handleMention(name)} className="w-full text-left px-3 py-2 rounded-md hover:bg-[#F8F8F8] text-sm font-bold flex items-center gap-2">
+            <button key={name} onClick={() => handleMention(name)} className="w-full text-left px-3 py-2 rounded-md hover:bg-muted text-sm font-bold flex items-center gap-2">
               <span className="w-3 h-3 rounded-pill" style={{ backgroundColor: agentColors[name] }} /> {name}
             </button>
           ))}
         </div>
       )}
 
-      <div className="flex gap-2 items-end p-3 bg-white">
-        <button onClick={() => setShowMentions(true)} className="text-[#999] hover:text-[#616061] text-lg">@</button>
-        <button className="text-[#999] hover:text-[#616061] text-lg">📎</button>
+      <div className="flex gap-2 items-end p-3 bg-card">
+        <button onClick={() => setShowMentions(true)} className="text-muted-foreground hover:text-foreground text-lg">@</button>
+        <button className="text-muted-foreground hover:text-foreground text-lg">📎</button>
         <input
-          className="flex-1 bg-transparent text-[15px] text-black placeholder-[#CFC3CF] focus:outline-none py-1"
+          className="flex-1 bg-transparent text-[15px] text-foreground placeholder-muted-foreground focus:outline-none py-1"
           placeholder={`Mensagem para #${channel}...`}
           value={text}
           onChange={e => setText(e.target.value)}
           onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSend() } }}
         />
-        <button onClick={handleSend} disabled={!text.trim()} className="w-8 h-8 rounded-md bg-[#000000] text-white flex items-center justify-center disabled:opacity-30 hover:bg-[#6D28D9] transition-colors">
+        <button onClick={handleSend} disabled={!text.trim()} className="w-8 h-8 rounded-md bg-primary text-white flex items-center justify-center disabled:opacity-30 hover:bg-[#6D28D9] transition-colors">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3"><path d="M5 12h14M12 5l7 7-7 7" /></svg>
         </button>
       </div>

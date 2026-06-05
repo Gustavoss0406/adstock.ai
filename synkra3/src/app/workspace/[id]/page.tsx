@@ -2,15 +2,14 @@
 
 import { useState, useEffect, useRef } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { useSession } from "next-auth/react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { motion } from "framer-motion"
-import { cn, getAgentGradient, getAgentInitials, getRoleLabel, getAgentColor } from "@/lib/utils"
+import { cn, getAgentGradient, getAgentInitials, getRoleLabel } from "@/lib/utils"
 import { PIXEL_OFFICE_URL } from "@/lib/ai/config"
 import { Agent } from "@prisma/client"
 import { Hash, ChevronDown, Zap, Maximize2, Minimize2, Send, Plus, Loader2, X } from "lucide-react"
 import { toast } from "sonner"
-import { signOut } from "next-auth/react"
+import { useAuth } from "@/lib/auth/useAuth"
 import { CreateTaskModal } from "@/components/tasks/CreateTaskModal"
 import { HireModal } from "@/components/agents/HireModal"
 import { AgentProfile } from "@/components/agents/AgentProfile"
@@ -31,7 +30,7 @@ const AGENT_CHARS: Record<string, string> = {
 
 export default function WorkspaceHub() {
   const params = useParams(); const router = useRouter()
-  const { data: session } = useSession()
+  const { user: session, signOut } = useAuth()
   const queryClient = useQueryClient()
   const orgId = params.id as string
 
@@ -110,6 +109,28 @@ export default function WorkspaceHub() {
     queryFn: async () => { const r = await fetch(`/api/tasks?orgId=${orgId}`); return r.json() },
     enabled: !!orgId, refetchInterval: 15000,
   })
+
+  // Regenerate stale outputs for DONE tasks on first load
+  const regenRef = useRef(false)
+  useEffect(() => {
+    if (stage !== "ready" || regenRef.current || !tasks?.length) return
+    const hasStale = tasks.some((t: any) => {
+      if (t.status !== "DONE") return false
+      const out = typeof t.output === "string" ? JSON.parse(t.output) : t.output
+      if (!out?.content) return true
+      return out.content === t.description || out.content === t.title
+    })
+    if (hasStale) {
+      regenRef.current = true
+      fetch("/api/tasks/regenerate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orgId }),
+      }).then(r => r.json()).then((d: any) => {
+        if (d.regenerated > 0) queryClient.invalidateQueries({ queryKey: ["tasks", orgId] })
+      }).catch(() => {})
+    }
+  }, [stage, tasks, orgId])
 
   const LOAD = ["Contratando equipe...", "Organizando canais...", "Decorando escritorio...", "Pronto."]
 
@@ -490,7 +511,7 @@ export default function WorkspaceHub() {
         <div className="relative space-y-5">
           {ags.slice(0, arrivalIdx).map((a) => (
             <motion.div key={a.id} initial={{ opacity: 0, y: 20, scale: 0.9 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: "spring", stiffness: 180, damping: 18 }}>
-              <div className="flex items-center gap-3 bg-editor-surface border border-editor-border  px-4 py-3 min-w-[240px]">
+              <div className="flex items-center gap-3 bg-editor-surface border border-editor-border rounded-xl px-4 py-3 min-w-[240px]">
                 {AGENT_CHARS[a.name] ? (
                   <img src={AGENT_CHARS[a.name]} className="w-10 h-10  object-cover" alt={a.name} />
                 ) : (
@@ -521,7 +542,7 @@ export default function WorkspaceHub() {
 
   const agents = org.agents?.filter(a => a.status !== "FIRED") || []
   const channels = org.channels || []
-  const statusDot = (a: Agent) => { if (a.status === "WORKING") return "bg-[#666] animate-pulse"; if (a.status === "ACTIVE") return "bg-[#000000]"; return "bg-[#444]" }
+  const statusDot = (a: Agent) => { if (a.status === "WORKING") return "bg-info animate-pulse"; if (a.status === "ACTIVE") return "bg-success"; return "bg-muted-foreground" }
 
   return (
     <div className="h-screen w-full flex overflow-hidden bg-editor-bg">
@@ -530,7 +551,7 @@ export default function WorkspaceHub() {
         <div className="h-10 flex items-center px-4 border-b border-editor-border"><span className="text-editor-ink text-xs font-semibold tracking-tight truncate">{org.name}</span></div>
         <div className="flex-1 overflow-y-auto py-2">
           <div className="px-3 pb-2 space-y-1">
-            <button onClick={() => setTaskOpen(true)} className="w-full flex items-center gap-2 px-3 py-1.5 rounded text-[11px] font-medium text-editor-muted hover:text-editor-ink hover:bg-white/[0.04] transition-all">
+            <button onClick={() => setTaskOpen(true)} className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg text-[11px] font-medium text-editor-muted hover:text-editor-ink hover:bg-white/[0.04] transition-all">
               <Plus className="w-3 h-3" />Nova tarefa
             </button>
             <HireModal orgId={orgId} onHired={() => queryClient.invalidateQueries({ queryKey: ["organization", orgId] })} />
@@ -556,12 +577,12 @@ export default function WorkspaceHub() {
             <div className="h-full rounded-pill bg-white/20" style={{ width: "45%" }} />
           </div>
           <div className="flex gap-1">
-            <button onClick={() => setBoardOpen(true)} className="flex-1 text-center py-1 rounded text-[9px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.03] transition-colors">
+            <button onClick={() => setBoardOpen(true)} className="flex-1 text-center py-1 rounded-lg text-[9px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.03] transition-colors">
               {org.officeSettings?.workflowMethod === "SPRINTS" ? "Sprint board" : "Kanban board"}
             </button>
           </div>
-          <button onClick={runDaily} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/[0.04] hover:bg-white/[0.06] text-editor-muted hover:text-editor-ink text-[11px] font-medium transition-all"><Zap className="w-3 h-3" />Daily</button>
-          <button onClick={() => fetch("/api/agents/heartbeat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId }) }).then(() => toast.success("Agentes trabalhando!"))} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded bg-white/[0.02] hover:bg-white/[0.04] text-editor-muted hover:text-editor-muted text-[10px] font-medium transition-all">Executar tarefas</button>
+          <button onClick={runDaily} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] text-editor-muted hover:text-editor-ink text-[11px] font-medium transition-all"><Zap className="w-3 h-3" />Daily</button>
+          <button onClick={() => fetch("/api/agents/heartbeat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId }) }).then(() => toast.success("Agentes trabalhando!"))} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] text-editor-muted hover:text-editor-muted text-[10px] font-medium transition-all">Executar tarefas</button>
           <button onClick={async () => {
             if (!confirm("Limpar TODAS as tarefas do board?")) return
             const res = await fetch(`/api/tasks/clear?orgId=${orgId}`, { method: "DELETE" })
@@ -570,7 +591,7 @@ export default function WorkspaceHub() {
               toast.success(d.message)
               queryClient.invalidateQueries({ queryKey: ["tasks", orgId] })
             }
-          }} className="w-full text-center text-editor-muted hover:text-[#000000]/40 text-[10px] transition-colors">Limpar board</button>
+          }} className="w-full text-center text-editor-muted hover:text-danger/40 text-[10px] transition-colors">Limpar board</button>
           <button onClick={() => signOut()} className="w-full text-center text-editor-muted hover:text-editor-muted text-[10px] transition-colors">Sair</button>
         </div>
       </div>
@@ -588,6 +609,8 @@ export default function WorkspaceHub() {
                   status: t.status === "TODO" ? "TODO" : t.status === "IN_PROGRESS" ? "IN_PROGRESS" : t.status === "IN_REVIEW" ? "IN_REVIEW" : t.status === "DONE" ? "DONE" : "BACKLOG",
                   priority: t.priority, platform: t.platform, dueDate: t.dueDate, completedAt: t.completedAt,
                   assignee: t.assignee || undefined, blocked: t.blocked, blockedReason: t.blockedReason,
+                  output: typeof t.output === "string" ? JSON.parse(t.output) : t.output,
+                  comments: t.comments || undefined,
                 }))}
                 agents={agents}
                 onCreateTask={() => setTaskOpen(true)}
@@ -601,7 +624,7 @@ export default function WorkspaceHub() {
         ) : (
           <>
             {/* Office */}
-            <div className="relative bg-[#111118] flex-shrink-0 border-2 border-editor-border  overflow-hidden" style={{ height: officeFs ? "100%" : `${dividerY}%` }}>
+            <div className="relative bg-editor-bg flex-shrink-0 border-2 border-editor-border rounded-xl overflow-hidden" style={{ height: officeFs ? "100%" : `${dividerY}%` }}>
           {officeReady ? (
             <iframe
               ref={(el) => { officeIframeRef.current = el }}
@@ -617,7 +640,7 @@ export default function WorkspaceHub() {
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-editor-bg">
               <div className="text-center space-y-3">
-                <div className="w-8 h-8 border-2 border-white/10 border-t-[#000000]/50 rounded-pill animate-spin mx-auto" />
+                <div className="w-8 h-8 border-2 border-white/10 border-t-primary/60 rounded-pill animate-spin mx-auto" />
                 <p className="text-[11px] text-editor-muted">Acordando o escritorio...</p>
               </div>
             </div>
@@ -639,11 +662,11 @@ export default function WorkspaceHub() {
                 await fetch("/api/routine", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, event: "approval_request", agentId: a.id }) })
                 queryClient.invalidateQueries({ queryKey: ["messages"] })
                 toast.success("Conteudo gerado!")
-              }} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.04] transition-colors">
+              }} className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.04] transition-colors">
                 <Plus className="w-3 h-3" />Conteudo
               </button>
-              <button onClick={() => setTaskOpen(true)} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.04] transition-colors"><Plus className="w-3 h-3" />Tarefa</button>
-              <button onClick={runDaily} className="flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.04] transition-colors"><Zap className="w-3 h-3" />Daily</button>
+              <button onClick={() => setTaskOpen(true)} className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.04] transition-colors"><Plus className="w-3 h-3" />Tarefa</button>
+              <button onClick={runDaily} className="flex items-center gap-1 px-2 py-0.5 rounded-lg text-[10px] text-editor-muted hover:text-editor-muted hover:bg-white/[0.04] transition-colors"><Zap className="w-3 h-3" />Daily</button>
             </div>
 
             <div className="flex-1 overflow-y-auto px-5 py-3 space-y-4">
@@ -665,26 +688,26 @@ export default function WorkspaceHub() {
                 // ── Conflict Card ──
                 if (conflictData) {
                   return (
-                    <div key={msg.id} className="my-3 p-4  border border-[#000000]/20 bg-[#000000]/[0.03]">
+                    <div key={msg.id} className="my-3 p-4 rounded-xl border border-warning/20 bg-warning/[0.03]">
                       <div className="flex items-center gap-2 mb-3">
-                        <span className="text-[10px] font-semibold text-[#000000]/60 uppercase tracking-wider">Conflito Detectado</span>
+                        <span className="text-[10px] font-semibold text-warning/80 uppercase tracking-wider">Conflito Detectado</span>
                       </div>
                       <p className="text-[10px] text-editor-muted mb-3">Sobre: {conflictData.topic || "estrategia"}</p>
                       <div className="grid grid-cols-2 gap-3 mb-3">
-                        <div className="p-2.5  bg-white/[0.02] border border-editor-border">
+                        <div className="p-2.5 rounded-xl bg-white/[0.02] border border-editor-border">
                           <p className="text-[10px] font-semibold text-editor-muted mb-1">{conflictData.agentA || "Agente A"}</p>
                           <p className="text-[10px] text-editor-muted italic">"{conflictData.positionA?.slice(0, 150) || "..."}"</p>
                         </div>
-                        <div className="p-2.5  bg-white/[0.02] border border-editor-border">
+                        <div className="p-2.5 rounded-xl bg-white/[0.02] border border-editor-border">
                           <p className="text-[10px] font-semibold text-editor-muted mb-1">{conflictData.agentB || "Agente B"}</p>
                           <p className="text-[10px] text-editor-muted italic">"{conflictData.positionB?.slice(0, 150) || "..."}"</p>
                         </div>
                       </div>
                       <div className="flex items-center gap-1 text-[9px] text-editor-muted mb-2">Com quem voce concorda?</div>
                       <div className="flex gap-1.5">
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-editor-muted transition-colors">{conflictData.agentA || "Ag. A"}</button>
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-editor-muted transition-colors">{conflictData.agentB || "Ag. B"}</button>
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-editor-muted transition-colors">Meio a meio</button>
+                        <button className="flex-1 py-1.5 rounded-lg text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-editor-muted transition-colors">{conflictData.agentA || "Ag. A"}</button>
+                        <button className="flex-1 py-1.5 rounded-lg text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-editor-muted transition-colors">{conflictData.agentB || "Ag. B"}</button>
+                        <button className="flex-1 py-1.5 rounded-lg text-[10px] font-medium bg-white/[0.03] hover:bg-white/[0.05] text-white/35 hover:text-editor-muted transition-colors">Meio a meio</button>
                       </div>
                     </div>
                   )
@@ -693,22 +716,22 @@ export default function WorkspaceHub() {
                 // ── Approval Card ──
                 if (approvalData) {
                   return (
-                    <div key={msg.id} className="my-3 p-3  border border-editor-border bg-white/[0.02]">
+                    <div key={msg.id} className="my-3 p-3 rounded-xl border border-editor-border bg-white/[0.02]">
                       <div className="flex items-center gap-2 mb-2">
-                        {msg.agentId ? (AGENT_CHARS[msg.agentName || ""] ? <img src={AGENT_CHARS[msg.agentName || ""]} className="w-6 h-6 rounded object-cover" alt={msg.agentName} /> : <div className={cn("w-6 h-6 rounded flex items-center justify-center text-white text-[8px] font-bold", msg.agentGradient || "bg-[#444]")}>{(msg.agentName || "A")[0]}</div>) : null}
+                        {msg.agentId ? (AGENT_CHARS[msg.agentName || ""] ? <img src={AGENT_CHARS[msg.agentName || ""]} className="w-6 h-6 rounded object-cover" alt={msg.agentName} /> : <div className={cn("w-6 h-6 rounded flex items-center justify-center text-white text-[8px] font-bold", msg.agentGradient || "bg-primary")}>{(msg.agentName || "A")[0]}</div>) : null}
                         <span className="text-xs font-semibold text-editor-ink">{msg.agentName}</span>
                         <span className="text-[9px] text-editor-muted">pede aprovacao</span>
                       </div>
-                      <div className="bg-white/[0.02]  p-3 mb-2">
+                      <div className="bg-white/[0.02] rounded-xl p-3 mb-2">
                         <p className="text-[10px] text-editor-muted uppercase tracking-wider mb-1">{approvalData.platform} · {approvalData.specs || "1080x1080px"}</p>
                         <h4 className="text-xs font-semibold text-editor-muted mb-1">{approvalData.title}</h4>
                         <p className="text-[11px] text-editor-muted italic">"{approvalData.copy}"</p>
                         <p className="text-[9px] text-editor-muted mt-1">Publicacao sugerida: {approvalData.publishDate || "em breve"}</p>
                       </div>
                       <div className="flex gap-1.5">
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.04] hover:bg-[#000000]/20 text-editor-muted hover:text-[#000000] transition-colors">Aprovar</button>
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.04] hover:bg-[#000000]/20 text-editor-muted hover:text-[#000000] transition-colors">Revisao</button>
-                        <button className="flex-1 py-1.5 rounded text-[10px] font-medium bg-white/[0.04] hover:bg-[#000000]/20 text-editor-muted hover:text-[#000000] transition-colors">Reprovar</button>
+                        <button className="flex-1 py-1.5 rounded-lg text-[10px] font-medium bg-success/5 hover:bg-success/10 text-success transition-colors">Aprovar</button>
+                        <button className="flex-1 py-1.5 rounded-lg text-[10px] font-medium bg-warning/5 hover:bg-warning/10 text-warning transition-colors">Revisao</button>
+                        <button className="flex-1 py-1.5 rounded-lg text-[10px] font-medium bg-destructive/5 hover:bg-destructive/10 text-destructive transition-colors">Reprovar</button>
                       </div>
                     </div>
                   )
@@ -725,7 +748,7 @@ export default function WorkspaceHub() {
                 if (isDailyStart) {
                   return (
                     <div key={msg.id} className="my-3 text-center">
-                      <div className="inline-flex flex-col items-center gap-1 px-4 py-2  bg-white/[0.02] border border-editor-border">
+                      <div className="inline-flex flex-col items-center gap-1 px-4 py-2 rounded-xl bg-white/[0.02] border border-editor-border">
                         <span className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider">Daily Standup</span>
                         <p className="text-[11px] text-editor-muted whitespace-pre-wrap">{cleanContent}</p>
                       </div>
@@ -737,7 +760,7 @@ export default function WorkspaceHub() {
                   const approved = dailyApproved[msg.id]
                   const showComment = showingCommentInput[msg.id]
                   return (
-                    <div key={msg.id} className="my-3 p-4  bg-white/[0.02] border border-editor-border">
+                    <div key={msg.id} className="my-3 p-4 rounded-xl bg-white/[0.02] border border-editor-border">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider">Resumo da Daily</span>
                       </div>
@@ -747,14 +770,14 @@ export default function WorkspaceHub() {
                           <div className="flex gap-2 mt-3 pt-3 border-t border-editor-border">
                             <button
                               onClick={() => handleDailyApprove(msg.id)}
-                              className="px-3 py-1.5  bg-[#000000]/10 hover:bg-[#000000]/20 text-[10px] text-[#000000] font-medium transition-colors"
+                              className="px-3 py-1.5 rounded-xl bg-primary/10 hover:bg-primary/20 text-[10px] text-primary font-medium transition-colors"
                             >
                               ✅ Tudo certo, podem comecar
                             </button>
                             <button
                               onClick={() => handleDailyComment(msg.id)}
                               className={cn(
-                                "px-3 py-1.5  border border-editor-border hover:bg-white/[0.03] text-[10px] transition-colors",
+                                "px-3 py-1.5 rounded-xl border border-editor-border hover:bg-white/[0.03] text-[10px] transition-colors",
                                 showComment ? "text-editor-ink border-editor-border" : "text-editor-muted"
                               )}
                             >
@@ -769,13 +792,13 @@ export default function WorkspaceHub() {
                                 onChange={e => setCommentText(e.target.value)}
                                 onKeyDown={e => { if (e.key === "Enter") handleSubmitComment(msg.id) }}
                                 placeholder="Escreva seu comentario..."
-                                className="flex-1 px-2.5 py-1.5  bg-white/[0.02] border border-editor-border text-[11px] text-editor-muted placeholder-white/15 focus:outline-none focus:border-white/[0.1]"
+                                className="flex-1 px-2.5 py-1.5 rounded-xl bg-white/[0.02] border border-editor-border text-[11px] text-editor-muted placeholder-white/15 focus:outline-none focus:border-white/[0.1]"
                                 autoFocus
                               />
                               <button
                                 onClick={() => handleSubmitComment(msg.id)}
                                 disabled={!commentText.trim() || submittingComment}
-                                className="px-3 py-1.5  bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 text-[10px] text-editor-muted transition-colors"
+                                className="px-3 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] disabled:opacity-30 text-[10px] text-editor-muted transition-colors"
                               >
                                 {submittingComment ? "..." : "Enviar"}
                               </button>
@@ -784,7 +807,7 @@ export default function WorkspaceHub() {
                         </>
                       ) : (
                         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-editor-border">
-                          <span className="text-[10px] text-[#000000]/60">✅ Daily aprovada — time trabalhando</span>
+                          <span className="text-[10px] text-primary/70">✅ Daily aprovada — time trabalhando</span>
                         </div>
                       )}
                     </div>
@@ -806,7 +829,7 @@ export default function WorkspaceHub() {
                 >
                   {msg.agentId ? (
                     AGENT_CHARS[msg.agentName || ""] ? <img src={AGENT_CHARS[msg.agentName || ""]} className="w-7 h-7 rounded object-cover flex-shrink-0 mt-0.5" alt={msg.agentName} /> :
-                    <div className={cn("w-7 h-7 rounded flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-0.5", msg.agentGradient || "bg-[#444]")}>{(msg.agentName || "A")[0]}</div>
+                    <div className={cn("w-7 h-7 rounded flex items-center justify-center text-white text-[9px] font-bold flex-shrink-0 mt-0.5", msg.agentGradient || "bg-primary")}>{(msg.agentName || "A")[0]}</div>
                   ) : (
                     <div className="w-7 h-7 rounded bg-white/[0.04] flex items-center justify-center text-editor-muted text-[9px] font-bold flex-shrink-0 mt-0.5">Voce</div>
                   )}
@@ -814,7 +837,7 @@ export default function WorkspaceHub() {
                     <div className="flex items-center gap-2 mb-0.5">
                       <span className="text-xs font-semibold text-editor-ink">{msg.agentName || "Voce"}</span>
                       {msg.agentRole && <span className="text-[10px] text-editor-muted">{msg.agentRole}</span>}
-                      {isDailySpeech && <span className="text-[9px] text-[#000000]/60 bg-[#000000]/[0.06] px-1.5 py-0.5 rounded font-medium">📅 Daily</span>}
+                      {isDailySpeech && <span className="text-[9px] text-primary/80 bg-primary/10 px-1.5 py-0.5 rounded font-medium">📅 Daily</span>}
                     </div>
                     <p className="text-xs text-white/45 leading-relaxed whitespace-pre-wrap">{cleanContent}</p>
                   </div>
@@ -840,7 +863,7 @@ export default function WorkspaceHub() {
             <div className="border-t border-editor-border px-4 py-2 flex gap-2 flex-shrink-0 relative">
               {/* @Mention dropdown */}
               {showMentions && (
-                <div className="absolute bottom-full left-4 mb-1 w-48 bg-editor-surface border border-editor-border  shadow-2xl p-1 z-20">
+                <div className="absolute bottom-full left-4 mb-1 w-48 bg-editor-surface border border-editor-border rounded-xl shadow-2xl p-1 z-20">
                   {agents.map(a => (
                     <button key={a.id} onClick={() => {
                       const beforeAt = chatInput.substring(0, chatInput.lastIndexOf("@"))
@@ -936,7 +959,7 @@ export default function WorkspaceHub() {
       />
       <CarlosBrandModal
         open={carlosBrandOpen}
-        userName={session?.user?.name || "CEO"}
+        userName={(session as any)?.user_metadata?.name || session?.email?.split("@")[0] || "CEO"}
         orgId={orgId}
         onSave={(brand) => {
           setBrandIdentity(brand)

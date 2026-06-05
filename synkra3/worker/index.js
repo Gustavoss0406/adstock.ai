@@ -36,8 +36,6 @@ export default {
           .filter(function (m) { return ["system", "user", "assistant"].includes(m.role) })
           .map(function (m) { return { role: m.role, content: m.content } })
       } else if (typeof body.message === "string") {
-        // TUDO como user message — NUNCA fazer split [SYSTEM]/[USER]
-        // Isso evita meta-texto ("O usuário quer...") no deepseek-v4-pro
         messages = [{ role: "user", content: body.message }]
       }
 
@@ -48,46 +46,62 @@ export default {
         })
       }
 
-      const response = await fetch(env.OPENCODE_API_URL, {
-        method: "POST",
-        headers: {
-          "Authorization": "Bearer " + env.OPENCODE_API_KEY,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ model: model, messages: messages, temperature: temperature, max_tokens: maxTokens }),
-      })
+      // ── Call with retry on null reply ──
+      let reply = null
+      let usage = null
+      let finalModel = model
+      const maxRetries = 2
 
-      if (!response.ok) {
-        const errText = await response.text()
-        return new Response(
-          JSON.stringify({ error: "Upstream error " + response.status + ": " + errText.slice(0, 200) }),
-          {
-            status: 502,
-            headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders),
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        const response = await fetch(env.OPENCODE_API_URL, {
+          method: "POST",
+          headers: {
+            "Authorization": "Bearer " + env.OPENCODE_API_KEY,
+            "Content-Type": "application/json",
           },
-        )
+          body: JSON.stringify({
+            model: finalModel,
+            messages: messages,
+            temperature: temperature,
+            max_tokens: maxTokens + (attempt * 200), // bump tokens on retry
+          }),
+        })
+
+        if (!response.ok) {
+          const errText = await response.text()
+          if (attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, 1500 * (attempt + 1)))
+            continue
+          }
+          return new Response(
+            JSON.stringify({ error: "Upstream error " + response.status + ": " + errText.slice(0, 200) }),
+            { status: 502, headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders) },
+          )
+        }
+
+        const data = await response.json()
+        reply = data.choices?.[0]?.message?.content
+        usage = data.usage
+
+        if (reply) break // got a real reply, done
+
+        // null reply — switch model on retry and backoff
+        console.log(`[Worker] Null reply for ${finalModel}, attempt ${attempt + 1}/${maxRetries + 1}`)
+        if (attempt < maxRetries) {
+          // Switch to the other model as fallback
+          finalModel = finalModel === "glm-5.1" ? "deepseek-v4-pro" : "glm-5.1"
+          await new Promise(r => setTimeout(r, 2000 * (attempt + 1)))
+        }
       }
 
-      const data = await response.json()
-
       return new Response(
-        JSON.stringify({
-          reply: data.choices?.[0]?.message?.content || null,
-          usage: data.usage,
-          model: model,
-        }),
-        {
-          status: 200,
-          headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders),
-        },
+        JSON.stringify({ reply: reply || null, usage: usage, model: finalModel }),
+        { status: 200, headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders) },
       )
     } catch (error) {
       return new Response(
         JSON.stringify({ error: error.message || "Unknown error" }),
-        {
-          status: 500,
-          headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders),
-        },
+        { status: 500, headers: Object.assign({ "Content-Type": "application/json" }, corsHeaders) },
       )
     }
   },
@@ -106,10 +120,7 @@ export default {
     try {
       const dailyResp = await fetch(url + "/api/routine/check", {
         method: "GET",
-        headers: {
-          "x-api-key": secret,
-          "Content-Type": "application/json",
-        },
+        headers: { "x-api-key": secret, "Content-Type": "application/json" },
       })
 
       if (dailyResp.ok) {
@@ -126,10 +137,7 @@ export default {
     try {
       const hbResp = await fetch(url + "/api/system/heartbeat-cron", {
         method: "GET",
-        headers: {
-          "x-api-key": secret,
-          "Content-Type": "application/json",
-        },
+        headers: { "x-api-key": secret, "Content-Type": "application/json" },
       })
 
       if (hbResp.ok) {

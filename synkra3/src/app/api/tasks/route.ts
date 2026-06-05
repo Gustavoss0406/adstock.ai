@@ -1,7 +1,6 @@
 import { prisma } from "@/lib/prisma"
-import { getServerSession } from "next-auth"
+import { getSupabaseSession } from "@/lib/auth/server"
 import { NextRequest, NextResponse } from "next/server"
-import { authOptions } from "@/lib/auth"
 import { assignTaskToBestAgent } from "@/lib/agents/controller"
 import { z } from "zod"
 
@@ -10,14 +9,16 @@ const taskSchema = z.object({
   projectId: z.string().optional(),
   title: z.string().min(1),
   description: z.string().optional(),
+  type: z.string().optional(),
   priority: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
   assignedTo: z.string().optional(),
   sprintId: z.string().optional(),
   dueDate: z.string().optional(),
+  platform: z.string().optional(),
 })
 
 export async function GET(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getSupabaseSession()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   }
@@ -37,7 +38,7 @@ export async function GET(request: NextRequest) {
 }
 
 export async function POST(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getSupabaseSession()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   }
@@ -77,7 +78,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function PUT(request: NextRequest) {
-  const session = await getServerSession(authOptions)
+  const session = await getSupabaseSession()
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Não autorizado" }, { status: 401 })
   }

@@ -9,7 +9,7 @@ const SIZE: Record<ImageFormat, { w: number; h: number }> = {
   instagram_story: { w: 1080, h: 1920 },
 }
 
-const SLIDES = {
+const SLIDES: Record<string, Array<{ type: string; bg: string; title: string; subtitle: string }>> = {
   "treino": [
     { type: "hero", bg: "gradient", title: "5 Mitos Sobre\nTreino de Perna", subtitle: "O que realmente funciona" },
     { type: "content", bg: "dark", title: "Mito #1", subtitle: "Agachar pesado todo dia constrói mais músculo" },

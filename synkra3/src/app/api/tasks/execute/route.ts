@@ -14,11 +14,13 @@ export async function POST(request: NextRequest) {
     if (!organizationId) return NextResponse.json({ error: "organizationId required" }, { status: 400 })
 
     // Load the task + agent
-    const [task, agent, ctx] = await Promise.all([
+    const [task, ctx] = await Promise.all([
       taskId ? prisma.task.findUnique({ where: { id: taskId }, include: { assignee: true } }) : null,
-      agentId ? prisma.agent.findUnique({ where: { id: agentId } }) : task?.assignee || null,
       buildCompanyContext(organizationId),
     ])
+    const agent = agentId
+      ? await prisma.agent.findUnique({ where: { id: agentId } })
+      : task?.assignee || null
 
     if (!agent) return NextResponse.json({ error: "No agent found" }, { status: 404 })
 
@@ -80,7 +82,7 @@ export async function POST(request: NextRequest) {
     if (task?.id) {
       await prisma.task.update({
         where: { id: task.id },
-        data: { output: JSON.stringify(output), status: "IN_REVIEW" },
+        data: { output: output as any, status: "IN_REVIEW" },
       } as any)
     }
 

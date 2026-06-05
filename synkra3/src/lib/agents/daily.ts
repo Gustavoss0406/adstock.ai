@@ -185,7 +185,7 @@ function sleep(ms: number): Promise<void> {
 async function generateWithRetry(
   prompt: string,
   agentName: string,
-  maxRetries = 0, // No retries — deepseek is reliable, speed > redundancy
+  maxRetries = 1,
 ): Promise<string> {
   let lastError: Error | null = null
 
@@ -368,7 +368,10 @@ Retorne APENAS JSON array, nada alem:
           status: "TODO",
           assignedTo: assigned?.id || null,
           estimatedMinutes: getTaskDurationMinutes(et.type || "content", et.priority || "MEDIUM"),
-          description: `Extraído da daily de ${new Date().toLocaleDateString("pt-BR")}.`,
+          description: et.description || `Extraido da daily de ${new Date().toLocaleDateString("pt-BR")}. ${et.title}`,
+          output: {
+            content: et.description || et.title,
+          },
         },
       } as any)
       created++
@@ -550,6 +553,9 @@ export async function runDaily(
   const allSpeeches: Array<{ agentName: string; content: string }> = []
 
   for (let i = 0; i < dailyOrder.length; i++) {
+    // Pace requests to avoid overwhelming the AI worker
+    if (i > 0) await sleep(300)
+
     const agent = dailyOrder[i]
     const isFirst = i === 0
     const isLast = i === dailyOrder.length - 1
@@ -597,7 +603,13 @@ ${userMessage}`
       cleaned = cleanAgentReply(reply)
     } catch (err) {
       console.error(`[Daily] Agent ${agent.name} failed:`, err instanceof Error ? err.message : String(err))
-      cleaned = "Estou com dificuldades tecnicas. Vou me atualizar e falar depois na daily."
+      // Smart fallback based on agent's actual tasks
+      const taskNames = agentTasks.map(t => t.title).join(", ")
+      if (taskNames) {
+        cleaned = `Hoje vou focar em: ${taskNames}. Vou mantendo o time atualizado do progresso.`
+      } else {
+        cleaned = `Bom dia! Estou revisando minhas prioridades e ja alinho com o time em breve.`
+      }
       success = false
     }
 

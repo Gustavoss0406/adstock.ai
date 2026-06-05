@@ -88,11 +88,11 @@ export async function GET(request: NextRequest) {
   const templateId = (searchParams.get("template") || "template-4") as TemplateId
   const format = searchParams.get("format") || "html"
 
-  const brand = orgId ? await loadBrandFromDb(orgId) : { ...DEFAULT_BRAND }
-  if (searchParams.get("color")) brand.colors[0] = searchParams.get("color")!
+  const brand = (orgId ? await loadBrandFromDb(orgId) : null) || { ...DEFAULT_BRAND }
+  if (searchParams.get("color")) brand!.colors[0] = searchParams.get("color")!
 
   if (templateId === "carousel" as any) {
-    const title = searchParams.get("title") || brand.name
+    const title = searchParams.get("title") || brand!.name
     const slides = [
       { title, subtitle: "Descubra mais nos slides a seguir", type: "hero" },
       { title: "O Problema", subtitle: "O que esta impedindo seu crescimento", type: "content" },
@@ -101,7 +101,7 @@ export async function GET(request: NextRequest) {
       { title: "Pronto para comecar?", subtitle: `Siga ${brand.handle} para mais conteudos`, type: "cta" },
     ]
     const html = generateCarouselHtml(brand, slides)
-  return new Response(rendered, { headers: { "Content-Type": "text/html; charset=utf-8" } })
+    return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } })
   }
 
   const html = await loadTemplateHtml(templateId)
@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
   const body = await request.json()
   const { organizationId } = body
 
-  const brand = organizationId ? await loadBrandFromDb(organizationId) : { ...DEFAULT_BRAND }
+  const brand = (organizationId ? await loadBrandFromDb(organizationId) : null) || { ...DEFAULT_BRAND }
 
   return NextResponse.json({
     success: true,

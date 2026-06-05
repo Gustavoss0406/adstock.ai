@@ -1,131 +1,100 @@
-import { prisma } from "@/lib/prisma"
-
+// ── Brand Identity ──────────────────────────────────────
 export interface BrandIdentity {
   name: string
   handle: string
-  colors: string[]
-  logoBase64: string | null
+  primaryColor: string
+  secondaryColor: string
+  fontFamily: string
   fontStyle: FontStyle
+  colors: string[]
+  logo: string
+  logoBase64: string | null
+  tone: string
 }
 
-export type FontStyle = "editorial" | "bold" | "tech" | "luxe"
+export type TemplateId = "instagram_carousel" | "instagram_feed" | "instagram_story" | "default" | "template-1" | "template-2" | "template-3" | "template-4"
 
-export const FONT_PAIRS: Record<FontStyle, {
-  heading: string; body: string; googleFontsUrl: string; label: string; preview: string
-}> = {
-  editorial: {
-    heading: "Playfair Display", body: "DM Sans",
-    googleFontsUrl: "fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap",
-    label: "Editorial Luxo", preview: "Elegante e sofisticado — perfeito para marcas premium",
-  },
-  bold: {
-    heading: "Bebas Neue", body: "Space Mono",
-    googleFontsUrl: "fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Barlow+Condensed:wght@300;400;600;800&display=swap",
-    label: "Bold / Zine", preview: "Ousado e impactante — destaque em qualquer feed",
-  },
-  tech: {
-    heading: "Syne", body: "Syne Mono",
-    googleFontsUrl: "fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=Syne+Mono&display=swap",
-    label: "Tech / Cyber", preview: "Moderno e tecnologico — ideal para marcas digitais",
-  },
-  luxe: {
-    heading: "Cormorant", body: "Jost",
-    googleFontsUrl: "fonts.googleapis.com/css2?family=Cormorant:ital,wght@0,300;0,400;0,600;1,300;1,400;1,600&family=Jost:wght@200;300;400&display=swap",
-    label: "Luxe Minimal", preview: "Classico e refinado — minimalismo com personalidade",
-  },
-}
+export type FontStyle = "modern" | "classic" | "minimal" | "bold" | "luxe"
 
-export type TemplateId = "template-1" | "template-2" | "template-3" | "template-4"
-
-const TEMPLATE_FILES: Record<TemplateId, string> = {
-  "template-1": "editorial.html",
-  "template-2": "bold-zine.html",
-  "template-3": "tech-cyber.html",
-  "template-4": "luxe-minimal.html",
+export const TEMPLATE_LABELS: Record<TemplateId, string> = {
+  instagram_carousel: "Carrossel Instagram",
+  instagram_feed: "Feed Instagram",
+  instagram_story: "Story Instagram",
+  default: "Padrão",
+  "template-1": "Editorial",
+  "template-2": "Bold Zine",
+  "template-3": "Tech Cyber",
+  "template-4": "Luxe Minimal",
 }
 
 export const DEFAULT_BRAND: BrandIdentity = {
-  name: "Sua Marca", handle: "@suamarca",
-  colors: ["#6366F1", "#A5B4FC"], logoBase64: null,
-  fontStyle: "luxe",
+  name: "Default",
+  handle: "@default",
+  primaryColor: "#6366F1",
+  secondaryColor: "#18181B",
+  fontFamily: "Inter",
+  fontStyle: "modern",
+  colors: ["#6366F1", "#18181B", "#FAFAFA"],
+  logo: "",
+  logoBase64: null,
+  tone: "professional",
 }
 
-// ── Color derivation ──────────────────────────────────────
-export function derivePalette(primary: string) {
-  const light = lightenHex(primary, 20)
-  const dark = darkenHex(primary, 30)
-  const r = parseInt(primary.slice(1, 3), 16)
-  const b = parseInt(primary.slice(5, 7), 16)
-  const isWarm = r > b + 30
+// ── Font Pairs ──────────────────────────────────────────
+export const FONT_PAIRS: Record<FontStyle, { label: string; preview: string; heading: string; body: string; googleFontsUrl: string }> = {
+  modern: { label: "Moderna", preview: "Inter 400/600/700", heading: "Inter", body: "Inter", googleFontsUrl: "fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" },
+  classic: { label: "Clássica", preview: "Playfair Display + Lato", heading: "Playfair Display", body: "Lato", googleFontsUrl: "fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Lato:wght@400;700&display=swap" },
+  minimal: { label: "Minimalista", preview: "DM Sans 400/500/700", heading: "DM Sans", body: "DM Sans", googleFontsUrl: "fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" },
+  bold: { label: "Impactante", preview: "Montserrat + Open Sans", heading: "Montserrat", body: "Open Sans", googleFontsUrl: "fonts.googleapis.com/css2?family=Montserrat:wght@700&family=Open+Sans:wght@400;600&display=swap" },
+  luxe: { label: "Luxo", preview: "Cormorant Garamond + Inter", heading: "Cormorant Garamond", body: "Inter", googleFontsUrl: "fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600;700&family=Inter:wght@400;500&display=swap" },
+}
+
+// ── Derive Palette ──────────────────────────────────────
+export function derivePalette(primaryColor: string): Record<string, string> {
   return {
-    primary, light, dark,
-    lightBg: isWarm ? "#FAF7F4" : "#F4F6FA",
-    darkBg: isWarm ? "#1A1918" : "#0F172A",
-    border: isWarm ? "#E8E2DB" : "#E2E6EE",
+    primary: primaryColor,
+    secondary: "#18181B",
+    light: "#FAFAFA",
+    dark: "#09090B",
+    accent: primaryColor + "80",
   }
 }
 
-function lightenHex(h: string, p: number) { return adjustHex(h, p) }
-function darkenHex(h: string, p: number) { return adjustHex(h, -p) }
-function adjustHex(hex: string, p: number): string {
-  const n = parseInt(hex.slice(1), 16)
-  const clamp = (v: number) => Math.min(255, Math.max(0, Math.round(v)))
-  const r = clamp(((n >> 16) & 0xFF) + 2.55 * p)
-  const g = clamp(((n >> 8) & 0xFF) + 2.55 * p)
-  const b = clamp((n & 0xFF) + 2.55 * p)
-  return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, "0")}`
-}
-
-// ── Template engine: apply brand to HTML ──────────────────
-export function applyBrandToTemplate(html: string, brand: BrandIdentity, content?: { title?: string; subtitle?: string; tagline?: string }): string {
-  const palette = derivePalette(brand.colors[0])
-  const secondary = brand.colors[1] || palette.light
-  const fonts = FONT_PAIRS[brand.fontStyle]
-  const initial = brand.name.charAt(0).toUpperCase()
-  const gradient = `linear-gradient(135deg, ${palette.dark}, ${brand.colors[0]}, ${secondary})`
-
-  let result = html
-    .replace(/\{brand_name\}/g, brand.name)
-    .replace(/\{brand_handle\}/g, brand.handle)
-    .replace(/\{brand_primary\}/g, brand.colors[0])
-    .replace(/\{brand_secondary\}/g, secondary)
-    .replace(/\{brand_light\}/g, palette.light)
-    .replace(/\{brand_dark\}/g, palette.dark)
-    .replace(/\{brand_lightBg\}/g, palette.lightBg)
-    .replace(/\{brand_darkBg\}/g, palette.darkBg)
-    .replace(/\{brand_border\}/g, palette.border)
-    .replace(/\{brand_gradient\}/g, gradient)
-    .replace(/\{brand_logo\}/g, brand.logoBase64 || "")
-    .replace(/\{brand_initial\}/g, initial)
-    .replace(/\{google_fonts_url\}/g, `https://${fonts.googleFontsUrl}`)
-    .replace(/\{heading_font\}/g, fonts.heading)
-    .replace(/\{body_font\}/g, fonts.body)
-
-  // Replace content placeholders if provided
-  if (content?.title) result = result.replace(/\{content_title\}/g, content.title)
-  if (content?.subtitle) result = result.replace(/\{content_subtitle\}/g, content.subtitle)  
-  if (content?.tagline) result = result.replace(/\{content_tagline\}/g, content.tagline)
-
-  return result
-}
-
-export async function loadBrandFromDb(organizationId: string): Promise<BrandIdentity> {
+// ── Load Brand From DB ──────────────────────────────────
+export async function loadBrandFromDb(orgId: string): Promise<BrandIdentity | null> {
   try {
-    // Use raw query because metadata is JSONB
-    const result = await prisma.$queryRawUnsafe(
-      `SELECT metadata->'brandIdentity' as brand FROM "Onboarding" WHERE "organizationId" = $1`,
-      organizationId
-    ) as any[]
-    if (result?.[0]?.brand) {
-      return { ...DEFAULT_BRAND, ...result[0].brand }
+    const { prisma } = await import("@/lib/prisma")
+    const org = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, name: true },
+    })
+    if (!org) return null
+    return {
+      name: org.name,
+      handle: "@" + org.name.toLowerCase().replace(/[^a-z0-9]/g, ""),
+      primaryColor: "#6366F1",
+      secondaryColor: "#18181B",
+      fontFamily: "Inter",
+      fontStyle: "modern",
+      colors: ["#6366F1", "#18181B", "#FAFAFA"],
+      logo: "",
+      logoBase64: null,
+      tone: "professional",
     }
-  } catch {}
-  return { ...DEFAULT_BRAND }
+  } catch {
+    return null
+  }
 }
 
-export async function saveBrandToDb(organizationId: string, brand: BrandIdentity): Promise<void> {
-  await prisma.$queryRawUnsafe(
-    `UPDATE "Onboarding" SET metadata = jsonb_set(COALESCE(metadata, '{}'::jsonb), '{brandIdentity}', $1::jsonb) WHERE "organizationId" = $2`,
-    JSON.stringify(brand), organizationId
-  )
+// ── Apply Brand To Template ─────────────────────────────
+export function applyBrandToTemplate(templateHtml: string, brand: BrandIdentity): string {
+  const palette = derivePalette(brand.colors[0])
+  const fonts = FONT_PAIRS[brand.fontStyle]
+  return templateHtml
+    .replace(/{{primary}}/g, palette.primary)
+    .replace(/{{secondary}}/g, palette.secondary)
+    .replace(/{{headingFont}}/g, fonts.heading)
+    .replace(/{{bodyFont}}/g, fonts.body)
+    .replace(/{{brandName}}/g, brand.name)
+    .replace(/{{brandHandle}}/g, brand.handle)
 }

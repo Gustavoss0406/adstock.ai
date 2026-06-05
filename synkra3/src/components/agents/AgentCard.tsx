@@ -19,12 +19,12 @@ interface AgentCardProps {
 }
 
 const statusConfig: Record<AgentStatus, { label: string; color: string; dot: string }> = {
-  ACTIVE: { label: "Ativo", color: "text-black", dot: "bg-black" },
-  IDLE: { label: "Ocioso", color: "text-black", dot: "bg-black" },
-  WORKING: { label: "Trabalhando", color: "text-black", dot: "bg-black animate-pulse" },
-  IN_MEETING: { label: "Em reunião", color: "text-black", dot: "bg-black animate-pulse" },
-  OFFLINE: { label: "Offline", color: "text-[#616061]", dot: "bg-[#616061]" },
-  FIRED: { label: "Demitido", color: "text-black", dot: "bg-black" },
+  ACTIVE: { label: "Ativo", color: "text-foreground", dot: "bg-success" },
+  IDLE: { label: "Ocioso", color: "text-foreground", dot: "bg-warning" },
+  WORKING: { label: "Trabalhando", color: "text-foreground", dot: "bg-info animate-pulse" },
+  IN_MEETING: { label: "Em reunião", color: "text-foreground", dot: "bg-info animate-pulse" },
+  OFFLINE: { label: "Offline", color: "text-muted-foreground", dot: "bg-muted" },
+  FIRED: { label: "Demitido", color: "text-foreground", dot: "bg-destructive" },
 }
 
 export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact = false }: AgentCardProps) {
@@ -35,16 +35,16 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
   if (compact) {
     return (
       <motion.div whileHover={{ scale: 1.01 }} className="cursor-pointer" onClick={() => onDetails?.(agent)}>
-        <div className="flex items-center gap-3 p-3 rounded-md border border-[#DDDDDD] bg-white hover:bg-[#F8F8F8] transition-colors shadow-card">
+        <div className="flex items-center gap-3 p-3 rounded-md border border-border bg-card hover:bg-muted transition-colors shadow-card">
           <div className={cn("w-8 h-8 rounded-sm bg-gradient-to-br flex items-center justify-center text-white font-bold text-xs", gradient)}>
             {initials}
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1.5">
-              <span className="font-bold text-sm truncate text-black">{agent.name}</span>
+              <span className="font-bold text-sm truncate text-foreground">{agent.name}</span>
               <span className={cn("w-1.5 h-1.5 rounded-pill flex-shrink-0", status.dot)} />
             </div>
-            <span className="text-[13px] text-[#616061]">{getRoleLabel(agent.role)}</span>
+            <span className="text-[13px] text-muted-foreground">{getRoleLabel(agent.role)}</span>
           </div>
         </div>
       </motion.div>
@@ -58,7 +58,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
       whileHover={{ y: -2 }}
       transition={{ duration: 0.15 }}
     >
-      <Card className="overflow-hidden border-[#DDDDDD] transition-shadow hover:shadow-elevated">
+      <Card className="overflow-hidden border-border transition-shadow hover:shadow-elevated">
         {/* Agent Header */}
         <div className={cn("h-20 bg-gradient-to-br", gradient)}>
           <div className="h-full flex items-end p-4 gap-3">
@@ -79,30 +79,30 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
         <CardContent className="p-4">
           {/* Bio */}
           {agent.bio && (
-            <p className="text-[13px] text-[#616061] line-clamp-2 mb-3">{agent.bio}</p>
+            <p className="text-[13px] text-muted-foreground line-clamp-2 mb-3">{agent.bio}</p>
           )}
 
           {/* Stats */}
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <div className="bg-[#F8F8F8] rounded-sm p-2">
-              <div className="flex items-center gap-1 text-[11px] text-[#616061] mb-0.5">
+            <div className="bg-muted rounded-sm p-2">
+              <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-0.5">
                 <Star className="w-3 h-3" />
                 Nível
               </div>
-              <span className="text-sm font-bold text-black">{agent.level}</span>
+              <span className="text-sm font-bold text-foreground">{agent.level}</span>
             </div>
-            <div className="bg-[#F8F8F8] rounded-sm p-2">
-              <div className="flex items-center gap-1 text-[11px] text-[#616061] mb-0.5">
+            <div className="bg-muted rounded-sm p-2">
+              <div className="flex items-center gap-1 text-[11px] text-muted-foreground mb-0.5">
                 <TrendingUp className="w-3 h-3" />
                 Perf.
               </div>
-              <span className="text-sm font-bold text-black">{Math.round(agent.performance)}%</span>
+              <span className="text-sm font-bold text-foreground">{Math.round(agent.performance)}%</span>
             </div>
           </div>
 
           {/* Morale */}
           <div className="mb-3">
-            <div className="flex justify-between text-[11px] text-[#616061] mb-1">
+            <div className="flex justify-between text-[11px] text-muted-foreground mb-1">
               <span>Moral</span>
               <span>{agent.morale}%</span>
             </div>
@@ -113,9 +113,9 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
           </div>
 
           {/* Salary */}
-          <div className="flex items-center justify-between pt-3 border-t border-[#DDDDDD]">
-            <span className="text-[13px] text-[#616061]">
-              Salário <span className="text-black font-bold">{formatCurrency(agent.salary)}</span>
+          <div className="flex items-center justify-between pt-3 border-t border-border">
+            <span className="text-[13px] text-muted-foreground">
+              Salário <span className="text-foreground font-bold">{formatCurrency(agent.salary)}</span>
             </span>
           </div>
 
@@ -133,7 +133,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
             <Button
               size="sm"
               variant="ghost"
-              className="text-xs h-8 px-2 text-black hover:text-black"
+              className="text-xs h-8 px-2 text-foreground hover:text-foreground"
               onClick={(e) => { e.stopPropagation(); onPromote?.(agent) }}
             >
               <ChevronUp className="w-3.5 h-3.5" />
@@ -141,7 +141,7 @@ export function AgentCard({ agent, onChat, onDetails, onPromote, onFire, compact
             <Button
               size="sm"
               variant="ghost"
-              className="text-xs h-8 px-2 text-black hover:text-black"
+              className="text-xs h-8 px-2 text-foreground hover:text-foreground"
               onClick={(e) => { e.stopPropagation(); onFire?.(agent) }}
             >
               <MoreHorizontal className="w-3.5 h-3.5" />

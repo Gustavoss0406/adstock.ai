@@ -11,6 +11,7 @@ export interface CompanyContext {
   overdueTasks: number
   backlogSize: number
   industry?: string
+  targetAudience?: string
   goals?: string[]
   mainChallenge?: string
 }
@@ -52,6 +53,7 @@ export async function buildCompanyContext(organizationId: string): Promise<Compa
     overdueTasks: tasks.filter(t => t.dueDate && new Date(t.dueDate) < now && t.status !== "DONE").length,
     backlogSize: tasks.filter(t => t.status === "TODO").length,
     industry: org?.onboarding?.industry || undefined,
+    targetAudience: org?.onboarding?.targetAudience || undefined,
     goals: org?.onboarding?.goals || undefined,
     mainChallenge: org?.onboarding?.mainChallenges || undefined,
   }

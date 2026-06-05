@@ -46,7 +46,7 @@ export function AutonomyDashboard({ orgId }: Props) {
       >
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
-            <BrainCircuit className="w-4 h-4 text-[#000000]/60" />
+            <BrainCircuit className="w-4 h-4 text-foreground/60" />
             <span className="text-[11px] font-semibold text-editor-muted uppercase tracking-wider">Nivel de Autonomia</span>
           </div>
           <span className="text-sm font-bold text-editor-ink">{autonomyLevel}%</span>
@@ -64,22 +64,22 @@ export function AutonomyDashboard({ orgId }: Props) {
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-2">
         <StatCard
-          icon={<CheckCircle2 className="w-3 h-3 text-[#000000]" />}
+          icon={<CheckCircle2 className="w-3 h-3 text-foreground" />}
           label="Tarefas criadas"
           value={context?.backlogSize || 0}
         />
         <StatCard
-          icon={<Activity className="w-3 h-3 text-[#000000]" />}
+          icon={<Activity className="w-3 h-3 text-foreground" />}
           label="Em execucao"
           value={context?.taskCounts?.inProgress || 0}
         />
         <StatCard
-          icon={<AlertTriangle className="w-3 h-3 text-[#000000]" />}
+          icon={<AlertTriangle className="w-3 h-3 text-foreground" />}
           label="Aprovacoes pendentes"
           value={(patterns?.totalApprovals || 0) + (patterns?.totalRejections || 0)}
         />
         <StatCard
-          icon={<XCircle className="w-3 h-3 text-[#000000]" />}
+          icon={<XCircle className="w-3 h-3 text-foreground" />}
           label="Rejeicoes"
           value={patterns?.totalRejections || 0}
         />
@@ -94,7 +94,7 @@ export function AutonomyDashboard({ orgId }: Props) {
         >
           <p className="text-[10px] text-editor-muted mb-1">Taxa de aprovacao do CEO</p>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold text-[#000000]">{Math.round(patterns.approvalRate * 100)}%</span>
+            <span className="text-lg font-bold text-foreground">{Math.round(patterns.approvalRate * 100)}%</span>
             <span className="text-[10px] text-editor-muted">
               ({patterns.totalApprovals} aprovadas, {patterns.totalRejections} rejeitadas)
             </span>
@@ -175,7 +175,7 @@ function ToggleRow({ label, checked, onChange }: { label: string; checked: boole
       className="w-full flex items-center justify-between px-2 py-1.5  hover:bg-white/[0.02] transition-colors"
     >
       <span className="text-[11px] text-editor-muted">{label}</span>
-      <div className={`w-7 h-4 rounded-pill transition-colors ${checked ? "bg-[#000000]/40" : "bg-white/[0.06]"}`}>
+      <div className={`w-7 h-4 rounded-pill transition-colors ${checked ? "bg-muted-foreground/40" : "bg-white/[0.06]"}`}>
         <div className={`w-3 h-3 rounded-pill bg-white/40 mt-0.5 transition-transform ${checked ? "translate-x-3.5" : "translate-x-0.5"}`} />
       </div>
     </button>

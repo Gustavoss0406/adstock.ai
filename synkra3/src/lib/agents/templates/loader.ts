@@ -3,6 +3,20 @@ import path from "path"
 
 const TEMPLATES_DIR = path.join(process.cwd(), "src/lib/agents/templates")
 
+const DELIVERY_ENFORCEMENT = `
+# REGRAS ABSOLUTAS DE ENTREGA
+
+1. TODO output deve incluir "delivery_status": "completed" e "needs_ceo_approval": true
+2. TODO JSON deve ter "quality_check": {"complete": true, "actionable": true, "uses_context": true}
+3. Meta descriptions SEMPRE <= 160 caracteres
+4. Toda entrega deve ter "next_actions" (array com proximos passos concretos)
+5. Atribua tarefas a outros agentes (Carlos, Bruno, Lena, Diego) sempre que relevante
+6. NUNCA diga "vou fazer", "posso fazer", "minha sugestao e". ENTREGUE o resultado final
+7. Todo artefato (copy, HTML, relatorio, calendario) deve ser completo e utilizavel imediatamente
+8. Use o contexto da empresa (cores, tom, metricas) em TODA entrega
+9. Se receber dados numericos, calcule e use os valores (ex: queda %, crescimento)
+10. Inclua SEMPRE "artifacts" como array com os entregaveis concretos produzidos`
+
 const AGENT_TEMPLATE_MAP: Record<string, string> = {
   "Maya Ferreira": "maya-ferreira.md",
   "Bruno Costa": "bruno-costa.md",
@@ -44,7 +58,9 @@ export function buildSpecializedPrompt(agentName: string, taskType: string, cont
   return `${sections}
 
 CONTEXTO ATUAL:
-${context}`
+${context}
+
+${DELIVERY_ENFORCEMENT}`
 }
 
 function extractRelevantSections(template: string, taskType: string): string {
@@ -126,5 +142,7 @@ ${companyContext}
 Execute a tarefa seguindo sua especializacao e formato de saida definidos acima.
 Retorne o resultado em JSON quando aplicavel, ou em texto natural.
 Mantenha seu tom de voz e estilo de comunicacao.
-Use apenas emojis moderadamente conforme sua personalidade.`
+Use apenas emojis moderadamente conforme sua personalidade.
+
+${DELIVERY_ENFORCEMENT}`
 }

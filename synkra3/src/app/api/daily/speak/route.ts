@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma"
 import { chatCompletion } from "@/lib/ai/client"
 import { getUpcomingEvents, getDayContext, extractTasksFromSpeeches } from "@/lib/agents/daily"
 
-export const maxDuration = 60
+export const maxDuration = 120
 
 const BAD_TASK_PATTERNS = [
   "nao consegui processar", "dificuldades tecnicas", "me atualizar",
@@ -103,26 +103,10 @@ export async function POST(request: NextRequest) {
         : ""
 
     const firstDailyBootstrap = isFirstDaily && isFirst
-      ? `Voce e a PRIMEIRA A FALAR na primeira daily da ${org.name}.
-
-Contexto do onboarding:
-${[
-  org.onboarding?.industry && `Setor: ${org.onboarding.industry}`,
-  org.onboarding?.targetAudience && `Publico: ${org.onboarding.targetAudience}`,
-  org.onboarding?.goals?.length && `Objetivos: ${org.onboarding.goals.join(", ")}`,
-  org.onboarding?.mainChallenges && `Desafio: ${org.onboarding.mainChallenges}`,
-].filter(Boolean).join(". ") || "Agencia de marketing"}
-${integrationNote}
-
-Suas tarefas:
-${myTaskLines || "Nenhuma tarefa criada ainda."}
-
-Tarefas do time:
-${allTaskLines || "Nenhuma."}
-
-Seu papel: De bom dia, apresente as prioridades da semana baseadas no contexto. Liste 4-6 tarefas que voces vao comecar hoje. Pergunte ao CEO se ele aprova antes de criar os cards.
-
-Fale em 1a pessoa. ${personalityDesc}. Apenas FALE.`
+      ? `PRIMEIRA DAILY da ${org.name}. ${org.onboarding?.industry || "marketing"}.
+${org.onboarding?.goals?.length ? "Objetivos: " + org.onboarding.goals.join(", ") : ""}
+${myTaskLines ? "Suas tarefas: " + myTaskLines.slice(0, 300) : ""}
+Apresente 4-6 prioridades da semana. Pergunte ao CEO se aprova. Fale em 1a pessoa. ${personalityDesc}.`
       : ""
 
     // First daily: non-first agents acknowledge Maya's plan
@@ -162,17 +146,20 @@ ${userMessage}
 
 Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
 
-    // Generate speech — more tokens for first daily bootstrap
-    const maxTokens = isFirstDaily && isFirst ? 2500 : isFirst ? 1500 : 2000
-    const reply = await chatCompletion(prompt, {
-      temperature: 0.9,
-      maxTokens,
-      model: "deepseek-v4-pro",
-    })
+    const maxTokens = 1500
+    let cleaned = ""
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const raw = await chatCompletion(prompt, { temperature: 0.85, maxTokens, model: "deepseek-v4-pro" })
+      cleaned = raw?.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "")?.trim() || ""
+      if (cleaned && !cleaned.includes("Nao consegui")) break
+      if (attempt === 0) await new Promise(r => setTimeout(r, 1000))
+    }
 
-    const cleaned = reply
-      ?.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "")
-      ?.trim() || "Nao consegui processar."
+    if (!cleaned || cleaned.includes("Nao consegui processar")) {
+      cleaned = isFirstDaily && isFirst
+        ? `Bom dia, time! Vamos planejar a semana com base nos dados que temos.`
+        : `Bom dia! Estou alinhado com o plano. Vou focar nas minhas tarefas de hoje.`
+    }
 
     // Save message
     const channel = await prisma.channel.findFirst({

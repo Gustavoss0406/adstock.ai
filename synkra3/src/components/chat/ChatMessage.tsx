@@ -25,7 +25,7 @@ export function ChatMessage({ content, agent, isUser = false, timestamp }: ChatM
       <div
         className={cn(
           "w-7 h-7 rounded-md bg-gradient-to-br flex-shrink-0 flex items-center justify-center text-white text-[10px] font-medium",
-          isUser ? "from-body-strong to-muted-foreground" : gradient
+          isUser ? "from-muted-foreground to-muted" : gradient
         )}
       >
         {isUser ? "VC" : initials}
@@ -33,11 +33,11 @@ export function ChatMessage({ content, agent, isUser = false, timestamp }: ChatM
 
       <div className={cn("flex-1 min-w-0", isUser && "flex flex-col items-end")}>
         <div className="flex items-center gap-2 mb-0.5">
-          <span className="text-xs font-medium text-body-strong">
+          <span className="text-xs font-medium text-foreground">
             {isUser ? "Você" : agent?.name || "Agente"}
           </span>
           {timestamp && (
-            <span className="text-[11px] text-muted-soft">
+              <span className="text-[11px] text-muted-foreground">
               {formatDate(timestamp, "relative")}
             </span>
           )}
@@ -47,8 +47,8 @@ export function ChatMessage({ content, agent, isUser = false, timestamp }: ChatM
           className={cn(
             " px-3.5 py-2 text-sm leading-relaxed",
             isUser
-              ? "bg-surface-soft border border-hairline text-body"
-              : "bg-background border border-border text-body"
+              ? "bg-surface border border-border text-foreground"
+              : "bg-card border border-border text-foreground"
           )}
         >
           <p className="whitespace-pre-wrap">{content}</p>
