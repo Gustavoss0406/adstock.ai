@@ -41,8 +41,32 @@ const HIREABLE_PROFILES = [
   },
 ]
 
-export async function GET() {
-  return NextResponse.json(HIREABLE_PROFILES)
+export async function GET(request: NextRequest) {
+  const orgId = request.nextUrl.searchParams.get("orgId")
+
+  // Include fired agents as re-hireable
+  const firedAgents: any[] = []
+  if (orgId) {
+    const fired = await prisma.agent.findMany({
+      where: { organizationId: orgId, status: "FIRED" },
+      select: { id: true, name: true, role: true, personality: true, bio: true, skills: true, salary: true },
+    })
+    for (const a of fired) {
+      firedAgents.push({
+        key: `rehire-${a.id}`,
+        name: a.name,
+        role: a.role,
+        personality: a.personality,
+        preview: a.bio || `${a.name} foi demitido(a) e esta disponivel para recontratacao.`,
+        strengths: a.skills,
+        salary: a.salary,
+        isRehire: true,
+        agentId: a.id,
+      })
+    }
+  }
+
+  return NextResponse.json([...firedAgents, ...HIREABLE_PROFILES])
 }
 
 export async function POST(request: NextRequest) {
@@ -51,6 +75,34 @@ export async function POST(request: NextRequest) {
 
     if (!organizationId || !profileKey) {
       return NextResponse.json({ error: "organizationId and profileKey required" }, { status: 400 })
+    }
+
+    // Handle re-hire: reactivate a fired agent
+    if (profileKey.startsWith("rehire-")) {
+      const agentId = profileKey.replace("rehire-", "")
+      const agent = await prisma.agent.update({
+        where: { id: agentId },
+        data: {
+          status: "ACTIVE",
+          workState: "IDLE",
+          performance: 50,
+          morale: 70,
+          spamCount: 0,
+          communicationState: "ACTIVE",
+          mutedUntil: null,
+        },
+      })
+
+      await prisma.agencyEvent.create({
+        data: {
+          organizationId,
+          type: "agent_rehired",
+          title: `${agent.name} foi recontratado!`,
+          description: `${agent.name} voltou para a equipe.`,
+        },
+      })
+
+      return NextResponse.json(agent)
     }
 
     const profile = HIREABLE_PROFILES.find(p => p.key === profileKey)

@@ -15,6 +15,8 @@ interface Profile {
   preview: string
   strengths: string[]
   salary: number
+  isRehire?: boolean
+  agentId?: string
 }
 
 interface HireModalProps {
@@ -78,7 +80,7 @@ export function HireModal({ orgId, onHired }: HireModalProps) {
     setSelected(null)
     setProfiles([])
     setHiredProfile(null)
-    const res = await fetch("/api/agents/hire")
+    const res = await fetch(`/api/agents/hire?orgId=${orgId}`)
     const data = await res.json()
     setProfiles(data)
   }
@@ -198,6 +200,11 @@ export function HireModal({ orgId, onHired }: HireModalProps) {
                               <div className="flex items-center gap-2 mb-0.5">
                                 <h3 className="text-sm font-semibold text-editor-ink group-hover:text-primary transition-colors">{profile.name}</h3>
                                 <span className="text-[10px] text-editor-muted">{ROLE_LABELS[profile.role] || profile.role}</span>
+                                {profile.isRehire && (
+                                  <span className="text-[9px] text-amber-400/70 bg-amber-400/10 px-1.5 py-0.5 rounded border border-amber-400/20">
+                                    Recontratar
+                                  </span>
+                                )}
                               </div>
                               <p className="text-[11px] text-editor-muted/70 leading-relaxed line-clamp-2">{profile.preview}</p>
                               <div className="flex items-center gap-3 mt-2">

@@ -1042,25 +1042,11 @@ export async function postWithTurn(
     return { success: false, action: "post_message", error: "No channel available" }
   }
 
-  // ── Communication economy check ──────────────────────
-  const verbosity = await getVerbosityLevel(ctx.organizationId)
-  const eventType = (options?.messageType || "post_message") as import("@/lib/orchestrator/communication-rules").ActionableEventType
-
-  const speakCheck = await shouldAgentSpeak(eventType, {
-    verbosityLevel: verbosity,
-    agentId: ctx.agent.id,
-    organizationId: ctx.organizationId,
-    content,
-    threadId,
-    channelId: finalChannelId,
-    priority,
-  })
-  if (!speakCheck.allowed) {
-    return { success: false, action: "post_message", error: `Blocked: ${speakCheck.reason}` }
-  }
-
   // ── Spam detection ───────────────────────────────────
-  const spamCheck = await detectAndHandleSpam(ctx.agent.id, content, "post_message")
+  const spamCheck = await detectAndHandleSpam(ctx.agent.id, content, options?.messageType || "post_message")
+  if (spamCheck.blocked) {
+    return { success: false, action: "post_message", error: `Spam: ${spamCheck.reason}` }
+  }
   if (spamCheck.blocked) {
     return { success: false, action: "post_message", error: `Spam: ${spamCheck.reason}` }
   }

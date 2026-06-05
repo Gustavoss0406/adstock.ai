@@ -19,6 +19,7 @@ import { DailyModal } from "@/components/meetings/DailyModal"
 import { FirstDailyOverlay } from "@/components/meetings/FirstDailyOverlay"
 import { CarlosBrandModal } from "@/components/meetings/CarlosBrandModal"
 import type { BrandIdentity } from "@/lib/images/template-engine"
+import { SettingsModal } from "@/components/settings/SettingsModal"
 
 type OrgData = { id: string; name: string; agents: Agent[]; channels: Array<{ id: string; name: string }>; officeSettings?: { workflowMethod: string; dailyTime: string } }
 
@@ -57,6 +58,7 @@ export default function WorkspaceHub() {
   const [firstDailyOverlay, setFirstDailyOverlay] = useState(false)
   const [carlosBrandOpen, setCarlosBrandOpen] = useState(false)
   const [brandIdentity, setBrandIdentity] = useState<BrandIdentity | null>(null)
+  const [settingsOpen, setSettingsOpen] = useState(false)
   const [dailyApproved, setDailyApproved] = useState<Record<string, boolean>>({})
   const [showingCommentInput, setShowingCommentInput] = useState<Record<string, boolean>>({})
   const [commentText, setCommentText] = useState("")
@@ -299,6 +301,24 @@ export default function WorkspaceHub() {
               return merged
             })
             lastMsgTime = newMsgs[newMsgs.length - 1].createdAt
+
+            // Notification sound on task completion
+            const hasCompletion = newMsgs.some((m: any) =>
+              m.content?.includes("Conclui:") || m.metadata?.type === "task_completed"
+            )
+            if (hasCompletion) {
+              try {
+                const ctx = new (window.AudioContext || (window as any).webkitAudioContext)()
+                const osc = ctx.createOscillator(); const gain = ctx.createGain()
+                osc.connect(gain); gain.connect(ctx.destination)
+                osc.type = "sine"; gain.gain.value = 0.06
+                osc.frequency.setValueAtTime(660, ctx.currentTime)
+                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.06)
+                osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.12)
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4)
+                osc.start(ctx.currentTime); osc.stop(ctx.currentTime + 0.4)
+              } catch {}
+            }
           }
         }
       } catch {}
@@ -582,6 +602,7 @@ export default function WorkspaceHub() {
             </button>
           </div>
           <button onClick={runDaily} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.06] text-editor-muted hover:text-editor-ink text-[11px] font-medium transition-all"><Zap className="w-3 h-3" />Daily</button>
+          <button onClick={() => setSettingsOpen(true)} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] text-editor-muted hover:text-editor-muted text-[10px] font-medium transition-all">Configuracoes</button>
           <button onClick={() => fetch("/api/agents/heartbeat", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId }) }).then(() => toast.success("Agentes trabalhando!"))} className="w-full flex items-center justify-center gap-1.5 py-1.5 rounded-lg bg-white/[0.02] hover:bg-white/[0.04] text-editor-muted hover:text-editor-muted text-[10px] font-medium transition-all">Executar tarefas</button>
           <button onClick={async () => {
             if (!confirm("Limpar TODAS as tarefas do board?")) return
@@ -985,6 +1006,11 @@ export default function WorkspaceHub() {
           setCarlosBrandOpen(false)
         }}
         onDismiss={() => setCarlosBrandOpen(false)}
+      />
+      <SettingsModal
+        open={settingsOpen}
+        orgId={orgId}
+        onClose={() => setSettingsOpen(false)}
       />
     </div>
   )
