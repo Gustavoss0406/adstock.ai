@@ -316,10 +316,26 @@ export default function OnboardingPage() {
 
           {step === 6 && (
             <div className="space-y-2">
-              {["Instagram","Google Search Console","LinkedIn","Canva"].map(int => (
-                <div key={int} className="flex items-center justify-between p-2.5  border border-editor-border">
-                  <span className="text-[11px] text-editor-muted">{int}</span>
-                  <button className="px-3 py-1 rounded border border-editor-border text-[10px] text-editor-muted hover:bg-white/[0.03]">Conectar</button>
+              {[
+                { name: "Instagram", platform: "instagram" },
+                { name: "Google Search Console", platform: "google" },
+                { name: "LinkedIn", platform: "linkedin" },
+                { name: "Canva", platform: "canva" },
+              ].map(int => (
+                <div key={int.platform} className="flex items-center justify-between p-2.5 border border-editor-border">
+                  <span className="text-[11px] text-editor-muted">{int.name}</span>
+                  <button
+                    onClick={() => {
+                      if (int.platform === "canva") {
+                        toast.info("Canva sera configurado depois")
+                        return
+                      }
+                      window.location.href = `/api/integrations/${int.platform}/auth?orgId=${orgId}`
+                    }}
+                    className="px-3 py-1 rounded border border-editor-border text-[10px] text-editor-muted hover:bg-white/[0.03]"
+                  >
+                    Conectar
+                  </button>
                 </div>
               ))}
               <button onClick={next} className="text-editor-muted text-[10px] hover:text-editor-muted block mx-auto mt-3">Fazer depois</button>
