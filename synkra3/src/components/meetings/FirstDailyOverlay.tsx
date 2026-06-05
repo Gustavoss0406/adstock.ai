@@ -84,7 +84,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
               : { scale: 1, opacity: 1, y: 0 }
           }
           transition={{ type: "spring", stiffness: 250, damping: 25 }}
-          className="relative w-full max-w-[380px] mx-4"
+          className="relative w-full max-w-[320px] mx-4 aspect-[9/19]"
         >
           {/* Phone bezel */}
           <div className="relative rounded-[40px] bg-black border-[3px] border-zinc-700 overflow-hidden shadow-[0_0_0_2px_#1a1a1a,0_0_0_5px_#111,0_0_0_7px_#1a1a1a,0_25px_60px_rgba(0,0,0,0.6)]">
@@ -97,7 +97,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
             </div>
 
             {/* Screen content */}
-            <div className="relative pt-10 pb-8 px-6 min-h-[520px] flex flex-col items-center justify-center">
+            <div className="relative pt-10 pb-8 px-6 h-full flex flex-col items-center justify-center">
               {/* ── Background gradient based on phase ── */}
               <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black" />
 

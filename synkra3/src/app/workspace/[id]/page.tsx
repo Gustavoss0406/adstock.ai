@@ -272,6 +272,35 @@ export default function WorkspaceHub() {
 
     // ── Real-time message polling ────────────────────────
     let lastMsgTime = new Date().toISOString()
+
+    // Load channel history from DB
+    const loadChannelHistory = async (channelName: string) => {
+      try {
+        const chId = org?.channels?.find((c: any) => c.name === channelName)?.id
+        if (!chId) return
+        const res = await fetch(`/api/messages?orgId=${orgId}&channelId=${chId}&limit=100`)
+        if (res.ok) {
+          const msgs = await res.json()
+          if (Array.isArray(msgs) && msgs.length > 0) {
+            setMessages(msgs.map((m: any) => ({
+              id: m.id,
+              agentId: m.agentId,
+              agentName: m.agent?.name,
+              agentRole: m.agent ? getRoleLabel(m.agent.role) : "",
+              agentGradient: m.agent ? getAgentGradient(m.agent.role) : "",
+              content: m.content,
+              time: m.createdAt,
+              metadata: m.metadata,
+            })))
+            lastMsgTime = msgs[msgs.length - 1].createdAt
+          }
+        }
+      } catch {}
+    }
+
+    // Load initial channel history
+    loadChannelHistory(selChannelRef.current)
+
     const pollMessages = async () => {
       try {
         const currentChannel = selChannelRef.current
@@ -577,7 +606,7 @@ export default function WorkspaceHub() {
             <HireModal orgId={orgId} onHired={() => queryClient.invalidateQueries({ queryKey: ["organization", orgId] })} />
           </div>
           <div className="px-4 py-1"><span className="text-[9px] font-semibold text-editor-muted uppercase tracking-widest">Canais</span></div>
-          {channels.map(ch => (<button key={ch.id} onClick={() => { setSelChannel(ch.name); setMessages([]); setBoardOpen(false) }} className={cn("w-full flex items-center gap-1.5 px-4 py-0.5 text-xs transition-colors", selChannel === ch.name ? "text-editor-ink" : "text-editor-muted hover:text-editor-muted")}><Hash className="w-3 h-3 opacity-30" /><span className="truncate">{ch.name}</span></button>))}
+          {channels.map(ch => (<button key={ch.id} onClick={() => { setSelChannel(ch.name); setMessages([]); setBoardOpen(false); const chId = org?.channels?.find((c: any) => c.name === ch.name)?.id; if (chId) { fetch(`/api/messages?orgId=${orgId}&channelId=${chId}&limit=100`).then(r => r.json()).then(msgs => { if (Array.isArray(msgs) && msgs.length > 0) { setMessages(msgs.map((m: any) => ({ id: m.id, agentId: m.agentId, agentName: m.agent?.name, agentRole: m.agent ? getRoleLabel(m.agent.role) : "", agentGradient: m.agent ? getAgentGradient(m.agent.role) : "", content: m.content, time: m.createdAt, metadata: m.metadata }))) } }).catch(() => {}) } }} className={cn("w-full flex items-center gap-1.5 px-4 py-0.5 text-xs transition-colors", selChannel === ch.name ? "text-editor-ink" : "text-editor-muted hover:text-editor-muted")}><Hash className="w-3 h-3 opacity-30" /><span className="truncate">{ch.name}</span></button>))}
           <div className="mt-4 pt-3 border-t border-editor-border"><div className="px-4 py-1"><span className="text-[9px] font-semibold text-editor-muted uppercase tracking-widest">Agentes</span></div>
              {agents.map(a => {
                const ws = a.status === "WORKING" ? "Trabalhando..." : a.status === "IN_MEETING" ? "Em reuniao" : a.status === "ACTIVE" ? "Online" : "Offline"

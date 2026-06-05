@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { writeAgentEvent } from "@/lib/orchestrator/bridgeWork"
+import { writeAgentEvent, initPixelOffice, registerPixelAgent, unregisterPixelAgent } from "@/lib/orchestrator/bridgeWork"
 import * as fs from "fs"
 import * as path from "path"
 import * as os from "os"

@@ -100,6 +100,9 @@ export class OpenCodeBridge {
       if (row) {
         this.lastPartId = row.id;
         console.log('[OpenCode Bridge] Seeded last part:', this.lastPartId);
+      } else {
+        this.lastPartId = '0';
+        console.log('[OpenCode Bridge] No existing parts, starting from beginning');
       }
 
       // Create JSONL files for all recently-active sessions.
@@ -141,13 +144,15 @@ export class OpenCodeBridge {
     for (const s of sessions) {
       const jsonlPath = this.sessionJsonlPath(s.id);
       const lines = this.readExistingParts(s.id);
-      // Always rewrite to ensure fresh DB data (truncates stale content from previous runs)
-      fs.writeFileSync(jsonlPath, '', 'utf-8');
-      if (lines.length > 0) {
-        fs.appendFileSync(jsonlPath, lines.join('\n') + '\n', 'utf-8');
-        console.log(
-          `[OpenCode Bridge] Reconciled ${s.id}: ${lines.length} records (${s.title})`,
-        );
+      const existingContent = fs.existsSync(jsonlPath) ? fs.readFileSync(jsonlPath, 'utf-8') : '';
+      const newContent = lines.length > 0 ? lines.join('\n') + '\n' : '';
+      if (newContent !== existingContent) {
+        fs.writeFileSync(jsonlPath, newContent, 'utf-8');
+        if (lines.length > 0) {
+          console.log(
+            `[OpenCode Bridge] Reconciled ${s.id}: ${lines.length} records (${s.title})`,
+          );
+        }
       } else {
         console.log(`[OpenCode Bridge] Active session: ${s.id} (${s.title})`);
       }
@@ -172,7 +177,7 @@ export class OpenCodeBridge {
     try {
       const newParts = this.db.prepare(`
         SELECT p.id, p.session_id, p.message_id, p.time_created, p.data
-        FROM part p WHERE p.id > ? ORDER BY p.time_created ASC
+        FROM part p WHERE p.time_created > (SELECT time_created FROM part WHERE id = ?) ORDER BY p.time_created ASC
       `).all(this.lastPartId) as unknown as RawPart[];
 
       if (newParts.length === 0) return;
