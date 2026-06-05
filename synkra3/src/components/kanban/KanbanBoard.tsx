@@ -82,16 +82,22 @@ function SortableCard({ task, onOpen }: { task: BoardTask; onOpen: (t: BoardTask
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.4 : 1,
+    zIndex: isDragging ? 50 : 1,
+    position: "relative" as const,
   }
 
   const tc = TYPE_CONFIG[task.type || "content"] || TYPE_CONFIG.content
   const cover = task.output?.coverUrl || task.output?.deliverableImage || null
   const isOverdue = task.dueDate && task.status !== "DONE" && new Date(task.dueDate) < new Date()
 
+  const handleClick = () => {
+    if (!isDragging) onOpen(task)
+  }
+
   return (
-    <div ref={setNodeRef} style={style} {...attributes}>
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="touch-none">
       <div
-        onClick={() => onOpen(task)}
+        onClick={handleClick}
         className={cn(
           "rounded-lg border bg-editor-surface border-editor-border cursor-grab active:cursor-grabbing transition-all hover:border-white/10 hover:shadow-[0_2px_8px_rgba(0,0,0,0.2)]",
           "overflow-hidden group",
@@ -105,11 +111,8 @@ function SortableCard({ task, onOpen }: { task: BoardTask; onOpen: (t: BoardTask
           {cover && (
             <img src={cover} className="w-full h-full object-cover absolute inset-0" alt="" />
           )}
-          {/* Drag handle */}
-          <div
-            {...listeners}
-            className="absolute top-1.5 right-1.5 p-1 rounded bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab"
-          >
+          {/* Grip indicator */}
+          <div className="absolute top-1.5 right-1.5 p-1 rounded bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none">
             <GripVertical className="w-3 h-3 text-white/60" />
           </div>
           {/* Badges */}

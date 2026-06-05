@@ -51,7 +51,7 @@ export async function chatWithMessages(messages: Array<{ role: "system" | "user"
       throw error
     }
   }
-  return lastReply || "Nao consegui processar."
+  return lastReply || ""
 }
 
 export async function chatCompletion(message: string, options?: ChatOptions): Promise<string> {
@@ -100,7 +100,7 @@ export async function chatCompletion(message: string, options?: ChatOptions): Pr
       throw error
     }
   }
-  return lastReply || "Nao consegui processar."
+  return lastReply || ""
 }
 
 export async function chatWithSystem(systemPrompt: string, userMessage: string, options?: ChatOptions): Promise<string> {

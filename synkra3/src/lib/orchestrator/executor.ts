@@ -543,9 +543,14 @@ async function executeCompleteTask(
         { name: ctx.agent.name, role: ctx.agent.role },
         ctx.organizationId,
       )
-      outputData = { ...outputData, ...gen }
+      // Filter out AI error fallbacks
+      if (gen.content && !gen.content.includes("Nao consegui processar") && gen.content.length > 10) {
+        outputData = { ...outputData, ...gen }
+      } else {
+        outputData.content = currentTask?.description || currentTask?.title || ""
+      }
     } catch {
-      outputData.content = currentTask?.description || currentTask?.title || "Entregavel concluido."
+      outputData.content = currentTask?.description || currentTask?.title || ""
     }
     if (currentTask?.type === "content" || currentTask?.type === "campaign") {
       outputData.deliverableImage = null
@@ -1038,8 +1043,9 @@ export async function postWithTurn(
 
   // ── Communication economy check ──────────────────────
   const verbosity = await getVerbosityLevel(ctx.organizationId)
+  const eventType = (options?.messageType || "post_message") as import("@/lib/orchestrator/communication-rules").ActionableEventType
 
-  const speakCheck = await shouldAgentSpeak("post_message", {
+  const speakCheck = await shouldAgentSpeak(eventType, {
     verbosityLevel: verbosity,
     agentId: ctx.agent.id,
     organizationId: ctx.organizationId,
@@ -1157,15 +1163,24 @@ Retorne APENAS um JSON object com:
 
   const reply = await chatCompletion(prompt, { temperature: 0.7, maxTokens: 2000 })
 
+  // Filter out AI error fallback
+  if (!reply || reply.includes("Nao consegui processar") || reply.length < 10) {
+    return { content: task.description || task.title }
+  }
+
   try {
     const jsonMatch = reply.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0])
-      if (parsed.content) return parsed
+      if (parsed.content && !parsed.content.includes("Nao consegui") && parsed.content.length > 10) return parsed
     }
   } catch {}
 
-  return { content: reply }
+  // Fallback: use reply as text if it's sensible
+  if (reply.length > 10 && !reply.includes("Nao consegui")) {
+    return { content: reply }
+  }
+  return { content: task.description || task.title }
 }
 
 async function logOrchestration(

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Phone, PhoneOff, Sparkles } from "lucide-react"
+import { Phone, PhoneOff } from "lucide-react"
 
 interface Props {
   orgId: string
@@ -31,6 +31,7 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
   const [phraseIdx, setPhraseIdx] = useState(0)
   const [mayaLineIdx, setMayaLineIdx] = useState(0)
   const [dismissed, setDismissed] = useState(false)
+  const [declining, setDeclining] = useState(false)
 
   useEffect(() => {
     if (phase !== "ringing") return
@@ -40,21 +41,27 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
     return () => clearInterval(iv)
   }, [phase])
 
-  // Maya speech line rotation (ready phase)
   useEffect(() => {
     if (phase !== "ready") return
     const iv = setInterval(() => {
       setMayaLineIdx(p => (p + 1) % MAYA_SPEECH.length)
-    }, 2000)
+    }, 2200)
     return () => clearInterval(iv)
   }, [phase])
 
   useEffect(() => {
-    // Auto-transition after ringing
-    const t1 = setTimeout(() => setPhase("connecting"), 4000)
-    const t2 = setTimeout(() => setPhase("ready"), 7000)
+    const t1 = setTimeout(() => setPhase("connecting"), 4500)
+    const t2 = setTimeout(() => setPhase("ready"), 7500)
     return () => { clearTimeout(t1); clearTimeout(t2) }
   }, [])
+
+  const handleDecline = () => {
+    setDeclining(true)
+    setTimeout(() => {
+      setDismissed(true)
+      onDismiss()
+    }, 400)
+  }
 
   if (dismissed) return null
 
@@ -64,181 +71,211 @@ export function FirstDailyOverlay({ orgId, orgName, onAccept, onDismiss }: Props
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        transition={{ duration: 0.6 }}
-        className="fixed inset-0 z-[200] bg-editor-bg/97 flex items-center justify-center backdrop-blur-sm"
+        transition={{ duration: 0.5 }}
+        className="fixed inset-0 z-[200] flex items-center justify-center"
+        style={{ background: "linear-gradient(180deg, #0a0a0a 0%, #111111 50%, #0a0a0a 100%)" }}
       >
-        <div className="text-center space-y-8 max-w-[360px] rounded-xl">
-          {/* Phone icon ringing */}
-          <motion.div
-            className="relative mx-auto"
-            animate={phase === "ringing" ? {
-              rotate: [-5, 5, -5, 5, 0],
-              scale: [1, 1.03, 1],
-            } : {}}
-            transition={{ duration: 0.8, repeat: phase === "ringing" ? Infinity : 0 }}
-          >
-            <div className="w-16 h-16 mx-auto rounded-pill bg-primary/5 border border-primary/20 flex items-center justify-center">
-              <Phone className="w-6 h-6 text-primary/50" />
-            </div>
-            {phase === "ringing" && (
-              <>
-                <motion.div
-                  className="absolute inset-0 rounded-pill border border-primary/30"
-                  animate={{ scale: [1, 2.2], opacity: [0.5, 0] }}
-                  transition={{ duration: 2.5, repeat: Infinity }}
-                />
-                <motion.div
-                  className="absolute inset-0 rounded-pill border border-primary/15"
-                  animate={{ scale: [1, 1.8], opacity: [0.3, 0] }}
-                  transition={{ duration: 2.5, repeat: Infinity, delay: 0.7 }}
-                />
-              </>
-            )}
-          </motion.div>
+        {/* ── Phone frame ── */}
+        <motion.div
+          initial={{ scale: 0.9, opacity: 0, y: 40 }}
+          animate={
+            declining
+              ? { scale: 0.8, opacity: 0, y: 100 }
+              : { scale: 1, opacity: 1, y: 0 }
+          }
+          transition={{ type: "spring", stiffness: 250, damping: 25 }}
+          className="relative w-full max-w-[380px] mx-4"
+        >
+          {/* Phone bezel */}
+          <div className="relative rounded-[40px] bg-black border-[3px] border-zinc-700 overflow-hidden shadow-[0_0_0_2px_#1a1a1a,0_0_0_5px_#111,0_0_0_7px_#1a1a1a,0_25px_60px_rgba(0,0,0,0.6)]">
 
-          {/* Avatar + Caller info */}
-          <div className="space-y-4">
-            <motion.div
-              className="relative mx-auto w-24 h-24"
-              animate={phase === "ringing" ? { scale: [1, 1.05, 1] } : {}}
-              transition={{ duration: 1.5, repeat: Infinity }}
-            >
-              <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center ring-4 ring-primary/20">
-                <img src="/agents/Maya.png" className="w-18 h-18  object-cover" alt="Maya Ferreira" />
+            {/* Notch */}
+            <div className="absolute top-0 inset-x-0 z-10 flex justify-center pt-2.5">
+              <div className="w-28 h-6 bg-black rounded-b-2xl border-b border-l border-r border-zinc-700 flex items-center justify-center gap-1.5">
+                <div className="w-2 h-2 rounded-full bg-zinc-800 ring-1 ring-zinc-700" />
               </div>
-              {phase === "ringing" && (
-                <motion.div
-                  className="absolute inset-0 "
-                  animate={{ boxShadow: [
-                    "0 0 0px rgba(255,56,92,0)",
-                    "0 0 30px rgba(255,56,92,0.3)",
-                    "0 0 0px rgba(255,56,92,0)",
-                  ] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                />
-              )}
-            </motion.div>
-
-            <div className="space-y-1">
-              <motion.h3
-                className="text-lg font-bold text-white"
-                animate={phase === "ringing" ? { opacity: [1, 0.7, 1] } : {}}
-                transition={{ duration: 1.5, repeat: Infinity }}
-              >
-                Maya Ferreira
-              </motion.h3>
-              <p className="text-xs text-editor-muted">Diretora de Conteudo · {orgName}</p>
             </div>
-          </div>
 
-          {/* Status */}
-          <div className="space-y-3">
-            {phase === "ringing" && (
-              <>
-                <motion.p
-                  className="text-sm font-medium text-editor-muted"
-                  animate={{ opacity: [1, 0.6, 1] }}
-                  transition={{ duration: 1.5, repeat: Infinity }}
-                >
-                  Chamada recebida...
-                </motion.p>
-                <motion.p
-                  key={phraseIdx}
-                  initial={{ opacity: 0, y: 4 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-[11px] text-editor-muted"
-                >
-                  {RINGING_PHRASES[phraseIdx]}
-                </motion.p>
-              </>
-            )}
+            {/* Screen content */}
+            <div className="relative pt-10 pb-8 px-6 min-h-[520px] flex flex-col items-center justify-center">
+              {/* ── Background gradient based on phase ── */}
+              <div className="absolute inset-0 bg-gradient-to-b from-zinc-900 via-zinc-950 to-black" />
 
-            {phase === "connecting" && (
-              <div className="space-y-3">
-                <div className="w-8 h-8 border-2 border-editor-border border-t-[#000000]/50 rounded-pill animate-spin mx-auto" />
-                <p className="text-[12px] text-editor-muted">Conectando com a equipe...</p>
-              </div>
-            )}
-
-            {phase === "ready" && (
-              <div className="space-y-4">
+              {/* ── Calling avatar (Maya photo) ── */}
+              <div className="relative z-10 flex flex-col items-center">
                 <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
+                  className="relative"
+                  animate={phase === "ringing" ? {
+                    scale: [1, 1.03, 1],
+                  } : phase === "connecting" ? {
+                    scale: 1,
+                  } : {
+                    scale: 0.85,
+                  }}
+                  transition={phase === "ringing" ? {
+                    duration: 1.5, repeat: Infinity,
+                  } : { duration: 0.3 }}
                 >
-                  <h2 className="text-base font-bold text-white mb-1">
-                    Primeira Daily
-                  </h2>
-                  <p className="text-[11px] text-editor-muted max-w-[280px] mx-auto leading-relaxed">
-                    Sua equipe esta pronta para a primeira reuniao. Eles vao definir as tarefas iniciais e comecar a trabalhar imediatamente.
-                  </p>
-                </motion.div>
+                  {/* Maya avatar circle */}
+                  <div className="relative">
+                    <div className="w-28 h-28 rounded-full bg-gradient-to-br from-rose-500/30 via-violet-500/20 to-indigo-500/30 p-[2px]">
+                      <div className="w-full h-full rounded-full bg-zinc-900 overflow-hidden">
+                        <img
+                          src="/agents/Maya.png"
+                          className="w-full h-full object-cover"
+                          alt="Maya Ferreira"
+                        />
+                      </div>
+                    </div>
 
-                {/* Maya speech bubble */}
-                <motion.div
-                  className="relative mx-4 p-3 rounded-xl bg-white/[0.03] border border-editor-border"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.3 }}
-                >
-                  {/* Triangle pointer */}
-                  <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white/[0.03] border-l border-t border-editor-border rotate-45" />
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <img src="/agents/Maya.png" className="w-4 h-4 rounded object-cover" alt="Maya" />
-                    <span className="text-[10px] font-medium text-foreground/60">Maya</span>
-                    <span className="text-[9px] text-editor-muted ml-auto">agora</span>
+                    {/* Ripple effects when ringing */}
+                    {phase === "ringing" && (
+                      <>
+                        <motion.div
+                          className="absolute inset-0 rounded-full border-2 border-rose-500/40"
+                          animate={{ scale: [1, 2.5], opacity: [0.4, 0] }}
+                          transition={{ duration: 3, repeat: Infinity }}
+                        />
+                        <motion.div
+                          className="absolute inset-0 rounded-full border border-rose-500/20"
+                          animate={{ scale: [1, 2], opacity: [0.3, 0] }}
+                          transition={{ duration: 3, repeat: Infinity, delay: 1 }}
+                        />
+                      </>
+                    )}
                   </div>
-                  <motion.p
-                    key={mayaLineIdx}
-                    initial={{ opacity: 0, y: 3 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    className="text-[12px] text-white/45 leading-relaxed"
-                  >
-                    {MAYA_SPEECH[mayaLineIdx]}
-                  </motion.p>
                 </motion.div>
 
-                <div className="flex items-center justify-center gap-3 pt-1">
-                  <button
-                    onClick={() => {
-                      setDismissed(true)
-                      onAccept()
-                    }}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-primary-foreground text-sm font-medium transition-all active:scale-95"
+                {/* Caller name */}
+                <div className="mt-6 text-center z-10">
+                  <motion.h2
+                    className="text-2xl font-bold text-white tracking-tight"
+                    animate={phase === "ringing" ? { opacity: [1, 0.8, 1] } : {}}
+                    transition={{ duration: 1.5, repeat: Infinity }}
                   >
-                    <Phone className="w-4 h-4" />
-                    Atender
-                  </button>
+                    Maya Ferreira
+                  </motion.h2>
+                  <div className="flex items-center justify-center gap-1.5 mt-1">
+                    <span className="text-sm text-white/40">{orgName}</span>
+                    <span className="text-white/20">·</span>
+                    <span className="text-sm text-white/40">Diretora</span>
+                  </div>
+                </div>
+
+                {/* Status line */}
+                <div className="mt-7 text-center min-h-[48px] flex flex-col items-center justify-center">
+                  {phase === "ringing" && (
+                    <div className="space-y-1.5">
+                      <motion.p
+                        className="text-white/50 text-sm font-medium"
+                        animate={{ opacity: [1, 0.5, 1] }}
+                        transition={{ duration: 1.5, repeat: Infinity }}
+                      >
+                        Chamando...
+                      </motion.p>
+                      <motion.p
+                        key={phraseIdx}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="text-xs text-white/25 max-w-[260px] leading-relaxed"
+                      >
+                        {RINGING_PHRASES[phraseIdx]}
+                      </motion.p>
+                    </div>
+                  )}
+
+                  {phase === "connecting" && (
+                    <div className="space-y-3">
+                      <div className="w-7 h-7 border-[2.5px] border-white/10 border-t-white/60 rounded-full animate-spin mx-auto" />
+                      <p className="text-sm text-white/40">Conectando com a equipe...</p>
+                    </div>
+                  )}
+
+                  {phase === "ready" && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.4 }}
+                      className="space-y-4"
+                    >
+                      <div className="flex items-center gap-1.5 justify-center">
+                        <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
+                        <span className="text-xs font-medium text-green-400/70">Conectado</span>
+                      </div>
+
+                      {/* Speech bubble from Maya */}
+                      <div className="relative">
+                        <div className="bg-white/[0.06] border border-white/[0.10] rounded-2xl px-5 py-4 backdrop-blur-sm">
+                          <div className="flex items-center gap-2 mb-2">
+                            <div className="w-6 h-6 rounded-full bg-rose-500/20 flex items-center justify-center overflow-hidden">
+                              <img src="/agents/Maya.png" className="w-5 h-5 object-cover" alt="" />
+                            </div>
+                            <span className="text-[11px] font-medium text-white/60">Maya</span>
+                            <span className="text-[10px] text-white/25 ml-auto">agora</span>
+                          </div>
+                          <motion.p
+                            key={mayaLineIdx}
+                            initial={{ opacity: 0, y: 3 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            className="text-[13px] text-white/70 leading-relaxed"
+                          >
+                            {MAYA_SPEECH[mayaLineIdx]}
+                          </motion.p>
+                        </div>
+                        {/* Triangle pointer */}
+                        <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white/[0.06] border-l border-t border-white/[0.10] rotate-45 -z-10" />
+                      </div>
+                    </motion.div>
+                  )}
+                </div>
+
+                {/* ── Action buttons ── */}
+                <div className="mt-10 flex items-center gap-8">
+                  {/* Decline */}
                   <button
-                    onClick={() => {
-                      setDismissed(true)
-                      onDismiss()
-                    }}
-                    className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-white/[0.03] hover:bg-white/[0.05] text-editor-muted hover:text-editor-muted text-sm transition-all active:scale-95"
+                    onClick={handleDecline}
+                    className="flex flex-col items-center gap-1.5 group"
                   >
-                    <PhoneOff className="w-4 h-4" />
-                    Depois
+                    <div className="w-16 h-16 rounded-full bg-red-500/20 hover:bg-red-500/30 flex items-center justify-center transition-colors active:scale-90">
+                      <PhoneOff className="w-7 h-7 text-red-400" />
+                    </div>
+                    <span className="text-[11px] text-white/30 group-hover:text-white/50 transition-colors">
+                      Recusar
+                    </span>
                   </button>
+
+                  {/* Accept */}
+                  {phase === "ready" && (
+                    <button
+                      onClick={() => {
+                        setDismissed(true)
+                        onAccept()
+                      }}
+                      className="flex flex-col items-center gap-1.5 group"
+                    >
+                      <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                        className="w-16 h-16 rounded-full bg-green-500/90 hover:bg-green-500 flex items-center justify-center transition-colors active:scale-90 shadow-[0_0_30px_rgba(34,197,94,0.2)]"
+                      >
+                        <Phone className="w-7 h-7 text-white" />
+                      </motion.div>
+                      <span className="text-[11px] text-white/40 group-hover:text-white/60 transition-colors">
+                        Atender
+                      </span>
+                    </button>
+                  )}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Progress dots */}
-          <div className="flex items-center justify-center gap-2 pb-4">
-            {[0, 1, 2].map(i => (
-              <motion.div
-                key={i}
-                className="w-1.5 h-1.5 rounded-pill"
-                animate={{
-                  backgroundColor: i <= (phase === "ringing" ? 0 : phase === "connecting" ? 1 : 2) ? "var(--primary)" : "rgba(255,255,255,0.06)",
-                }}
-                transition={{ duration: 0.3 }}
-              />
-            ))}
+            {/* Home indicator */}
+            <div className="absolute bottom-2 inset-x-0 flex justify-center z-10">
+              <div className="w-32 h-1 rounded-full bg-zinc-700" />
+            </div>
           </div>
-        </div>
+        </motion.div>
       </motion.div>
     </AnimatePresence>
   )

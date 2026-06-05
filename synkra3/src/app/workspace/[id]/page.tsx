@@ -638,10 +638,29 @@ export default function WorkspaceHub() {
               }}
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center bg-editor-bg">
-              <div className="text-center space-y-3">
-                <div className="w-8 h-8 border-2 border-white/10 border-t-primary/60 rounded-pill animate-spin mx-auto" />
-                <p className="text-[11px] text-editor-muted">Acordando o escritorio...</p>
+            <div className="w-full h-full flex items-center justify-center bg-gradient-to-b from-zinc-900 via-black to-zinc-900">
+              <div className="text-center space-y-6">
+                {/* Agent silhouettes */}
+                <div className="flex items-center justify-center gap-1">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i}
+                      className="w-8 h-10 rounded-sm opacity-20 animate-pulse"
+                      style={{
+                        backgroundColor: ["#7C3AED", "#D97706", "#059669", "#2563EB", "#DC2626"][i],
+                        animationDelay: `${i * 0.2}s`,
+                      }}
+                    />
+                  ))}
+                </div>
+                {/* Spinner */}
+                <div className="relative mx-auto w-10 h-10">
+                  <div className="w-10 h-10 rounded-full border-2 border-white/[0.04]" />
+                  <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-amber-500/40 animate-spin" />
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[12px] font-medium text-white/30">Preparando o escritorio</p>
+                  <p className="text-[10px] text-white/10">os agentes estao chegando...</p>
+                </div>
               </div>
             </div>
           )}
