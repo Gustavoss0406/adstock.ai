@@ -45,9 +45,10 @@ TIME (5 agentes):
 ${agents.map(a => `- ${a.name} (${a.role}): ${a.name === maya.name ? "estrategia e copy" : a.role === "SOCIAL_MEDIA" ? "redes sociais e trends" : a.role === "ANALYST" ? "dados e metricas" : a.role === "DESIGNER" ? "design e identidade visual" : "SEO e otimizacao"}`).join("\n")}
 
 SUA TAREFA: Crie o plano de trabalho para HOJE. Seja concisa e motivacional.
+REGRAS: Economize tokens. So fale do que e acionavel. Nao enrole. Seja direta e objetiva.
 
 Formato:
-1. Saudacao motivacional (2 frases)
+1. Saudacao motivacional (1 frase)
 2. 3-4 prioridades do dia (baseadas no contexto)
 3. Distribuicao: quem faz o que (1 tarefa por agente)
 4. Se tem datas comemorativas proximas, mencione

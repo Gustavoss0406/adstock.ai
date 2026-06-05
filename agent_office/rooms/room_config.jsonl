@@ -1,0 +1,10 @@
+{"room_id":"entrance","display_name":"Entrada","tiles":{"x":0,"y":6,"w":2,"h":4},"walkable":true,"furniture":["door","welcome_mat"]}
+{"room_id":"desk_maya","display_name":"Mesa Maya","tiles":{"x":2,"y":2,"w":4,"h":4},"walkable":true,"furniture":["desk","monitor","chair","plant","coffee_mug"],"agent_default":"maya","color_accent":"#7C3AED"}
+{"room_id":"seo_room","display_name":"Sala SEO","tiles":{"x":0,"y":6,"w":5,"h":5},"walkable":true,"furniture":["desk","monitor_dual","chair","bookshelf","post_its_wall"],"agent_default":"diego","color_accent":"#DC2626"}
+{"room_id":"meeting_room","display_name":"Sala de Reuniao","tiles":{"x":6,"y":0,"w":8,"h":6},"walkable":true,"furniture":["big_table","chairs_6","whiteboard","projector"],"capacity":6}
+{"room_id":"design_studio","display_name":"Estudio de Design","tiles":{"x":12,"y":0,"w":8,"h":6},"walkable":true,"furniture":["desk_l_shape","monitor_large","tablet","moodboard"],"agent_default":"carlos","color_accent":"#D97706"}
+{"room_id":"metrics_room","display_name":"Sala de Metricas","tiles":{"x":8,"y":6,"w":6,"h":5},"walkable":true,"furniture":["desk","monitor_triple","charts_wall"],"agent_default":"lena","color_accent":"#059669"}
+{"room_id":"social_media_room","display_name":"Sala de Social Media","tiles":{"x":4,"y":6,"w":5,"h":5},"walkable":true,"furniture":["desk","monitor","ring_light","camera"],"agent_default":"bruno","color_accent":"#2563EB"}
+{"room_id":"copa","display_name":"Copa","tiles":{"x":12,"y":6,"w":6,"h":5},"walkable":true,"furniture":["coffee_machine","table_small","chairs_4","fridge"]}
+{"room_id":"corridor","display_name":"Corredor","tiles":{"x":5,"y":5,"w":8,"h":2},"walkable":true,"furniture":["plant_big","bulletin_board"]}
+{"room_id":"ceo_room","display_name":"Sala do CEO","tiles":{"x":14,"y":8,"w":6,"h":5},"walkable":true,"furniture":["big_desk","chair_executive","couch","tv"]}

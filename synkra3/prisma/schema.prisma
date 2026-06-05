@@ -49,6 +49,21 @@ enum AgentWorkState {
   SPEAKING
 }
 
+enum CommunicationState {
+  SILENT
+  RESPONSIVE
+  ACTIVE
+  MEETING
+  MUTED
+}
+
+enum VerbosityLevel {
+  SILENT
+  MINIMAL
+  BALANCED
+  VERBOSE
+}
+
 enum MeetingType {
   DAILY
   WEEKLY
@@ -240,6 +255,7 @@ model OfficeSettings {
   dailyEnabled   Boolean  @default(true)
   checkIntervalSec Int    @default(45)
   proactiveWorkEnabled Boolean @default(true)
+  verbosityLevel  VerbosityLevel @default(BALANCED)
   lastDailyAt    DateTime?
 
   createdAt      DateTime @default(now())
@@ -270,6 +286,10 @@ model Agent {
   lastCheckAt    DateTime?
   lastMessageSeenId String?
   lastDailySpokeAt  DateTime?
+
+  communicationState CommunicationState @default(SILENT)
+  mutedUntil     DateTime?
+  spamCount      Int         @default(0)
 
   createdAt      DateTime    @default(now())
   updatedAt      DateTime    @updatedAt

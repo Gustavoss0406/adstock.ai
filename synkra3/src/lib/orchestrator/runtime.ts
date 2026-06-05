@@ -23,6 +23,7 @@ import { recordAgentMemory, summarizeAgentDay, isLunchTime, isCheckpointTime, is
 import { canActAutonomously } from "./autonomy"
 import { scheduleAction } from "./scheduler"
 import { getEasterEggResponse, postTimeBasedMessage } from "@/lib/autonomous/agent-engine"
+import { postDailyDigest } from "./actionable-messages"
 
 // ── Process pending mentions (two-way conversation) ─────────
 export async function processPendingMentions(organizationId: string, channelId: string): Promise<string[]> {
@@ -238,25 +239,11 @@ export async function processTimeBasedEvents(organizationId: string, channelId: 
         },
       } as any)
 
-      // Each agent posts simple summary (no AI blocking)
+      // ── DIGEST MODE: cada agente posta 1 resumo ──
       for (const agent of agents.slice(0, 5)) {
-        const taskCount = await prisma.task.count({
-          where: { assignedTo: agent.id, createdAt: { gte: new Date(today) } },
-        })
-        const done = await prisma.task.count({
-          where: { assignedTo: agent.id, status: "DONE", createdAt: { gte: new Date(today) } },
-        })
-        const summary = `${agent.name}: ${done} concluidas, ${taskCount} criadas hoje.`
-        await prisma.message.create({
-          data: {
-            content: summary,
-            metadata: { type: "daily_checkpoint", agentId: agent.id },
-            agentId: agent.id,
-            channelId: channelId,
-          },
-        } as any)
+        await postDailyDigest(agent.id, agent.name, organizationId, channelId)
       }
-      results.push("Checkpoint: agentes resumiram o dia")
+      results.push("Checkpoint: agentes resumiram o dia (digest)")
     }
 
     // Maya plans tomorrow (no AI blocking)

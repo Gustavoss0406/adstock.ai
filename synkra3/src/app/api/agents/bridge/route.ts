@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
+import { writeAgentEvent } from "@/lib/orchestrator/bridgeWork"
 import * as fs from "fs"
 import * as path from "path"
 import * as os from "os"
@@ -122,6 +123,23 @@ export async function POST(request: NextRequest) {
       const fp = path.join(SESSIONS_DIR, `synkra-${agentId}.jsonl`)
       try { fs.unlinkSync(fp) } catch { /* gone */ }
       return NextResponse.json({ removed: true })
+    }
+
+    if (action === "event" && agentId) {
+      const { eventType, taskTitle, speechBubble, emote, tool } = await request.json()
+      const agent = await prisma.agent.findUnique({ where: { id: agentId } })
+      if (!agent) return NextResponse.json({ error: "Agent not found" }, { status: 404 })
+
+      writeAgentEvent({
+        agentId,
+        agentName: agent.name,
+        eventType: eventType || "task_completed",
+        taskTitle,
+        speechBubble,
+        emote,
+        tool,
+      })
+      return NextResponse.json({ ok: true, agent: agent.name, eventType })
     }
 
     return NextResponse.json({ error: "Invalid action" }, { status: 400 })

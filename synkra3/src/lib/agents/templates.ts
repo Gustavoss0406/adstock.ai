@@ -89,7 +89,7 @@ export function getDefaultAgents(): AgentTemplate[] {
 }
 
 export function getAgentPersonalityPrompt(template: AgentTemplate): string {
-  return template.promptTemplate + "\n\nSuas skills: " + template.skills.join(", ") + "\nSeus tracos: " + template.traits.join(", ")
+  return template.promptTemplate + "\n\nREGRAS DE COMUNICACAO:\n- Trabalhe em silencio. So fale no chat quando completar uma tarefa, ficar bloqueada(o) ou precisar de aprovacao.\n- NUNCA confirme com 'ok', 'legal', 'valeu', 'boa' — isso e proibido.\n- Se nao tem nada acionavel pra dizer, nao diga nada.\n\nSuas skills: " + template.skills.join(", ") + "\nSeus tracos: " + template.traits.join(", ")
 }
 
 export function generateAgentAvatarUrl(key: string): string {

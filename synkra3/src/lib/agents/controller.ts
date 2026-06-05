@@ -3,6 +3,8 @@ import { Agent, AgentStatus, MeetingType, MeetingStatus } from "@prisma/client"
 import { chatWithSystem, generateAgentResponse as aiGenerateResponse } from "@/lib/ai/client"
 import { getAgentTemplate, getAgentPersonalityPrompt } from "./templates"
 import { getRandomThinkingPhrase } from "@/lib/ai/config"
+import { transitionToMeeting, endMeetingForAgent } from "@/lib/orchestrator/communication-rules"
+import { DEFAULT_CHANNELS } from "@/lib/channels/channel-map"
 
 export interface AgentContext {
   organizationId: string
@@ -51,21 +53,8 @@ export async function createDefaultAgents(organizationId: string) {
 }
 
 export async function createDefaultChannels(organizationId: string) {
-  const channels = [
-    { name: "geral", description: "Chat principal da agência", isDefault: true },
-    { name: "daily-standup", description: "Daily às 9h — cada agente fala o que vai fazer", isDefault: true },
-    { name: "aprovações", description: "Artes e copies para revisão e aprovação do time", isDefault: false },
-    { name: "estrategia", description: "Planejamento estratégico e discussões de alto nível", isDefault: false },
-    { name: "instagram", description: "Conteúdo e estratégia para Instagram", isDefault: false },
-    { name: "linkedin", description: "Posts e artigos para LinkedIn", isDefault: false },
-    { name: "blog-seo", description: "Planejamento de conteúdo para blog e SEO", isDefault: false },
-    { name: "criativo", description: "Peças criativas, designs e copy", isDefault: false },
-    { name: "metricas", description: "Dados, relatórios e análises de performance", isDefault: false },
-    { name: "resultados", description: "Relatórios e conquistas da agência", isDefault: true },
-  ]
-
   const created = []
-  for (const channel of channels) {
+  for (const channel of DEFAULT_CHANNELS) {
     const c = await prisma.channel.create({
       data: { organizationId, ...channel },
     })
@@ -140,6 +129,7 @@ export async function runMeeting(meetingId: string) {
       where: { id: agent.id },
       data: { status: AgentStatus.IN_MEETING },
     })
+    await transitionToMeeting(agent.id)
 
     await prisma.meetingParticipant.upsert({
       where: { meetingId_agentId: { meetingId, agentId: agent.id } },
@@ -164,7 +154,8 @@ Voz da marca: ${context.brandVoice || "Não especificada"}
 Objetivos: ${context.goals?.join(", ") || "Crescimento de marketing"}
 
 Esta é a daily da agência às ${new Date().toLocaleTimeString("pt-BR")}.
-Formato: cada agente fala na sua vez por 3 rodadas. Sejam diretos e produtivos.`
+Formato: cada agente fala na sua vez. Sejam diretos e produtivos.
+REGRAS DA DAILY: Fale seu plano do dia em 1-2 frases. Nao enrole. Seja objetivo e acionavel.`
 
   const conversation: Array<{ agent: string; message: string }> = []
   for (const agent of conversationPrompts) {
@@ -209,6 +200,7 @@ Formato: cada agente fala na sua vez por 3 rodadas. Sejam diretos e produtivos.`
       where: { id: agent.id },
       data: { status: AgentStatus.ACTIVE },
     })
+    await endMeetingForAgent(agent.id)
   }
 
   return { meetingId, summary, messages }

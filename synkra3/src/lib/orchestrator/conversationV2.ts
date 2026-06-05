@@ -6,6 +6,8 @@
 import { prisma } from "@/lib/prisma"
 import { chatCompletion } from "@/lib/ai/client"
 import { requestTurn, releaseTurn, calculateTypingTime, setTypingIndicator, clearTypingIndicator } from "./turns"
+import { selectBestChannel } from "@/lib/channels/channel-selector"
+import { ensureChannelExists } from "@/lib/channels/channel-validator"
 
 export async function respondToMessage(
   agentId: string,
@@ -21,9 +23,11 @@ O QUE ACONTECEU: ${context.what}
 QUEM FALOU: ${context.from}
 DETALHE: ${context.detail.slice(0, 300)}
 
-Se for uma pergunta direta ou um aviso importante, responda.
-Se for apenas informativo sem necessidade de resposta, nao responda.
-Se precisar agir (criar tarefa, agendar, analisar), diga o que vai fazer.
+REGRAS DE COMUNICACAO:
+- Se for pergunta direta ou aviso IMPORTANTE, responda de forma acionavel.
+- Se for apenas INFORMATIVO (ex: "terminei X"), nao responda — so o autor precisava avisar.
+- NUNCA responda com "ok", "legal", "valeu", "boa", "perfeito" — isso e proibido.
+- Se nao tem nada util ou acionavel pra dizer, NAO RESPONDA. Silencio e melhor.
 
 Responda APENAS se necessario. 1-2 frases. 1a pessoa. Tom natural.`
 
@@ -44,30 +48,50 @@ export async function postAgentMessage(
   organizationId: string,
   channelName: string = "geral",
   priority: number = 5,
+  messageType?: string,
+  needsApproval?: boolean,
 ): Promise<string | null> {
   if (!content || content.length < 10) return null
 
-  const channel = await prisma.channel.findFirst({ where: { organizationId, name: channelName } })
-  if (!channel) return null
+  // ── Channel routing ─────────────────────────────────
+  let finalChannelName = channelName
+  if (messageType) {
+    const agent = await prisma.agent.findUnique({
+      where: { id: agentId },
+      select: { role: true },
+    })
+    const best = selectBestChannel({
+      content,
+      agentId,
+      agentRole: agent?.role || undefined,
+      messageType,
+      metadata: { needsCEOApproval: needsApproval },
+    })
+    finalChannelName = best
+  }
+
+  const channel = await prisma.channel.findFirst({ where: { organizationId, name: finalChannelName } })
+  const channelId = channel?.id || await ensureChannelExists(finalChannelName, organizationId)
+  if (!channelId) return null
 
   try {
-    const turn = requestTurn(channelName, agentId, agentName, priority)
+    const turn = requestTurn(finalChannelName, agentId, agentName, priority)
     if (!turn.acquired) return null
 
-    setTypingIndicator(channelName, agentId, agentName)
+    setTypingIndicator(finalChannelName, agentId, agentName)
     await new Promise(r => setTimeout(r, calculateTypingTime(agentName, content)))
 
     const msg = await prisma.message.create({
       data: {
         content,
-        metadata: { type: "agent_conversation", agentId, agentName, timestamp: new Date().toISOString() },
+        metadata: { type: messageType || "agent_conversation", agentId, agentName, timestamp: new Date().toISOString(), autoSelectedChannel: finalChannelName !== channelName },
         agentId,
-        channelId: channel.id,
+        channelId,
       },
     } as any)
 
-    clearTypingIndicator(channelName)
-    releaseTurn(channelName, agentId)
+    clearTypingIndicator(finalChannelName)
+    releaseTurn(finalChannelName, agentId)
     return msg.id
   } catch {
     return null

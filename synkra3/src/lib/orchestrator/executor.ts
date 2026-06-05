@@ -25,9 +25,13 @@ import {
   getTaskDurationMinutes,
 } from "@/lib/orchestrator/config"
 import { resumeActionsOnUnblock } from "@/lib/orchestrator/conflict"
-import { writeBridgeWorkActivity, getToolForTask } from "@/lib/orchestrator/bridgeWork"
+import { writeBridgeWorkActivity, getToolForTask, writeAgentEvent } from "@/lib/orchestrator/bridgeWork"
 import { notifyTaskChain } from "@/lib/orchestrator/conversation"
 import { executeFullCascade } from "@/lib/autonomous/agent-engine"
+import { shouldAgentSpeak, getVerbosityLevel, transitionToWorking, transitionToTaskCompleted, transitionToMentioned } from "@/lib/orchestrator/communication-rules"
+import { detectAndHandleSpam } from "@/lib/orchestrator/spam-detection"
+import { selectBestChannel, getMessageTypeForAction } from "@/lib/channels/channel-selector"
+import { ensureChannelExists } from "@/lib/channels/channel-validator"
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -205,7 +209,11 @@ async function executePostMessage(
     return { success: false, action: "post_message", error: "Missing content or channelId" }
   }
 
-  return postWithTurn(ctx, targetChannelId, content, action.priority, action.context.threadId as string | undefined)
+  return postWithTurn(ctx, targetChannelId, content, action.priority, action.context.threadId as string | undefined, {
+    messageType: action.context.messageType as string || "post_message",
+    taskType: action.context.taskType as string,
+    needsApproval: action.context.needsApproval as boolean,
+  })
 }
 
 async function executeRespondToMention(
@@ -219,14 +227,32 @@ async function executeRespondToMention(
     return { success: false, action: "respond_to_mention", error: "No channel" }
   }
 
+  const verbosity = await getVerbosityLevel(ctx.organizationId)
+  const speakCheck = await shouldAgentSpeak("mentioned", {
+    verbosityLevel: verbosity,
+    agentId: ctx.agent.id,
+    organizationId: ctx.organizationId,
+    content: message,
+    channelId: targetChannelId,
+  })
+  if (!speakCheck.allowed) {
+    return { success: false, action: "respond_to_mention", error: `Blocked: ${speakCheck.reason}` }
+  }
+
   const prompt = `Voce e ${ctx.agent.name}. Responda a esta mensagem em 1-2 frases, em primeira pessoa.
 Mensagem recebida: "${message}".
-Seja natural. Nao diga que e IA. Use o tom da sua personalidade.`
+
+REGRAS DE COMUNICACAO:
+- NUNCA responda com "ok", "legal", "valeu", "obrigado" ou confirmacoes vazias.
+- Sua resposta deve ser ACIONAVEL: algo util, informativo ou que ajude o time.
+- Seja natural. Nao diga que e IA. Use o tom da sua personalidade.`
 
   const reply = await chatCompletion(prompt, { maxTokens: 1500, temperature: 0.8 })
   const cleaned = reply.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "").trim()
 
-  return postWithTurn(ctx, targetChannelId, cleaned, action.priority)
+  return postWithTurn(ctx, targetChannelId, cleaned, action.priority, undefined, {
+    messageType: "respond_to_mention",
+  })
 }
 
 async function executeRespondToAgent(
@@ -240,8 +266,28 @@ async function executeRespondToAgent(
     return { success: false, action: "respond_to_agent", error: "No channel" }
   }
 
+  // ── Communication economy check ──────────────────────
+  const verbosity = await getVerbosityLevel(ctx.organizationId)
+  const speakCheck = await shouldAgentSpeak("respond_to_agent", {
+    verbosityLevel: verbosity,
+    agentId: ctx.agent.id,
+    organizationId: ctx.organizationId,
+    content: message,
+    channelId: targetChannelId,
+  })
+  if (!speakCheck.allowed) {
+    return { success: false, action: "respond_to_agent", error: `Blocked: ${speakCheck.reason}` }
+  }
+
   const prompt = `Voce e ${ctx.agent.name}. Um colega de equipe te mencionou ou falou com voce. Responda em 1-2 frases, em primeira pessoa.
 Mensagem recebida: "${message}".
+
+REGRAS DE COMUNICACAO:
+- NUNCA diga apenas "ok", "legal", "valeu", "boa", "obrigado". Seja sempre informativo.
+- Se a mensagem for uma confirmacao vazia, NAO responda — ignore.
+- Sua resposta deve ser ACIONAVEL: algo que o outro agente precise fazer, aprovar ou saber.
+- Se nao tem nada acionavel pra dizer, nao diga nada.
+
 Seja colaborativo e natural. Nao diga que e IA.`
 
   const reply = await chatCompletion(prompt, { maxTokens: 1500, temperature: 0.8 })
@@ -253,7 +299,9 @@ Seja colaborativo e natural. Nao diga que e IA.`
     data: { workState: "WORKING_VISIBLE" },
   }).catch(() => {})
 
-  return postWithTurn(ctx, targetChannelId, cleaned, action.priority)
+  return postWithTurn(ctx, targetChannelId, cleaned, action.priority, undefined, {
+    messageType: "respond_to_agent",
+  })
 }
 
 async function executeRespondToCeo(
@@ -274,7 +322,9 @@ Seja profissional mas direto. Nao diga que e IA.`
   const reply = await chatCompletion(prompt, { maxTokens: 1500, temperature: 0.7 })
   const cleaned = reply.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "").trim()
 
-  return postWithTurn(ctx, targetChannelId, cleaned, 10)
+  return postWithTurn(ctx, targetChannelId, cleaned, 10, undefined, {
+    messageType: "respond_to_ceo",
+  })
 }
 
 async function executeJoinConversation(
@@ -288,14 +338,33 @@ async function executeJoinConversation(
     return { success: false, action: "join_conversation", error: "No channel" }
   }
 
+  // ── Communication economy: only join if explicitly invited ──
+  const verbosity = await getVerbosityLevel(ctx.organizationId)
+  const speakCheck = await shouldAgentSpeak("join_conversation", {
+    verbosityLevel: verbosity,
+    agentId: ctx.agent.id,
+    organizationId: ctx.organizationId,
+    channelId: targetChannelId,
+  })
+  if (!speakCheck.allowed) {
+    return { success: false, action: "join_conversation", error: `Blocked: ${speakCheck.reason}` }
+  }
+
   const prompt = `Voce e ${ctx.agent.name}. Voce entrou em uma conversa relevante. Contribua em 1-2 frases, em primeira pessoa.
 Contexto: "${conversationTopic}".
-Seja natural. Traga valor real para a discussao. Nao diga que e IA.`
+
+REGRAS DE COMUNICACAO:
+- NUNCA diga confirmacoes vazias. Traga valor real para a discussao.
+- Seu comentario deve ser acionavel ou informativo.
+- Se nao tem nada relevante pra adicionar, NAO fale — silencio e melhor.
+- Seja natural. Nao diga que e IA.`
 
   const reply = await chatCompletion(prompt, { maxTokens: 1500, temperature: 0.8 })
   const cleaned = reply.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "").trim()
 
-  return postWithTurn(ctx, targetChannelId, cleaned, action.priority)
+  return postWithTurn(ctx, targetChannelId, cleaned, action.priority, undefined, {
+    messageType: "join_conversation",
+  })
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -307,15 +376,12 @@ async function executeAcknowledgeTask(
   ctx: ExecutionContext,
 ): Promise<ExecutionResult> {
   const title = (action.context.taskTitle as string) || "uma tarefa"
-  const eta = action.context.eta as string | undefined
-  const targetChannelId = (action.context.channelId as string) || ctx.channelId
-
-  if (!targetChannelId) {
-    return { success: false, action: "acknowledge_task", error: "No channel" }
-  }
-
-  const content = `Vi a tarefa "${title}".${eta ? ` ETA: ${eta}` : " Vou iniciar em breve."}`
-  return postWithTurn(ctx, targetChannelId, content, action.priority)
+  // ── Communication economy: silently acknowledge, don't post ──
+  await transitionToMentioned(ctx.agent.id)
+  await logOrchestration(ctx.organizationId, ctx.agent.id, "task_acknowledged_silently", {
+    taskTitle: title,
+  })
+  return { success: true, action: "acknowledge_task" }
 }
 
 async function executeAcknowledgePendingTask(
@@ -326,12 +392,31 @@ async function executeAcknowledgePendingTask(
   const daysPending = (action.context.daysPending as number) || 1
   const targetChannelId = (action.context.channelId as string) || ctx.channelId
 
-  if (!targetChannelId) {
-    return { success: false, action: "acknowledge_pending_task", error: "No channel" }
+  // ── Only post if severely delayed (>3 days), otherwise silent ──
+  if (targetChannelId && daysPending >= 3) {
+    const verbosity = await getVerbosityLevel(ctx.organizationId)
+    const speakCheck = await shouldAgentSpeak("task_blocked", {
+      verbosityLevel: verbosity,
+      agentId: ctx.agent.id,
+      organizationId: ctx.organizationId,
+      content: `A tarefa "${title}" esta parada ha ${daysPending} dia(s). Vou comecar ela agora.`,
+      channelId: targetChannelId,
+      daysPending,
+    })
+    if (speakCheck.allowed) {
+      const content = `A tarefa "${title}" esta parada ha ${daysPending} dia(s). Vou comecar ela agora.`
+      return postWithTurn(ctx, targetChannelId, content, action.priority, undefined, {
+        messageType: daysPending >= 5 ? "task_blocked" : "task_started",
+        isBlocked: daysPending >= 5,
+      })
+    }
   }
 
-  const content = `A tarefa "${title}" esta parada ha ${daysPending} dia(s). Vou comecar ela agora.`
-  return postWithTurn(ctx, targetChannelId, content, action.priority)
+  await logOrchestration(ctx.organizationId, ctx.agent.id, "pending_task_acknowledged_silently", {
+    taskTitle: title,
+    daysPending,
+  })
+  return { success: true, action: "acknowledge_pending_task" }
 }
 
 async function executeAcknowledgeFeedback(
@@ -402,14 +487,8 @@ async function executeStartTask(
     }
   }
 
-  // 4. Always communicate — user needs to see agents working
-  const targetChannelId = (action.context.channelId as string) || ctx.channelId
-  if (targetChannelId) {
-    const isUrgent = action.type === "start_unblocked_task"
-    const prefix = isUrgent ? "Desbloqueado! " : ""
-    await postWithTurn(ctx, targetChannelId, `${prefix}Comecando: "${task.title}".`, action.priority)
-  }
-
+  // 4. Communication economy: start silently, update state only
+  await transitionToWorking(ctx.agent.id)
   await logOrchestration(ctx.organizationId, ctx.agent.id, ORCHESTRATION_EVENT_TYPES.TASK_STARTED, {
     taskId,
     title: task.title,
@@ -424,6 +503,16 @@ async function executeStartTask(
     getToolForTask(task.type || "content"),
     `Comecando: ${task.title}`,
   )
+
+  // Rich event: agent started working
+  writeAgentEvent({
+    agentId: ctx.agent.id,
+    agentName: ctx.agent.name,
+    eventType: "task_started",
+    taskTitle: task.title,
+    emote: task.type === "analysis" ? "🔍" : task.type === "content" ? "✍️" : task.type === "technical" ? "🔧" : "📋",
+    tool: getToolForTask(task.type || "content"),
+  })
 
   return { success: true, action: "start_task", taskId }
 }
@@ -505,11 +594,26 @@ async function executeCompleteTask(
     }
   }
 
-  // 4. Optionally communicate
+  // 4. Communication economy: only post completion (actionable)
+  await transitionToTaskCompleted(ctx.agent.id)
   const targetChannelId = (action.context.channelId as string) || ctx.channelId
   if (targetChannelId) {
     const title = (action.context.taskTitle as string) || "tarefa"
-    await postWithTurn(ctx, targetChannelId, `Conclui: "${title}".`, action.priority)
+    const verbosity = await getVerbosityLevel(ctx.organizationId)
+    const speakCheck = await shouldAgentSpeak("task_completed", {
+      verbosityLevel: verbosity,
+      agentId: ctx.agent.id,
+      organizationId: ctx.organizationId,
+      content: `Conclui: "${title}".`,
+      channelId: targetChannelId,
+    })
+    if (speakCheck.allowed) {
+      await postWithTurn(ctx, targetChannelId, `Conclui: "${title}".`, action.priority, undefined, {
+        messageType: "task_completed",
+        taskType: currentTask?.type || undefined,
+        needsApproval: true,
+      })
+    }
   }
 
   await logOrchestration(ctx.organizationId, ctx.agent.id, ORCHESTRATION_EVENT_TYPES.TASK_COMPLETED, {
@@ -527,6 +631,15 @@ async function executeCompleteTask(
       "bash",
       `Concluido: ${task.title}`,
     )
+
+    // Rich event: agent celebrating
+    writeAgentEvent({
+      agentId: ctx.agent.id,
+      agentName: ctx.agent.name,
+      eventType: "task_completed",
+      taskTitle: task.title,
+      speechBubble: `Terminei! ✅`,
+    })
   }
 
   // ── Post-completion: generate follow-up tasks ──────────
@@ -625,13 +738,8 @@ async function executeReportProgress(
   ctx: ExecutionContext,
 ): Promise<ExecutionResult> {
   const title = (action.context.taskTitle as string) || "minha tarefa"
-  const targetChannelId = (action.context.channelId as string) || ctx.channelId
 
-  if (!targetChannelId) {
-    return { success: false, action: "report_progress", error: "No channel" }
-  }
-
-  // Update last communicated timestamp
+  // ── Communication economy: silent progress update ──
   if (action.context.taskId) {
     await prisma.task.update({
       where: { id: action.context.taskId as string },
@@ -648,14 +756,18 @@ async function executeReportProgress(
     `Progresso: ${title}`,
   )
 
-  // Agent is communicating while working → WORKING_VISIBLE
+  // Keep agent in WORKING_SILENT state
   await prisma.agent.update({
     where: { id: ctx.agent.id },
-    data: { workState: "WORKING_VISIBLE" },
+    data: { workState: "WORKING_SILENT" },
   }).catch(() => {})
 
-  const content = `Atualizacao: Continuo trabalhando em "${title}". Progresso: indo bem.`
-  return postWithTurn(ctx, targetChannelId, content, action.priority)
+  await logOrchestration(ctx.organizationId, ctx.agent.id, "silent_progress_update", {
+    taskTitle: title,
+    taskId: action.context.taskId,
+  })
+
+  return { success: true, action: "report_progress" }
 }
 
 async function executePickNextTask(
@@ -701,10 +813,21 @@ async function executePickNextTask(
   })
 
   const targetChannelId = (action.context.channelId as string) || ctx.channelId
+  // ── Communication economy: only announce HIGH/CRITICAL tasks ──
   if (targetChannelId) {
     const isImportant = task.priority === "HIGH" || task.priority === "CRITICAL"
     if (isImportant) {
-      await postWithTurn(ctx, targetChannelId, `Comecando: "${task.title}".`, action.priority)
+      const verbosity = await getVerbosityLevel(ctx.organizationId)
+      const speakCheck = await shouldAgentSpeak("task_started", {
+        verbosityLevel: verbosity,
+        agentId: ctx.agent.id,
+        organizationId: ctx.organizationId,
+        channelId: targetChannelId,
+        priority: 7,
+      })
+      if (speakCheck.allowed) {
+        await postWithTurn(ctx, targetChannelId, `Comecando prioridade: "${task.title}".`, action.priority)
+      }
     }
   }
 
@@ -846,7 +969,10 @@ async function executeGentleReminder(
   }
 
   const content = `A tarefa "${title}" esta aguardando aprovacao ha um tempo. Alguma novidade?`
-  return postWithTurn(ctx, targetChannelId, content, action.priority)
+  return postWithTurn(ctx, targetChannelId, content, action.priority, undefined, {
+    messageType: "gentle_reminder",
+    needsApproval: true,
+  })
 }
 
 async function executeRoutineCheck(
@@ -877,17 +1003,66 @@ async function executeRoutineCheck(
  */
 export async function postWithTurn(
   ctx: ExecutionContext,
-  channelId: string,
+  channelId: string | null,
   content: string,
   priority: number,
   threadId?: string,
+  options?: { messageType?: string; taskType?: string; isBlocked?: boolean; isAlert?: boolean; needsApproval?: boolean },
 ): Promise<ExecutionResult> {
+  // ── CHANNEL ROUTING: auto-select best channel ──────────
+  let finalChannelId = channelId
+  if (options?.messageType) {
+    const bestChannel = selectBestChannel({
+      content,
+      agentId: ctx.agent.id,
+      agentRole: ctx.agent.role,
+      messageType: options.messageType,
+      metadata: {
+        taskType: options.taskType,
+        isBlocked: options.isBlocked,
+        isAlert: options.isAlert,
+        needsCEOApproval: options.needsApproval,
+      },
+    })
+    const routedId = await ensureChannelExists(bestChannel, ctx.organizationId)
+    if (routedId) finalChannelId = routedId
+  }
+
+  if (!finalChannelId) {
+    const geralId = await ensureChannelExists("geral", ctx.organizationId)
+    finalChannelId = geralId
+  }
+  if (!finalChannelId) {
+    return { success: false, action: "post_message", error: "No channel available" }
+  }
+
+  // ── Communication economy check ──────────────────────
+  const verbosity = await getVerbosityLevel(ctx.organizationId)
+
+  const speakCheck = await shouldAgentSpeak("post_message", {
+    verbosityLevel: verbosity,
+    agentId: ctx.agent.id,
+    organizationId: ctx.organizationId,
+    content,
+    threadId,
+    channelId: finalChannelId,
+    priority,
+  })
+  if (!speakCheck.allowed) {
+    return { success: false, action: "post_message", error: `Blocked: ${speakCheck.reason}` }
+  }
+
+  // ── Spam detection ───────────────────────────────────
+  const spamCheck = await detectAndHandleSpam(ctx.agent.id, content, "post_message")
+  if (spamCheck.blocked) {
+    return { success: false, action: "post_message", error: `Spam: ${spamCheck.reason}` }
+  }
   // 1. Request turn — if not acquired, skip (will be retried on next heartbeat)
-  const turn = requestTurn(channelId, ctx.agent.id, ctx.agent.name, priority)
+  const turn = requestTurn(finalChannelId, ctx.agent.id, ctx.agent.name, priority)
 
   if (!turn.acquired) {
     await logOrchestration(ctx.organizationId, ctx.agent.id, ORCHESTRATION_EVENT_TYPES.TURN_QUEUED, {
-      channelId,
+      channelId: finalChannelId,
       position: turn.position,
       priority,
     })
@@ -895,15 +1070,15 @@ export async function postWithTurn(
   }
 
   await logOrchestration(ctx.organizationId, ctx.agent.id, ORCHESTRATION_EVENT_TYPES.TURN_ACQUIRED, {
-    channelId,
+    channelId: finalChannelId,
     priority,
   })
 
   try {
     // 2. Show typing indicator
-    setTypingIndicator(channelId, ctx.agent.id, ctx.agent.name)
+    setTypingIndicator(finalChannelId, ctx.agent.id, ctx.agent.name)
     await logOrchestration(ctx.organizationId, ctx.agent.id, ORCHESTRATION_EVENT_TYPES.MESSAGE_TYPING_STARTED, {
-      channelId,
+      channelId: finalChannelId,
       contentLength: content.length,
     })
 
@@ -916,32 +1091,32 @@ export async function postWithTurn(
       data: {
         content,
         agentId: ctx.agent.id,
-        channelId,
+        channelId: finalChannelId,
       },
     })
 
     await logOrchestration(ctx.organizationId, ctx.agent.id, ORCHESTRATION_EVENT_TYPES.MESSAGE_SENT, {
       messageId: message.id,
-      channelId,
+      channelId: finalChannelId,
       contentPreview: content.slice(0, 80),
       typingTimeMs: typingTime,
     })
 
     // 5. Clear typing indicator
-    clearTypingIndicator(channelId)
+    clearTypingIndicator(finalChannelId)
     await logOrchestration(ctx.organizationId, ctx.agent.id, ORCHESTRATION_EVENT_TYPES.MESSAGE_TYPING_ENDED, {
-      channelId,
+      channelId: finalChannelId,
     })
 
     // 6. Release turn after breathing room
     await sleep(2000)
-    releaseTurn(channelId, ctx.agent.id)
+    releaseTurn(finalChannelId, ctx.agent.id)
 
     return { success: true, action: "post_message", messageId: message.id }
   } catch (err) {
     // Cleanup on error
-    clearTypingIndicator(channelId)
-    releaseTurn(channelId, ctx.agent.id)
+    clearTypingIndicator(finalChannelId)
+    releaseTurn(finalChannelId, ctx.agent.id)
     throw err
   }
 }

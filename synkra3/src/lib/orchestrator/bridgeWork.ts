@@ -2,10 +2,7 @@
  * ── BRIDGE WORK ACTIVITY ───────────────────────────────────
  *
  * Escreve JSONL com contexto REAL de trabalho no pixel office.
- * Substitui atividades aleatórias por eventos baseados em tasks reais.
- *
- * Usado pelo executor (start_task, complete_task, report_progress)
- * para mostrar agentes trabalhando de verdade no escritório.
+ * Agora com eventos ricos: estados, speech bubbles e animacoes.
  */
 
 import * as fs from "fs"
@@ -20,15 +17,22 @@ function ensureDir(): void {
   }
 }
 
+function appendToAgent(agentId: string, lines: string): void {
+  ensureDir()
+  const fp = path.join(SESSIONS_DIR, `synkra-${agentId}.jsonl`)
+  if (!fs.existsSync(fp)) {
+    fs.writeFileSync(fp, "", "utf-8")
+  }
+  fs.appendFileSync(fp, lines, "utf-8")
+}
+
 function generateLine(tool: string, status: string, input: Record<string, unknown>): string {
   const callId = `sk-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
-  const lines = [
+  return [
     JSON.stringify({
       type: "assistant",
       message: {
-        content: [
-          { type: "tool_use", id: callId, name: tool, input },
-        ],
+        content: [{ type: "tool_use", id: callId, name: tool, input }],
         usage: { input_tokens: 300, output_tokens: 150 },
       },
     }),
@@ -38,12 +42,10 @@ function generateLine(tool: string, status: string, input: Record<string, unknow
     }),
     JSON.stringify({ type: "system", subtype: "turn_duration" }),
   ].join("\n") + "\n"
-  return lines
 }
 
 /**
- * Escreve atividade REAL de trabalho para um agente no pixel office.
- * Usa o título real da task em vez de atividades aleatórias.
+ * Escreve atividade REAL de trabalho com contexto da task.
  */
 export function writeBridgeWorkActivity(
   agentId: string,
@@ -56,27 +58,21 @@ export function writeBridgeWorkActivity(
     ensureDir()
     const fp = path.join(SESSIONS_DIR, `synkra-${agentId}.jsonl`)
 
-    // Create session file if it doesn't exist
     if (!fs.existsSync(fp)) {
       const startLine = JSON.stringify({
         type: "user",
-        message: {
-          content: [{ type: "text", text: `${agentName} chegou no escritorio.` }],
-        },
+        message: { content: [{ type: "text", text: `${agentName} chegou no escritorio.` }] },
       }) + "\n"
       fs.writeFileSync(fp, startLine + generateLine(tool, status, { taskTitle }), "utf-8")
       return
     }
 
-    // Append work activity with real task context
     const input = { taskTitle, action: status }
     const line = generateLine(tool, status, input)
     const thought = Math.random() > 0.5
       ? JSON.stringify({
           type: "assistant",
-          message: {
-            content: [{ type: "text", text: `${agentName}: ${status} — "${taskTitle}"...` }],
-          },
+          message: { content: [{ type: "text", text: `${agentName}: ${status} — "${taskTitle}"...` }] },
         }) + "\n"
       : ""
 
@@ -86,9 +82,79 @@ export function writeBridgeWorkActivity(
   }
 }
 
+// ─────────────────────────────────────────────────────────────
+// Eventos ricos de comportamento
+// ─────────────────────────────────────────────────────────────
+
+export interface AgentEvent {
+  agentId: string
+  agentName: string
+  eventType: "task_completed" | "task_started" | "task_blocked" | "celebrating" | "sad" | "thinking" | "approval_needed" | "deep_work" | "coffee_break" | "leaving" | "arriving"
+  taskTitle?: string
+  speechBubble?: string
+  emote?: string
+  tool?: string
+}
+
 /**
- * TOOL per task type — maps task types to realistic tool invocations.
+ * Escreve um evento rico de comportamento no JSONL do agente.
+ * Isso faz o boneco no pixel office reagir visualmente.
  */
+export function writeAgentEvent(event: AgentEvent): void {
+  try {
+    const lines: string[] = []
+
+    // State change announcement
+    lines.push(JSON.stringify({
+      type: "system",
+      subtype: "agent_state",
+      agentId: event.agentId,
+      state: event.eventType,
+      taskTitle: event.taskTitle,
+      speechBubble: event.speechBubble,
+      emote: event.emote,
+    }))
+
+    // Tool activity if applicable
+    if (event.tool) {
+      const input = { taskTitle: event.taskTitle || "task" }
+      const callId = `ev-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`
+      lines.push(JSON.stringify({
+        type: "assistant",
+        message: {
+          content: [{ type: "tool_use", id: callId, name: event.tool, input }],
+          usage: { input_tokens: 200, output_tokens: 80 },
+        },
+      }))
+      lines.push(JSON.stringify({
+        type: "user",
+        message: { content: [{ type: "tool_result", tool_use_id: callId }] },
+      }))
+    }
+
+    // Speech bubble as assistant text
+    if (event.speechBubble) {
+      lines.push(JSON.stringify({
+        type: "assistant",
+        message: {
+          content: [{ type: "text", text: `${event.agentName}: ${event.speechBubble}` }],
+        },
+      }))
+    }
+
+    // Turn end
+    lines.push(JSON.stringify({ type: "system", subtype: "turn_duration" }))
+
+    appendToAgent(event.agentId, lines.map(l => l + "\n").join(""))
+  } catch {
+    // Bridge failure never breaks execution
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
+// Tool mapping
+// ─────────────────────────────────────────────────────────────
+
 const TASK_TOOLS: Record<string, string[]> = {
   content: ["write", "edit", "read"],
   analysis: ["bash", "read", "grep"],
@@ -101,3 +167,4 @@ export function getToolForTask(taskType: string): string {
   const tools = TASK_TOOLS[taskType] || TASK_TOOLS.default
   return tools[Math.floor(Math.random() * tools.length)]
 }
+

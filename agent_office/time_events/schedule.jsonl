@@ -1,0 +1,10 @@
+{"event_id":"morning_open_08h55","trigger":{"type":"time","value":"08:55"},"effect":{"lights":"on","monitors":"boot","coffee_machine":"on"},"agents_sequence":["diego","lena","maya","bruno","carlos"],"arrival_delays_ms":[0,180000,300000,360000,600000]}
+{"event_id":"daily_meeting_09h","trigger":{"type":"time","value":"09:00"},"effect":{"meeting_room":"occupied","chairs":"filled"},"all_agents_move_to":"meeting_room"}
+{"event_id":"back_to_desks_09h15","trigger":{"type":"time","value":"09:15"},"effect":{"meeting_room":"empty"},"all_agents_move_to":"own_desk"}
+{"event_id":"lunch_12h","trigger":{"type":"time","value":"12:00"},"effect":{"copa":"busy","office":"half_empty"},"agents_move":["maya","bruno","carlos"],"destination":"copa","agents_stay":["diego","lena"]}
+{"event_id":"back_lunch_13h","trigger":{"type":"time","value":"13:00"},"effect":{"copa":"empty","office":"full"},"agents_move":["maya","bruno","carlos"],"destination":"own_desk"}
+{"event_id":"coffee_break_15h","trigger":{"type":"time","value":"15:00"},"effect":{"copa":"small_group"},"agents_move_random":{"count":2,"pool":["maya","bruno","carlos","lena"]},"destination":"copa","duration_minutes":15}
+{"event_id":"checkpoint_17h","trigger":{"type":"time","value":"17:00"},"effect":{"all_agents":"summary_animation"},"duration_minutes":15}
+{"event_id":"office_close_17h30","trigger":{"type":"time","value":"17:30"},"effect":{"lights":"dimming","most_desks":"empty"},"agents_leave_sequence":["bruno","maya","carlos","lena"],"leave_delays_ms":[0,300000,600000,900000],"diego_stays":true}
+{"event_id":"night_mode_19h","trigger":{"type":"time","value":"19:00"},"effect":{"lights":"dim","monitors":"standby_except_diego","office_sound":"quiet"}}
+{"event_id":"late_night_22h","trigger":{"type":"time","value":"22:00"},"effect":{"lights":"off","only_monitor_glow":"diego_desk"}}

@@ -4,6 +4,52 @@ import path from "path"
 const TEMPLATES_DIR = path.join(process.cwd(), "src/lib/agents/templates")
 
 const DELIVERY_ENFORCEMENT = `
+# REGRAS OBRIGATORIAS DE COMUNICACAO
+
+## CANAIS DE COMUNICACAO
+Escolha o canal CORRETO para cada mensagem:
+
+- #aprovações → Arte pronta, copy finalizada, conteudo aguardando aprovacao do CEO
+- #alertas → Tarefa bloqueada, API fora do ar, metrica caiu, problemas criticos
+- #daily-standup → Daily automatica, plano do dia, prioridades
+- #estrategia → Planejamento semanal, calendario editorial, mudancas de estrategia
+- #criativo → Design, artes, copy, briefings criativos
+- #instagram → Posts do Instagram, trends, engajamento da plataforma
+- #blog-seo → SEO, blog posts, palavras-chave, otimizacao
+- #metricas → Relatorios, analises de performance, metricas
+- #resultados → Conquistas, marcos alcancados, celebracoes
+- #geral → APENAS o que nao se encaixa em nenhum canal acima
+
+REGRA DE OURO: Nao coloque TUDO no #geral. Se tem canal especifico, USE ele.
+
+## ECONOMIA DE TOKENS
+Voce esta em um sistema com economia de tokens. Siga estas regras:
+
+### PODE FALAR quando:
+- COMPLETAR uma tarefa
+- Ficar BLOQUEADO em uma tarefa
+- Detectar CONFLITO com outro agente
+- Precisar de APROVACAO do CEO
+- Alertar PROBLEMA CRITICO (queda de metricas, erro tecnico)
+- Responder MENC AO DIRETA (@seu_nome)
+
+### NAO PODE FALAR (PROIBIDO):
+- "Estou trabalhando em X" — ninguem precisa saber em tempo real
+- "Ok", "Legal", "Valeu", "Boa", "Perfeito" — confirmacoes vazias
+- "Boa sorte!", "Bora time!" — motivacao vazia
+- "Qualquer coisa me chama" — obvio, desnecessario
+- "Vou comecar agora" — atualize o Kanban, nao o chat
+- Emojis soltos sem contexto acionavel
+- Perguntas retoricas ou sociais
+
+### REGRA DE OURO
+Se nao tem nada ACIONAVEL pra dizer (algo que outra pessoa precise FAZER, APROVAR ou SABER urgentemente), NAO DIGA NADA. Trabalhe em silencio. Atualize o Kanban. Poste so o resultado.
+
+### LIMITES
+- Maximo 2 mensagens suas por conversa/thread
+- Se estiver em duvida se deve falar: NAO FALE
+- Em reunioes (daily), pode falar livremente
+
 # REGRAS ABSOLUTAS DE ENTREGA
 
 1. TODO output deve incluir "delivery_status": "completed" e "needs_ceo_approval": true
@@ -16,6 +62,7 @@ const DELIVERY_ENFORCEMENT = `
 8. Use o contexto da empresa (cores, tom, metricas) em TODA entrega
 9. Se receber dados numericos, calcule e use os valores (ex: queda %, crescimento)
 10. Inclua SEMPRE "artifacts" como array com os entregaveis concretos produzidos`
+
 
 const AGENT_TEMPLATE_MAP: Record<string, string> = {
   "Maya Ferreira": "maya-ferreira.md",

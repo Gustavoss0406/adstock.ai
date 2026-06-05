@@ -124,6 +124,11 @@ ${agentList}
 ${taskContext}
 ${actionContext}
 
+REGRAS DE COMUNICACAO:
+- So fale quando for ACIONAVEL (completou, bloqueou, precisa de aprovacao, alerta critico)
+- NUNCA responda com "ok", "legal", "valeu", "boa", "perfeito" ou confirmacoes vazias
+- Se nao tem nada util pra dizer, nao diga nada
+
 REGRAS:
 1. Voce CONHECE as tarefas acima. Elas sao reais, estao no sistema.
 2. Se o usuario perguntar sobre tarefas, RESPONDA com os dados reais da lista acima.
@@ -142,7 +147,7 @@ FALA: [Texto]`
       const agent = agents.find(a => a.id === agentId)
       if (agent) {
         const ri = AGENT_ROLES[agent.role] || { name: agent.name, specialty: "marketing", style: "profissional" }
-        const directSystem = `VOCE E ${ri.name}. Especialista em ${ri.specialty}. ${ri.style}.\n\nTAREFAS REAIS DO SISTEMA:\n${taskContext}\n${actionContext}\n\nREGRA: Voce CONHECE essas tarefas. Responda com base nelas. JAMAIS invente. Mencione colegas naturalmente.`
+        const directSystem = `VOCE E ${ri.name}. Especialista em ${ri.specialty}. ${ri.style}.\n\nREGRAS DE COMUNICACAO:\n- So fale se for acionavel (completou, bloqueou, precisa de aprovacao, alerta)\n- NUNCA responda "ok", "legal", "valeu", "boa" ou confirmacoes vazias\n- Se nao tem nada util pra dizer, seja breve e direto(a)\n\nTAREFAS REAIS DO SISTEMA:\n${taskContext}\n${actionContext}\n\nREGRA: Voce CONHECE essas tarefas. Responda com base nelas. JAMAIS invente. Mencione colegas naturalmente.`
         const directReply = await chatCompletion(`${directSystem}\n\n${message}`, { temperature: 0.7, maxTokens: 1500 })
         const cleaned = directReply.replace(/^(Claro|Certo|Com certeza|OK|Ok)[,!.]?\s*/i, "").trim()
 

@@ -9,6 +9,8 @@ import { canActAutonomously } from "@/lib/orchestrator/autonomy"
 import { processPendingMentions, processTimeBasedEvents, processWeeklyEvents, checkRejectionPattern } from "@/lib/orchestrator/runtime"
 import { recordAgentMemory } from "@/lib/orchestrator/memory"
 import { runPreDaily, runBlockedTaskCheck } from "@/lib/autonomous/agent-engine"
+import { silentProgressUpdate } from "@/lib/agents/silent-updates"
+import { postDailyDigest } from "@/lib/orchestrator/actionable-messages"
 
 const ROLE_MATCH: Record<string, string[]> = {
   STRATEGIST: ["content", "campaign"],
@@ -137,23 +139,14 @@ export async function POST(request: NextRequest) {
           ? Date.now() - new Date(inProgress.lastCommunicatedAt).getTime()
           : taskDuration
 
-        // Progress report: task >2h and no communication in 1h
+        // Progress report: task >2h and no communication in 1h → SILENT update
         const needsProgressReport =
           taskDuration > TIMING_CONFIG.LONG_TASK_THRESHOLD_MS &&
           timeSinceLastComm > TIMING_CONFIG.PROGRESS_UPDATE_INTERVAL_MS
 
-        if (needsProgressReport && channelId) {
-          await executeAction(
-            {
-              id: `progress-${inProgress.id}-${Date.now()}`,
-              type: "report_progress",
-              priority: 5,
-              agentId: agent.id,
-              context: { taskTitle: inProgress.title, taskId: inProgress.id, channelId },
-            },
-            channelId,
-          )
-          results.push({ agent: agent.name, action: `Progresso: ${inProgress.title}` })
+        if (needsProgressReport) {
+          await silentProgressUpdate(agent.id, inProgress.id, inProgress.progress || 0, inProgress.title, organizationId)
+          results.push({ agent: agent.name, action: `Progresso silencioso: ${inProgress.title}` })
         }
 
         // ── Time-based progress (replaces Math.random auto-complete) ──
@@ -225,27 +218,36 @@ export async function POST(request: NextRequest) {
           )
           results.push({ agent: agent.name, action: `Comecou: ${task.title}` })
         } else {
-          // No tasks available — agent may ask Maya for direction
+          // No tasks available — agent stays idle silently
           if (canActAutonomously("inter_agent_chat")) {
-            // If this agent has been idle for multiple cycles, ask Maya
-            const maya = agents.find(a => a.role === "STRATEGIST")
-            if (maya && maya.id !== agent.id && channelId) {
-              await executeAction(
-                {
-                  id: `ask-maya-${agent.id}-${Date.now()}`,
-                  type: "post_message",
-                  priority: 2,
-                  agentId: agent.id,
-                  context: {
-                    channelId,
-                    message: `@Maya, terminei minhas tarefas. Tem algo novo pra mim ou alguma prioridade que eu deveria focar?`,
-                    mentionAgentId: maya.id,
-                    mentionAgentName: "Maya Ferreira",
+            // Only ask Maya once every 30 minutes to reduce noise
+            const lastAskLog = await prisma.orchestrationLog.findFirst({
+              where: {
+                agentId: agent.id,
+                eventType: "asked_maya_for_tasks",
+                createdAt: { gte: new Date(Date.now() - 1800000) },
+              },
+            })
+            if (!lastAskLog) {
+              const maya = agents.find(a => a.role === "STRATEGIST")
+              if (maya && maya.id !== agent.id && channelId) {
+                await executeAction(
+                  {
+                    id: `ask-maya-${agent.id}-${Date.now()}`,
+                    type: "post_message",
+                    priority: 2,
+                    agentId: agent.id,
+                    context: {
+                      channelId,
+                      message: `@Maya, terminei minhas tarefas. Tem algo novo pra mim ou alguma prioridade que eu deveria focar?`,
+                      mentionAgentId: maya.id,
+                      mentionAgentName: "Maya Ferreira",
+                    },
                   },
-                },
-                channelId,
-              )
-              results.push({ agent: agent.name, action: "Pediu novas tarefas pra Maya" })
+                  channelId,
+                )
+                results.push({ agent: agent.name, action: "Pediu novas tarefas pra Maya" })
+              }
             }
           }
           await prisma.agent.update({
