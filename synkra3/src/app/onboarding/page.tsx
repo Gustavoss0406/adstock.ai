@@ -58,6 +58,7 @@ export default function OnboardingPage() {
   const [showFinal, setShowFinal] = useState(false)
   const [finalLoading, setFinalLoading] = useState(false)
   const [finalReady, setFinalReady] = useState(false)
+  const [connectedIntegrations, setConnectedIntegrations] = useState<string[]>([])
 
   useEffect(() => { if (!authLoading && !session) router.push("/login") }, [authLoading, session, router])
 
@@ -82,6 +83,27 @@ export default function OnboardingPage() {
     if (ns >= 6) { data.website = website; data.competitors = competitors }
     await fetch("/api/onboarding", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ organizationId: orgId, ...data }) })
   }
+
+  useEffect(() => {
+    if (step === 6 && orgId) {
+      const params = new URLSearchParams(window.location.search)
+      const connected = params.get("connected")
+      if (connected) {
+        setConnectedIntegrations(prev => prev.includes(connected) ? prev : [...prev, connected])
+        params.delete("connected")
+        const newUrl = params.toString() ? `${window.location.pathname}?${params.toString()}` : window.location.pathname
+        window.history.replaceState({}, "", newUrl)
+      }
+      fetch(`/api/integrations?orgId=${orgId}`)
+        .then(r => r.json())
+        .then(integrations => {
+          if (Array.isArray(integrations)) {
+            setConnectedIntegrations(integrations.map((i: any) => i.platform))
+          }
+        })
+        .catch(() => {})
+    }
+  }, [step, orgId])
 
   const next = async () => {
     if (step === TOTAL - 1) {
@@ -315,30 +337,42 @@ export default function OnboardingPage() {
           )}
 
           {step === 6 && (
-            <div className="space-y-2">
+            <div className="space-y-3">
+              <p className="text-[10px] text-editor-muted mb-2">Conecte pelo menos uma plataforma para continuar:</p>
               {[
                 { name: "Instagram", platform: "instagram" },
                 { name: "Google Search Console", platform: "google" },
                 { name: "LinkedIn", platform: "linkedin" },
                 { name: "Canva", platform: "canva" },
-              ].map(int => (
-                <div key={int.platform} className="flex items-center justify-between p-2.5 border border-editor-border">
-                  <span className="text-[11px] text-editor-muted">{int.name}</span>
-                  <button
-                    onClick={() => {
-                      if (int.platform === "canva") {
-                        toast.info("Canva sera configurado depois")
-                        return
-                      }
-                      window.location.href = `/api/integrations/${int.platform}/auth?orgId=${orgId}`
-                    }}
-                    className="px-3 py-1 rounded border border-editor-border text-[10px] text-editor-muted hover:bg-white/[0.03]"
-                  >
-                    Conectar
-                  </button>
-                </div>
-              ))}
-              <button onClick={next} className="text-editor-muted text-[10px] hover:text-editor-muted block mx-auto mt-3">Fazer depois</button>
+              ].map(int => {
+                const isConnected = connectedIntegrations.includes(int.platform)
+                return (
+                  <div key={int.platform} className="flex items-center justify-between p-2.5 border border-editor-border">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[11px] text-editor-muted">{int.name}</span>
+                      {isConnected && <CheckCircle2 className="w-3.5 h-3.5 text-green-500" />}
+                    </div>
+                    <button
+                      onClick={() => {
+                        if (int.platform === "canva") {
+                          toast.info("Canva sera configurado depois")
+                          return
+                        }
+                        window.location.href = `/api/integrations/${int.platform}/auth?orgId=${orgId}&returnTo=/onboarding`
+                      }}
+                      disabled={isConnected}
+                      className={cn(
+                        "px-3 py-1 rounded border text-[10px] transition-colors",
+                        isConnected
+                          ? "border-green-500/30 text-green-500/70 bg-green-500/5 cursor-default"
+                          : "border-editor-border text-editor-muted hover:bg-white/[0.03]"
+                      )}
+                    >
+                      {isConnected ? "Conectado" : "Conectar"}
+                    </button>
+                  </div>
+                )
+              })}
             </div>
           )}
 
@@ -357,7 +391,15 @@ export default function OnboardingPage() {
 
           <div className="flex items-center justify-between mt-5 pt-4 border-t border-editor-border">
             {step > 0 ? <button onClick={() => setStep(step - 1)} className="text-editor-muted hover:text-editor-muted text-[11px] flex items-center gap-1"><ArrowLeft className="w-3 h-3" />Voltar</button> : <div />}
-            <button onClick={step === 0 ? createOrg : next} disabled={loading || (step === 0 && !companyName)} className={cn("px-6 py-2  text-[11px] font-medium transition-all flex items-center gap-2", (step === TOTAL - 1 || step === 0) ? "bg-white/10 text-editor-ink hover:bg-white/15" : "bg-white/[0.04] text-editor-muted hover:bg-white/[0.08]", (loading || (step === 0 && !companyName)) && "opacity-30")}>
+            <button
+              onClick={step === 0 ? createOrg : next}
+              disabled={loading || (step === 0 && !companyName) || (step === 6 && connectedIntegrations.length === 0)}
+              className={cn(
+                "px-6 py-2 text-[11px] font-medium transition-all flex items-center gap-2",
+                (step === TOTAL - 1 || step === 0) ? "bg-white/10 text-editor-ink hover:bg-white/15" : "bg-white/[0.04] text-editor-muted hover:bg-white/[0.08]",
+                (loading || (step === 0 && !companyName) || (step === 6 && connectedIntegrations.length === 0)) && "opacity-30 cursor-not-allowed"
+              )}
+            >
               {loading ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
               {step === 0 ? "Comecar" : step === TOTAL - 1 ? "Criar agencia" : "Proximo"}
               <ArrowRight className="w-3 h-3" />

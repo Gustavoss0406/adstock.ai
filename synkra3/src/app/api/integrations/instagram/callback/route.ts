@@ -5,9 +5,10 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code")
   const state = request.nextUrl.searchParams.get("state")
   const error = request.nextUrl.searchParams.get("error")
+  const baseUrl = process.env.NEXTAUTH_URL || "https://www.adstock.ai"
 
   if (error) {
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/?error=instagram_auth_failed`)
+    return NextResponse.redirect(`${baseUrl}/?error=instagram_auth_failed`)
   }
 
   if (!code || !state) {
@@ -15,9 +16,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { orgId } = JSON.parse(Buffer.from(state, "base64").toString())
+    const { orgId, returnTo } = JSON.parse(Buffer.from(state, "base64").toString())
+    const redirectPath = returnTo === "/onboarding" ? `/onboarding?connected=instagram` : `/workspace/${orgId}?connected=instagram`
 
-    const redirectUri = `${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/api/integrations/instagram/callback`
+    const redirectUri = `${baseUrl}/api/integrations/instagram/callback`
 
     const tokenRes = await fetch("https://api.instagram.com/oauth/access_token", {
       method: "POST",
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok) {
       console.error("[Instagram OAuth] Token error:", tokens)
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/?error=instagram_token_failed`)
+      return NextResponse.redirect(`${baseUrl}/?error=instagram_token_failed`)
     }
 
     const shortLivedToken = tokens.access_token
@@ -80,9 +82,9 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/workspace/${orgId}?connected=instagram`)
+    return NextResponse.redirect(`${baseUrl}${redirectPath}`)
   } catch (err) {
     console.error("[Instagram OAuth] Error:", err)
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/?error=instagram_callback_failed`)
+    return NextResponse.redirect(`${baseUrl}/?error=instagram_callback_failed`)
   }
 }

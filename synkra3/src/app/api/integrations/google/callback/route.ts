@@ -5,9 +5,10 @@ export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code")
   const state = request.nextUrl.searchParams.get("state")
   const error = request.nextUrl.searchParams.get("error")
+  const baseUrl = process.env.NEXTAUTH_URL || "https://www.adstock.ai"
 
   if (error) {
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/?error=google_auth_failed`)
+    return NextResponse.redirect(`${baseUrl}/?error=google_auth_failed`)
   }
 
   if (!code || !state) {
@@ -15,9 +16,10 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { orgId } = JSON.parse(Buffer.from(state, "base64").toString())
+    const { orgId, returnTo } = JSON.parse(Buffer.from(state, "base64").toString())
+    const redirectPath = returnTo === "/onboarding" ? `/onboarding?connected=google` : `/workspace/${orgId}?connected=google`
 
-    const redirectUri = `${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/api/integrations/google/callback`
+    const redirectUri = `${baseUrl}/api/integrations/google/callback`
 
     const tokenRes = await fetch("https://oauth2.googleapis.com/token", {
       method: "POST",
@@ -35,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     if (!tokenRes.ok) {
       console.error("[Google OAuth] Token error:", tokens)
-      return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/?error=google_token_failed`)
+      return NextResponse.redirect(`${baseUrl}/?error=google_token_failed`)
     }
 
     const expiresAt = tokens.expires_in ? new Date(Date.now() + tokens.expires_in * 1000) : null
@@ -68,9 +70,9 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/workspace/${orgId}?connected=google`)
+    return NextResponse.redirect(`${baseUrl}${redirectPath}`)
   } catch (err) {
     console.error("[Google OAuth] Error:", err)
-    return NextResponse.redirect(`${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/?error=google_callback_failed`)
+    return NextResponse.redirect(`${baseUrl}/?error=google_callback_failed`)
   }
 }

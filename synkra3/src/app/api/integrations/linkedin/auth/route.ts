@@ -8,13 +8,14 @@ export async function GET(request: NextRequest) {
   }
 
   const orgId = request.nextUrl.searchParams.get("orgId")
+  const returnTo = request.nextUrl.searchParams.get("returnTo") || ""
   if (!orgId) {
     return NextResponse.json({ error: "orgId é obrigatório" }, { status: 400 })
   }
 
   const clientId = process.env.LINKEDIN_CLIENT_ID
   const redirectUri = `${process.env.NEXTAUTH_URL || "https://www.adstock.ai"}/api/integrations/linkedin/callback`
-  const state = Buffer.from(JSON.stringify({ orgId, userId: session.user.id })).toString("base64")
+  const state = Buffer.from(JSON.stringify({ orgId, userId: session.user.id, returnTo })).toString("base64")
 
   const params = new URLSearchParams({
     client_id: clientId!,
