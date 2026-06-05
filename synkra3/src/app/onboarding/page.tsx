@@ -81,10 +81,14 @@ export default function OnboardingPage() {
     try {
       const slug = companyName.toLowerCase().replace(/[^a-z0-9]/g, "-") + "-" + Date.now().toString(36)
       const res = await fetch("/api/organizations", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ name: companyName, slug, description: `Agencia da ${companyName}` }) })
-      if (!res.ok) throw new Error("Erro")
-      const org = await res.json(); setOrgId(org.id); setStep(1)
-      localStorage.setItem("onboarding_orgId", org.id)
-    } catch (err: any) { toast.error("Erro ao criar agencia") }
+      const data = await res.json()
+      if (!res.ok) {
+        console.error("[Create Org Error]", data)
+        throw new Error(data.error || "Erro ao criar")
+      }
+      setOrgId(data.id); setStep(1)
+      localStorage.setItem("onboarding_orgId", data.id)
+    } catch (err: any) { toast.error(err.message || "Erro ao criar agencia") }
     finally { setLoading(false) }
   }
 
