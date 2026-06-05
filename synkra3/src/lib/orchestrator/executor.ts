@@ -648,15 +648,16 @@ async function executeCompleteTask(
   }
 
   // ── Post-completion: generate follow-up tasks ──────────
-  await suggestNextTasks(ctx.organizationId, taskId, ctx.agent, action.context.taskTitle as string)
+  // DISABLED: was creating too many garbage tasks in a feedback loop
+  // await suggestNextTasks(ctx.organizationId, taskId, ctx.agent, action.context.taskTitle as string)
 
-  // ── Post-completion: full cascade (notify + create tasks for next agents) ──
-  setTimeout(() => {
-    const targetChannelId = (action.context.channelId as string) || ctx.channelId
-    if (targetChannelId) {
-      executeFullCascade(ctx.organizationId, taskId, targetChannelId).catch(() => {})
-    }
-  }, 2000)
+  // ── Post-completion: cascade disabled to prevent task flood ──
+  // setTimeout(() => {
+  //   const targetChannelId = (action.context.channelId as string) || ctx.channelId
+  //   if (targetChannelId) {
+  //     executeFullCascade(ctx.organizationId, taskId, targetChannelId).catch(() => {})
+  //   }
+  // }, 2000)
 
   return { success: true, action: "complete_task", taskId }
 }

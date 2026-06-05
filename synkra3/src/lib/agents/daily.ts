@@ -290,6 +290,12 @@ export async function extractTasksFromSpeeches(
 ): Promise<number> {
   if (speeches.length === 0) return 0
 
+  // Hard cap: don't create tasks if already have enough active
+  const activeCount = await prisma.task.count({
+    where: { organizationId, status: { not: "DONE" } },
+  })
+  if (activeCount >= 15) return 0
+
   const org = await prisma.organization.findUnique({
     where: { id: organizationId },
     include: { onboarding: { select: { industry: true, brandVoice: true, targetAudience: true, goals: true } } },

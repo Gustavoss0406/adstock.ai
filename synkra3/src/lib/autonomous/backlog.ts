@@ -3,6 +3,12 @@ import { buildCompanyContext } from "./context"
 import { chatCompletion } from "@/lib/ai/client"
 
 export async function maintainBacklog(organizationId: string): Promise<{ created: number; ideas: string[] }> {
+  // Hard cap: never exceed 15 total non-DONE tasks
+  const activeCount = await prisma.task.count({
+    where: { organizationId, status: { not: "DONE" } },
+  })
+  if (activeCount >= 15) return { created: 0, ideas: [] }
+
   const ctx = await buildCompanyContext(organizationId)
   const ideas: string[] = []
   let created = 0
