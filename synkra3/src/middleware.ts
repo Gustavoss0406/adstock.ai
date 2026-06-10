@@ -5,8 +5,19 @@ import { verifyAdminToken } from "@/lib/auth/admin-session"
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
+  if (pathname.startsWith("/api/admin/")) {
+    if (pathname.startsWith("/api/admin/login")) {
+      return NextResponse.next()
+    }
+    const token = request.cookies.get("admin_session")?.value
+    if (!token || !verifyAdminToken(token)) {
+      return NextResponse.json({ error: "Nao autorizado" }, { status: 401 })
+    }
+    return NextResponse.next()
+  }
+
   if (pathname.startsWith("/admin")) {
-    if (pathname === "/admin/login" || pathname.startsWith("/api/admin/login")) {
+    if (pathname === "/admin/login") {
       return NextResponse.next()
     }
 
