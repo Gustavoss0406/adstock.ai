@@ -92,6 +92,19 @@ export async function generateDeliverableCard(
       },
     })
 
+    // Create attachment record for the HTML document
+    const htmlDataUrl = 'data:text/html;base64,' + Buffer.from(result.htmlDocument!, 'utf-8').toString('base64')
+    await prisma.taskAttachment.create({
+      data: {
+        taskId: input.taskId,
+        fileName: `Entrega_${input.agentName.replace(/\s+/g, '_')}_${new Date().toISOString().slice(0, 10)}.html`,
+        fileUrl: htmlDataUrl,
+        fileType: 'html',
+        fileSize: Buffer.byteLength(result.htmlDocument!, 'utf-8'),
+        mimeType: 'text/html',
+      },
+    })
+
     console.log(`[Deliverable Card] Done: html=${!!result.htmlDocument} artworkPending=${isDesigner}`)
     return result
   } catch (error) {
@@ -124,6 +137,8 @@ export async function generateArtworkExport(
         where: { id: input.taskId },
         data: {
           status: 'DONE',
+          completedAt: new Date(),
+          deliveryStatus: 'APPROVED',
           output: {
             ...((await prisma.task.findUnique({ where: { id: input.taskId }, select: { output: true } }))?.output as any || {}),
             artworkPending: false,
@@ -183,6 +198,20 @@ export async function generateArtworkExport(
         } as any,
       },
     })
+
+    // Create attachment record for the PNG artwork
+    if (result.artworkUrl) {
+      await prisma.taskAttachment.create({
+        data: {
+          taskId: input.taskId,
+          fileName: `Arte_${input.agentName.replace(/\s+/g, '_')}_${input.taskTitle.substring(0, 30).replace(/[^a-zA-Z0-9]/g, '_')}.png`,
+          fileUrl: result.artworkUrl,
+          fileType: 'png',
+          fileSize: result.fileSize || 0,
+          mimeType: 'image/png',
+        },
+      })
+    }
 
     console.log(`[Artwork Export] Done: artworkUrl=${!!result.artworkUrl} size=${result.fileSize || 0}`)
     return result
