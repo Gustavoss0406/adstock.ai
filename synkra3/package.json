@@ -2,6 +2,7 @@
   "name": "adstock",
   "version": "1.0.0",
   "private": true,
+  "engines": { "node": "22.x" },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -103,7 +104,3 @@
     "vitest": "^4.1.8"
   }
 }
-,
-  "engines": {
-    "node": "22.x"
-  }
