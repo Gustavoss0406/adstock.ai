@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd synkra3 && npm install && npx prisma generate && npx next build",
+  "framework": "nextjs",
   "installCommand": "cd synkra3 && npm install",
-  "framework": "nextjs"
+  "buildCommand": "cd synkra3 && npx prisma generate && npx next build"
 }
