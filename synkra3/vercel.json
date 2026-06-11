@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
   "installCommand": "npm install",
-  "buildCommand": "prisma generate 2>&1 && echo '---prisma ok---' && next build 2>&1"
+  "buildCommand": "prisma generate && next build"
 }
