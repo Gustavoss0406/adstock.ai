@@ -12,8 +12,11 @@
 import { prisma } from "@/lib/prisma"
 import { chatCompletion } from "@/lib/ai/client"
 import { loadAgentTemplate } from "@/lib/agents/templates/loader"
-import { buildCompanyContext } from "@/lib/autonomous/context"
+import { buildCompanyContext, IntegrationInfo } from "@/lib/autonomous/context"
 import { analyzeApprovalPatterns } from "@/lib/autonomous/learning"
+import { canOrganizationCreateTask, getOrganizationDailyTaskCount } from "@/lib/agents/daily-limit"
+import { fetchAllMetrics, buildMetricsPrompt } from "@/lib/autonomous/metrics-fetcher"
+import { getIntegrationMetrics, buildIntegrationPrompt, generateFallbackMetrics } from "@/lib/autonomous/integrations"
 
 // ── TOOLS: Real data access ────────────────────────────────
 interface AgentTools {
@@ -23,6 +26,8 @@ interface AgentTools {
   getBrandKit: () => Promise<{ primaryColor: string | null; brandVoice: string | null; audience: string | null; industry: string | null }>
   getActiveTasks: () => Promise<Array<{ title: string; status: string; assignedTo: string }>>
   getCompanyInfo: () => Promise<{ name: string; industry: string | undefined }>
+  getIntegrations: () => Promise<IntegrationInfo[]>
+  getDailyTaskCount: (agentId: string) => Promise<{ tasksCreatedToday: number; dailyLimit: number; remaining: number }>
 }
 
 export async function getAgentTools(organizationId: string): Promise<AgentTools> {
@@ -65,6 +70,11 @@ export async function getAgentTools(organizationId: string): Promise<AgentTools>
       return tasks.map(t => ({ title: t.title, status: t.status, assignedTo: t.assignee?.name || "nao atribuido" }))
     },
     getCompanyInfo: async () => ({ name: org?.name || "Agencia", industry: onboarding?.industry }),
+    getIntegrations: async () => ctx.integrations || [],
+    getDailyTaskCount: async (agentId: string) => {
+      const count = await getOrganizationDailyTaskCount(organizationId)
+      return { tasksCreatedToday: count.totalTasksToday, dailyLimit: count.dailyLimit, remaining: count.remaining }
+    },
   }
 }
 
@@ -75,7 +85,7 @@ export interface TaskExecutionInput {
   agentName: string
   taskTitle: string
   taskDescription?: string
-  taskType: "create_calendar" | "create_copy" | "create_carousel" | "analyze_metrics" | "create_blog_post" | "research_keywords" | "optimize_seo" | "schedule_post" | "create_daily_plan" | "generic"
+  taskType: "create_calendar" | "create_copy" | "create_carousel" | "analyze_metrics" | "create_blog_post" | "research_keywords" | "optimize_seo" | "create_daily_plan" | "generic"
 }
 
 interface ExecutionContext {
@@ -87,35 +97,95 @@ interface ExecutionContext {
   brandKit: { voice: string | null; audience: string | null }
   activeTasks: Array<{ title: string; status: string; assignedTo: string }>
   performance: { best: { type: string; why: string } | null; worst: { type: string; why: string } | null }
+  integrations: IntegrationInfo[]
+  metricsContext?: string
 }
 
 export async function buildExecutionContext(input: TaskExecutionInput): Promise<ExecutionContext> {
   const tools = await getAgentTools(input.organizationId)
   const template = loadAgentTemplate(input.agentName)
-  const [company, approval, calendar, brand, tasks, perf] = await Promise.all([
+  const [company, approval, calendar, brand, tasks, perf, integrations, metrics] = await Promise.all([
     tools.getCompanyInfo(),
     tools.getApprovalHistory(),
     tools.getCalendar(),
     tools.getBrandKit(),
     tools.getActiveTasks(),
     tools.getRecentPerformance(),
+    tools.getIntegrations(),
+    fetchAllMetrics(input.organizationId),
   ])
 
-  return { tools, agentTemplate: template, company, approvalHistory: approval, calendar, brandKit: { voice: brand.voice, audience: brand.audience }, activeTasks: tasks, performance: perf }
+  const metricsPrompt = buildMetricsPrompt(metrics)
+
+  return { 
+    tools, 
+    agentTemplate: template, 
+    company, 
+    approvalHistory: approval, 
+    calendar, 
+    brandKit: { voice: brand.voice, audience: brand.audience }, 
+    activeTasks: tasks, 
+    performance: perf, 
+    integrations,
+    metricsContext: metricsPrompt,
+  }
 }
 
-function buildSpecificPrompt(task: TaskExecutionInput, ctx: ExecutionContext): { systemPrompt: string; userPrompt: string; outputSchema: string } {
+function buildSpecificPrompt(task: TaskExecutionInput, ctx: ExecutionContext, agentId?: string): { systemPrompt: string; userPrompt: string; outputSchema: string } {
   const identity = ctx.agentTemplate.slice(0, 400)
+
+  const integrationsList = ctx.integrations.length > 0
+    ? ctx.integrations.map(i => `- ${i.name} (${i.platform})`).join("\n")
+    : "Nenhuma integração conectada"
+
+  const integrationInstructions = ctx.integrations.length > 0
+    ? `\nPLATAFORMAS CONECTADAS (dados reais disponiveis):
+${integrationsList}
+- Instagram conectado: use dados de seguidores e ultimos 5 posts (curtidas, comentarios, alcance)
+- LinkedIn conectado: APENAS perfil basico (nome, email) — sem dados de pagina ou posts
+- Site informado: dados do scraper SEO (meta tags, headings, SEO score, tech stack)
+- ATENCAO: GSC e Analytics NAO sao consultados. Nao mencione dados dessas plataformas.`
+    : "\nNenhuma plataforma conectada. Trabalhe com o conhecimento do setor informado no onboarding."
+
+  const scarcityMindset = `\n⚠️ MENTALIDADE DE ESCASSEZ (CRÍTICO):
+A AGÊNCIA INTEIRA só pode criar ${10} tasks por dia. Todos os agentes compartilham esse limite.
+Cada task é PRECIOSA e compete com as tarefas dos outros agentes.
+
+Antes de criar QUALQUER task, pergunte-se:
+1. Esta task vai gerar RESULTADO REAL ou é só para preencher o dia?
+2. Existe algo MAIS IMPORTANTE que outro agente deveria fazer?
+3. Se a agência tivesse apenas 3 slots HOJE para TODOS, esta estaria entre elas?
+4. Esta task é ESPECÍFICA e ACIONÁVEL ou é genérica?
+5. Eu estou criando essa task porque é NECESSÁRIA ou porque é FÁCIL?
+
+NUNCA crie tasks como:
+- "Post sobre [tema genérico]"
+- "Criar conteúdo para [plataforma]"
+- "Analisar métricas" (sem especificar O QUE analisar)
+
+SEMPRE crie tasks como:
+- "Post carrossel: 5 erros que [público] comete ao [ação] - baseado em dados do Instagram"
+- "Copy emocional para Black Friday focada em [produto específico] com urgência"
+- "Analisar queda de 15% no engajamento do Instagram na última semana e propor 3 ações"
+
+Se você não tem certeza se vale a pena, NÃO CRIE. É melhor 3 tasks excelentes que 10 tasks medíocres.
+Lembre-se: você está competindo com os outros agentes pelos slots limitados.
+
+LIMITE DA AGÊNCIA: ${10} tasks/dia (compartilhado entre TODOS os agentes)`
 
   const systemPrompt = `${identity}
 
 Voce e ${task.agentName}. Voce tem acesso a ferramentas e dados reais da empresa.
+${scarcityMindset}
+${ctx.metricsContext || ""}
 
 REGRAS ABSOLUTAS:
 1. RETORNE APENAS JSON valido. Nao adicione explicacoes, markdown, ou texto antes/depois.
 2. Comece com { e termine com }.
 3. Cada campo deve ser preenchido com dados ESPECIFICOS, nunca genericos.
 4. Use os dados de contexto fornecidos — nao invente.
+5. QUALIDADE > QUANTIDADE. Melhor 3 tasks excelentes que 10 medíocres.
+${integrationInstructions}
 
 DADOS DISPONIVEIS (use-os):
 - Empresa: ${ctx.company.name}, setor ${ctx.company.industry || "marketing"}
@@ -129,7 +199,9 @@ DADOS DISPONIVEIS (use-os):
 ${task.taskDescription ? `DESCRICAO: ${task.taskDescription}` : ""}
 
 ${ctx.performance.best ? `MELHOR PERFORMANCE RECENTE: ${ctx.performance.best.type} — ${ctx.performance.best.why}` : ""}
-${ctx.approvalHistory.rejected.length > 0 ? `EVITE (CEO rejeitou): ${ctx.approvalHistory.rejected.slice(0, 3).join(" | ")}` : ""}`
+${ctx.approvalHistory.rejected.length > 0 ? `EVITE (CEO rejeitou): ${ctx.approvalHistory.rejected.slice(0, 3).join(" | ")}` : ""}
+
+LEMBRE-SE: Cada task é preciosa. Crie apenas se for REALMENTE importante e específico.`
 
   const { outputSchema } = getTaskSchema(task.taskType)
   return { systemPrompt, userPrompt, outputSchema }
@@ -212,7 +284,7 @@ export async function executeWithRetry(
   taskInput: TaskExecutionInput,
 ): Promise<{ success: boolean; output: any; attempts: number; error?: string }> {
   const ctx = await buildExecutionContext(taskInput)
-  const { systemPrompt, userPrompt, outputSchema } = buildSpecificPrompt(taskInput, ctx)
+  const { systemPrompt, userPrompt, outputSchema } = buildSpecificPrompt(taskInput, ctx, taskInput.agentId)
   const { validator } = getTaskSchema(taskInput.taskType)
 
   let fullPrompt = `${systemPrompt}\n\n${userPrompt}\n\nFORMATO DE SAIDA OBRIGATORIO (JSON):\n${outputSchema}\n\nREGRAS:\n- RETORNE APENAS o JSON, sem explicacoes\n- Nao use markdown (\`\`\`json)\n- Comece com { e termine com }`
@@ -249,23 +321,154 @@ export async function executeWithRetry(
   return { success: false, output: null, attempts: 3, error: errorMsg }
 }
 
+// ── Task Priority Evaluator ─────────────────────────────────
+export interface TaskEvaluation {
+  shouldCreate: boolean
+  priority: "critical" | "high" | "medium" | "low"
+  score: number
+  reasoning: string
+}
+
+/**
+ * Evaluate if a task is worth creating given the daily limit
+ */
+export async function evaluateTaskWorthiness(
+  organizationId: string,
+  agentId: string,
+  taskTitle: string,
+  taskDescription: string
+): Promise<TaskEvaluation> {
+  const orgCount = await getOrganizationDailyTaskCount(organizationId)
+  
+  // If organization has plenty of slots, be more lenient
+  if (orgCount.remaining >= 7) {
+    return {
+      shouldCreate: true,
+      priority: "medium",
+      score: 70,
+      reasoning: `Agência tem ${orgCount.remaining} slots disponíveis. Task aprovada.`,
+    }
+  }
+
+  // If organization is running low, be more selective
+  const ctx = await buildCompanyContext(organizationId)
+  
+  // Score based on multiple factors
+  let score = 50
+  
+  // Time-sensitive tasks get priority
+  const urgentKeywords = ["urgente", "hoje", "amanhã", "deadline", "prazo", "black friday", "natal"]
+  if (urgentKeywords.some(k => taskTitle.toLowerCase().includes(k) || taskDescription.toLowerCase().includes(k))) {
+    score += 30
+  }
+
+  // Data-driven tasks are more valuable
+  const dataKeywords = ["analisar", "métrica", "dados", "performance", "relatório", "instagram", "google"]
+  if (dataKeywords.some(k => taskTitle.toLowerCase().includes(k) || taskDescription.toLowerCase().includes(k))) {
+    score += 20
+  }
+
+  // Specific tasks are better than generic ones
+  if (taskTitle.length > 30 && taskDescription.length > 50) {
+    score += 15
+  }
+
+  // Tasks with clear deliverables
+  const deliverableKeywords = ["criar", "produzir", "publicar", "enviar", "entregar"]
+  if (deliverableKeywords.some(k => taskTitle.toLowerCase().includes(k))) {
+    score += 10
+  }
+
+  // If there are overdue tasks, prioritize catching up
+  if (ctx.overdueTasks > 0) {
+    score += 15
+  }
+
+  // If backlog is high, be more selective
+  if (ctx.backlogSize > 20) {
+    score -= 10
+  }
+
+  // Determine priority and decision
+  let priority: TaskEvaluation["priority"]
+  let shouldCreate: boolean
+
+  if (score >= 85) {
+    priority = "critical"
+    shouldCreate = true
+  } else if (score >= 70) {
+    priority = "high"
+    shouldCreate = true
+  } else if (score >= 50) {
+    priority = "medium"
+    shouldCreate = orgCount.remaining >= 3 // Only create if we have buffer
+  } else {
+    priority = "low"
+    shouldCreate = orgCount.remaining >= 5 // Only create if we have plenty of slots
+  }
+
+  const reasoning = shouldCreate
+    ? `Score: ${score}/100. Agência tem ${orgCount.remaining} slots restantes. Task vale a pena.`
+    : `Score: ${score}/100. Apenas ${orgCount.remaining} slots restantes na agência. Task não é prioritária o suficiente.`
+
+  return { shouldCreate, priority, score, reasoning }
+}
+
 // ── PILLAR 4: Task pipeline — break complex tasks ──────────
-export async function executeCalendarPipeline(organizationId: string, agentId: string, agentName: string): Promise<{ created: number; posts: any[] }> {
+export async function executeCalendarPipeline(organizationId: string, agentId: string, agentName: string): Promise<{ created: number; posts: any[]; skipped: number; limitMessage?: string }> {
   const result = await executeWithRetry({
     organizationId, agentId, agentName,
     taskTitle: "Criar calendario editorial da proxima semana",
-    taskDescription: "Planejar posts para a semana incluindo datas comemorativas e baseado em performance recente",
+    taskDescription: "Planejar posts para a semana incluindo datas comemorativas e baseado em performance recente. LEMBRE-SE: Seja EXTREMAMENTE seletivo. Cada slot é precioso.",
     taskType: "create_calendar",
   })
 
-  if (!result.success || !result.output) return { created: 0, posts: [] }
+  if (!result.success || !result.output) return { created: 0, posts: [], skipped: 0 }
 
   let created = 0
-  for (const post of result.output.posts || []) {
+  let skipped = 0
+  let evaluated = 0
+  
+  // Check organization limit first
+  const orgLimit = await getOrganizationDailyTaskCount(organizationId)
+  let orgRemaining = orgLimit.remaining
+
+  const posts = result.output.posts || []
+  
+  for (const post of posts) {
     const agent = await prisma.agent.findFirst({
       where: { organizationId, name: { contains: post.assignTo || "" }, status: { not: "FIRED" } },
     })
 
+    if (!agent) {
+      skipped++
+      continue
+    }
+
+    // Check if organization has slots available
+    if (orgRemaining <= 0) {
+      skipped++
+      continue
+    }
+
+    // Evaluate if this task is worth creating (especially when slots are low)
+    if (orgRemaining <= 5) {
+      evaluated++
+      const evaluation = await evaluateTaskWorthiness(
+        organizationId,
+        agent.id,
+        post.theme || "Post da semana",
+        `Copy: ${post.copyBrief || ""}\nVisual: ${post.visualBrief || ""}\nPlatform: ${post.platform || "instagram"}`
+      )
+
+      if (!evaluation.shouldCreate) {
+        console.log(`[Calendar] Task skipped for ${agent.name}: "${post.theme}" - Score: ${evaluation.score}, Reason: ${evaluation.reasoning}`)
+        skipped++
+        continue
+      }
+    }
+
+    // Create the task
     await prisma.task.create({
       data: {
         organizationId,
@@ -274,55 +477,101 @@ export async function executeCalendarPipeline(organizationId: string, agentId: s
         type: "content",
         priority: post.priority || "MEDIUM",
         status: "TODO",
-        assignedTo: agent?.id || null,
+        assignedTo: agent.id,
         dueDate: post.date ? new Date(post.date) : null,
         estimatedMinutes: post.type === "carrossel" ? 120 : 60,
       },
     } as any)
+    
+    orgRemaining--
     created++
   }
+
+  // Check if organization hit the limit
+  const limitMessage = orgRemaining === 0
+    ? `Atenção: A agência atingiu o limite de 10 tasks/dia. Todos os agentes devem focar em executar tarefas existentes.`
+    : undefined
 
   // Post summary to chat
   const channel = await prisma.channel.findFirst({ where: { organizationId, name: "geral" } })
   if (channel) {
+    const selectivityMessage = evaluated > 0 
+      ? `\n\n🎯 ${evaluated} tasks avaliadas por critério de prioridade. ${skipped} puladas por não serem essenciais.`
+      : ""
+    
+    const summaryMessage = `📅 Calendario da semana criado! ${created} posts planejados.${skipped > 0 ? ` ${skipped} pulados (seletividade).` : ""}${selectivityMessage}\n\n${posts.slice(0, created).map((p: any) => `• ${p.date || "?"}: ${p.theme} (${p.platform || "instagram"})`).join("\n")}\n\nEstrategia: ${result.output.weekStrategy || "Foco em engajamento e relevancia."}${limitMessage ? `\n\n⚠️ ${limitMessage}` : ""}`
+    
     await prisma.message.create({
       data: {
-        content: `📅 Calendario da semana criado! ${created} posts planejados.\n\n${(result.output.posts || []).map((p: any) => `• ${p.date || "?"}: ${p.theme} (${p.platform || "instagram"})`).join("\n")}\n\nEstrategia: ${result.output.weekStrategy || "Foco em engajamento e relevancia."}`,
-        metadata: { type: "calendar_created", posts: result.output.posts },
+        content: summaryMessage,
+        metadata: { type: "calendar_created", posts, created, skipped, evaluated },
         agentId,
         channelId: channel.id,
       },
     } as any)
   }
 
-  return { created, posts: result.output.posts || [] }
+  return { created, posts, skipped, limitMessage }
 }
 
-export async function executeCopyPipeline(organizationId: string, agentId: string, agentName: string, brief: string): Promise<{ variants: any[] } | null> {
+export async function executeCopyPipeline(organizationId: string, agentId: string, agentName: string, brief: string): Promise<{ variants: any[]; taskId?: string } | null> {
+  // Check if agent has capacity
+  const canCreate = await canAgentCreateTask(agentId)
+  if (!canCreate.allowed) {
+    console.log(`[Copy Pipeline] ${agentName} cannot create task: ${canCreate.reason}`)
+    return null
+  }
+
   const result = await executeWithRetry({
     organizationId, agentId, agentName,
     taskTitle: brief,
-    taskDescription: "Criar 3 variacoes de copy: emocional, direta, interativa",
+    taskDescription: "Criar 3 variacoes de copy: emocional, direta, interativa. Seja ESPECÍFICO e use dados reais.",
     taskType: "create_copy",
   })
 
   if (!result.success) return null
+
+  // Create task first
+  const task = await prisma.task.create({
+    data: {
+      organizationId,
+      title: `Copy: ${brief}`,
+      description: result.output.variants?.map((v: any) => `${v.name}: ${v.copy}`).join("\n\n") || "",
+      type: "copy",
+      status: "IN_REVIEW",
+      assignedTo: agentId,
+      output: result.output as any,
+    },
+  })
+
+  // Attach copy variants as document
+  if (result.output.variants && result.output.variants.length > 0) {
+    // Attachments stored in task.output via generateAttachments (called from heartbeat)
+    console.log(`[Pipeline] Copy variants generated for task ${task.id}`)
+  }
 
   // Post to #aprovacoes
   let channel = await prisma.channel.findFirst({ where: { organizationId, name: "aprovacoes" } })
   if (!channel) channel = await prisma.channel.create({ data: { organizationId, name: "aprovacoes" } })
 
   const variants = result.output.variants || []
-  const content = `${agentName} criou copies para: "${brief}"\n\n${variants.map((v: any) => `**${v.name}**\n${v.copy}\n_Tom: ${v.tone}_`).join("\n\n---\n\n")}\n\nRecomendacao: ${result.output.recommendation || "CEO, escolha a que preferir."}`
+  const content = `${agentName} criou copies para: "${brief}"\n\n${variants.map((v: any) => `**${v.name}**\n${v.copy}\n_Tom: ${v.tone}_`).join("\n\n---\n\n")}\n\nRecomendacao: ${result.output.recommendation || "CEO, escolha a que preferir."}\n\n📎 Arquivo anexado ao card.`
 
   await prisma.message.create({
-    data: { content, metadata: { type: "copy_ready", needsApproval: true, output: result.output }, agentId, channelId: channel.id },
+    data: { content, metadata: { type: "copy_ready", needsApproval: true, output: result.output, taskId: task.id }, agentId, channelId: channel.id },
   } as any)
 
-  return { variants }
+  return { variants, taskId: task.id }
 }
 
 export async function executeCarouselPipeline(organizationId: string, agentId: string, agentName: string, theme: string): Promise<any | null> {
+  // Check if we can create a task
+  const canCreate = await canOrganizationCreateTask(organizationId)
+  if (!canCreate.allowed) {
+    console.log(`[Carousel Pipeline] Cannot create task: ${canCreate.reason}`)
+    return null
+  }
+
   const result = await executeWithRetry({
     organizationId, agentId, agentName,
     taskTitle: theme,
@@ -332,6 +581,25 @@ export async function executeCarouselPipeline(organizationId: string, agentId: s
 
   if (!result.success) return null
 
+  // Create task first
+  const task = await prisma.task.create({
+    data: {
+      organizationId,
+      title: `Carrossel: ${theme}`,
+      description: result.output.slides?.map((s: any) => `Slide ${s.number}: ${s.type} - ${s.content}`).join("\n") || "",
+      type: "carousel",
+      status: "IN_REVIEW",
+      assignedTo: agentId,
+      output: result.output as any,
+    },
+  })
+
+  // Attach carousel images
+  if (result.output.slides && result.output.slides.length > 0) {
+    // Attachments stored in task.output via generateAttachments (called from heartbeat)
+    console.log(`[Pipeline] Carousel images generated for task ${task.id}`)
+  }
+
   // Post preview
   let channel = await prisma.channel.findFirst({ where: { organizationId, name: "aprovacoes" } })
   if (!channel) channel = await prisma.channel.create({ data: { organizationId, name: "aprovacoes" } })
@@ -339,11 +607,11 @@ export async function executeCarouselPipeline(organizationId: string, agentId: s
   const slides = result.output.slides || []
   await prisma.message.create({
     data: {
-      content: `${agentName} criou carrossel: "${result.output.theme || theme}"\n\n${slides.map((s: any) => `Slide ${s.number}: ${s.type} — ${s.content?.slice(0, 80)}`).join("\n")}\n\nTotal: ${result.output.totalSlides || slides.length} slides`,
-      metadata: { type: "carousel_ready", needsApproval: true, output: result.output },
+      content: `${agentName} criou carrossel: "${result.output.theme || theme}"\n\n${slides.map((s: any) => `Slide ${s.number}: ${s.type} — ${s.content?.slice(0, 80)}`).join("\n")}\n\nTotal: ${result.output.totalSlides || slides.length} slides\n\n📎 Arquivos anexados ao card.`,
+      metadata: { type: "carousel_ready", needsApproval: true, output: result.output, taskId: task.id },
       agentId, channelId: channel.id,
     },
   } as any)
 
-  return result.output
+  return { ...result.output, taskId: task.id }
 }

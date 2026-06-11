@@ -12,7 +12,7 @@ export interface TaskContext {
   calendar: { dayName: string; today: string; upcomingDates: string }
 }
 
-export type TaskType = "create_copy" | "create_carousel" | "analyze_metrics" | "create_blog_post" | "research_keywords" | "create_daily_plan" | "optimize_seo" | "schedule_post" | "generic"
+export type TaskType = "create_copy" | "create_carousel" | "analyze_metrics" | "create_blog_post" | "research_keywords" | "create_daily_plan" | "optimize_seo" | "generic"
 
 export function buildTaskPrompt(type: TaskType, description: string, ctx: TaskContext): string {
   const base = `CONTEXTO DA EMPRESA:
@@ -111,19 +111,11 @@ TAREFA: Otimizar SEO de "${description}"
 
 Checklist: title tag, meta description, H1, URL, internal links, images alt text, content length.
 Identifique gaps e otimizacoes necessarias.
+DADOS DISPONIVEIS: Apenas scraper do site (SEO score, meta tags, headings, tech stack).
+GSC e Analytics NAO sao consultados.
 
 Retorne JSON:
 {"page":"...","targetKeyword":"...","optimizations":[{"element":"title_tag","current":"...","optimized":"...","reason":"..."}],"estimatedImpact":"..."}`,
-
-    schedule_post: `${base}
-
-TAREFA: Agendar "${description}"
-
-Verifique melhores horarios. Distribua ao longo da semana.
-Confirme que conteudo esta aprovado antes de agendar.
-
-Retorne JSON:
-{"scheduledPosts":[{"platform":"instagram","type":"feed","scheduledFor":"...","reason":"..."}],"summary":"..."}`,
 
     generic: `Tarefa: ${description}. Contexto: ${JSON.stringify(ctx)}. Execute a tarefa e retorne resultado.`,
   }
@@ -149,7 +141,6 @@ export function validateTaskOutput(type: TaskType, rawOutput: string): any {
     research_keywords: (d: any) => Array.isArray(d?.priorityKeywords) && d.priorityKeywords.length > 0,
     create_daily_plan: (d: any) => Array.isArray(d?.tasks) && d.tasks.length > 0,
     optimize_seo: (d: any) => Array.isArray(d?.optimizations) && d.optimizations.length > 0,
-    schedule_post: (d: any) => Array.isArray(d?.scheduledPosts) && d.scheduledPosts.length > 0,
     generic: () => true,
   }
 

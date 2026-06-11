@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { chatCompletion } from "@/lib/ai/client"
+import { chatCompletionDaily } from "@/lib/ai/client"
 import { getUpcomingEvents, getDayContext, extractTasksFromSpeeches } from "@/lib/agents/daily"
+import { fetchAllMetrics, buildMetricsPrompt } from "@/lib/autonomous/metrics-fetcher"
+import { getCompanyProfile, buildContextPrompt } from "@/lib/autonomous/company-profile"
 
 export const maxDuration = 120
 
@@ -27,10 +29,20 @@ export async function POST(request: NextRequest) {
       where: { id: organizationId },
       include: {
         onboarding: true,
-        integrations: { where: { status: "connected" }, select: { platform: true, name: true } },
+        integrations: { where: { status: "connected" }, select: { platform: true, name: true, metadata: true } },
       },
     })
     if (!org) return NextResponse.json({ error: "Org not found" }, { status: 404 })
+ 
+    // Load brand identity from Organization
+    const orgMeta = await prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { brandIdentity: true },
+    })
+    const brandIdentity = (orgMeta?.brandIdentity as Record<string, any>) || {}
+    const insightsText = brandIdentity.name 
+      ? `\nIDENTIDADE VISUAL: Cores ${brandIdentity.primaryColor || 'padrão'} e ${brandIdentity.secondaryColor || 'padrão'}. Fonte: ${brandIdentity.fontFamily || 'Inter'}.`
+      : ""
 
     if (isSummary) {
       return generateSummary(organizationId, previousSpeeches, org)
@@ -60,12 +72,14 @@ export async function POST(request: NextRequest) {
 
     const companyCtx = [
       org.onboarding?.industry && `Setor: ${org.onboarding.industry}`,
+      org.onboarding?.whatYouSell && `O QUE VENDE: ${org.onboarding.whatYouSell}`,
       org.onboarding?.targetAudience && `Publico-alvo: ${org.onboarding.targetAudience}`,
       org.onboarding?.brandVoice && `Voz da marca: ${org.onboarding.brandVoice}`,
       org.onboarding?.mainChallenges && `Desafio principal: ${org.onboarding.mainChallenges}`,
       (org.onboarding?.goals?.length ?? 0) > 0 && `Objetivos: ${org.onboarding?.goals?.join(", ")}`,
       (org.integrations?.length ?? 0) > 0 && `Integracoes conectadas: ${org.integrations?.map(i => i.platform).join(", ")}`,
       org.onboarding?.website && `Site: ${org.onboarding.website}`,
+      insightsText,
     ].filter(Boolean).join(". ")
 
     const myTaskLines = validMyTasks.map(t => `- "${t.title}" (${t.priority})`).join("\n")
@@ -102,18 +116,39 @@ export async function POST(request: NextRequest) {
         ? `\nIntegracoes conectadas: ${org.integrations?.map(i => i.platform).join(", ")}.`
         : ""
 
+    const integrationData = org.integrations && org.integrations.length > 0
+      ? org.integrations.map(i => {
+          const m = (i.metadata as any) || {}
+          const f = m.followers ? `${m.followers.toLocaleString()} seguidores` : ''
+          const p = m.recentPosts?.length ? `${m.recentPosts.length} posts` : ''
+          return `${i.name}: ${[f,p].filter(Boolean).join(', ') || 'conectado'}`
+        }).join(' | ')
+      : ''
+
+    // Use cached profile if pre-warmed (saves 2-3s in first daily)
+    const cachedProfile = (orgMeta?.brandIdentity as any)?.profileCache
+    const profile = cachedProfile?.industry 
+      ? cachedProfile 
+      : await getCompanyProfile(organizationId).catch(() => null)
+    const ctxStr = profile ? buildContextPrompt(profile, agent.role) : ''
+    const niche = profile?.niche || org.onboarding?.industry || 'marketing'
+
     const firstDailyBootstrap = isFirstDaily && isFirst
-      ? `PRIMEIRA DAILY da ${org.name}. ${org.onboarding?.industry || "marketing"}.
+      ? `PRIMEIRA DAILY da ${org.name}. ${niche}.
 ${org.onboarding?.goals?.length ? "Objetivos: " + org.onboarding.goals.join(", ") : ""}
 ${myTaskLines ? "Suas tarefas: " + myTaskLines.slice(0, 300) : ""}
-Apresente 4-6 prioridades da semana. Pergunte ao CEO se aprova. Fale em 1a pessoa. ${personalityDesc}.`
+${ctxStr}
+${integrationData ? `DADOS REAIS: ${integrationData}. USE ESTES NÚMEROS na sua fala!` : 'Nenhuma rede conectada. Sugira conectar.'}
+Apresente 4-6 prioridades da semana focadas no nicho acima. Pergunte ao CEO se aprova. Fale em 1a pessoa. ${personalityDesc}.`
       : ""
 
     // First daily: non-first agents acknowledge Maya's plan
     const firstDailyFollowUp = isFirstDaily && !isFirst
       ? `Voce esta na PRIMEIRA DAILY da ${org.name}. Maya acabou de apresentar as prioridades da semana (veja acima).
 
-Comente brevemente sobre o plano dela, confirme o que voce vai fazer HOJE, e se tiver alguma sugestao ou duvida, fale agora.
+${ctxStr}
+
+Comente brevemente sobre o plano dela, confirme o que voce vai fazer HOJE focado no nicho "${niche}", e se tiver alguma sugestao ou duvida, fale agora.
 
 Seja ${personalityDesc}. Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
       : ""
@@ -121,14 +156,14 @@ Seja ${personalityDesc}. Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
     // Aligned with document: what to do today, dependencies, blockers, ETA
     const userMessage = firstDailyBootstrap || firstDailyFollowUp || (isFirst
       ? `Voce e a PRIMEIRA a falar. De bom dia, de o tom, compartilhe:
-1. O que vai fazer HOJE
+1. O que vai fazer HOJE (posts, artes, artigos, analise, copy, SEO — foque no que a plataforma faz)
 2. Precisa de algo de algum colega?
 3. Algum bloqueio?
 Inclua ETA. Seja ${personalityDesc}.`
       : isLast
         ? `Voce e a ULTIMA. Recapitule os planos, conecte dependencias, encerre a daily. Seja ${personalityDesc}.`
         : `Sua vez. Comente sobre o que os colegas disseram, depois compartilhe:
-1. O que vai fazer HOJE
+1. O que vai fazer HOJE (posts, artes, artigos, analise, copy, SEO — foque no que a plataforma faz)
 2. Precisa de algo de algum colega?
 3. Algum bloqueio?
 Inclua ETA. Seja ${personalityDesc}.`)
@@ -140,18 +175,48 @@ ${companyCtx || "Agencia de marketing recem-criada."}
 ${dayContext}
 ${eventsText}
 ${validAllTasks.length > 0 ? `Tarefas do time:\n${allTaskLines}` : "Nenhuma tarefa pendente."}
-${myTaskLines ? `\nSuas tarefas:\n${myTaskLines}` : ""}${prevLines}
+${myTaskLines ? `\nSuas tarefas:\n${myTaskLines}` : ""}
+
+DADOS REAIS DAS PLATAFORMAS CONECTADAS (USE ESTES NÚMEROS na sua fala):
+${org.integrations && org.integrations.length > 0 ? org.integrations.map(i => {
+  const m = (i.metadata as any) || {}
+  const followers = m.followers ? `${m.followers.toLocaleString()} seguidores` : ''
+  const posts = m.recentPosts?.length ? `${m.recentPosts.length} posts recentes` : ''
+  const seo = m.seoScore ? `SEO Score: ${m.seoScore}/100` : ''
+  return `- ${i.name}: ${[followers, posts, seo].filter(Boolean).join(', ') || 'conectado'}`
+}).join('\n') : 'Nenhuma plataforma conectada.'}
+
+IMPORTANTE: Mencione os números reais acima na sua fala. Ex: "Nossos 292M de seguidores..."
+
+${prevLines}
 
 ${userMessage}
 
+SOMENTE FALE SOBRE O QUE A PLATAFORMA FAZ:
+- Planejar calendario editorial e criar copies (texto)
+- Analisar dados REAIS do Instagram (seguidores, engajamento dos ultimos 5 posts — se conectado)
+- Auditar SEO do site via scraper (meta tags, headings, SEO score)
+- Criar briefings visuais e estruturas de carrosseis (descricao textual)
+- Pesquisar e recomendar keywords baseadas no setor do cliente
+- Revisar e aprovar entregas de outros agentes
+
+A PLATAFORMA NAO FAZ (NAO FALE SOBRE):
+- NAO publica em rede social nenhuma
+- NAO agenda posts
+- NAO tem TikTok, Pinterest, Facebook, Twitter, YouTube
+- NAO acessa Google Search Console ou Analytics (tokens salvos mas dados NAO sao consultados)
+- NAO gera imagens diretamente (apenas briefings textuais — o PNG so e gerado apos aprovacao da Maya)
+- NAO faz Google Ads, media buying, pixels, remarketing
+- NAO responde comentarios em redes sociais
+
 Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
 
-    const maxTokens = 1500
+    const maxTokens = isFirst && isFirstDaily ? 500 : 300
     let cleaned = ""
     for (let attempt = 0; attempt < 2; attempt++) {
-      const raw = await chatCompletion(prompt, { temperature: 0.85, maxTokens, model: "deepseek-v4-pro" })
+      const raw = await chatCompletionDaily(prompt, { temperature: 0.85, maxTokens })
       cleaned = raw?.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "")?.trim() || ""
-      if (cleaned && !cleaned.includes("Nao consegui")) break
+      if (cleaned && cleaned.length > 20 && !/dificuldades|nao consegui/i.test(cleaned)) break
       if (attempt === 0) await new Promise(r => setTimeout(r, 1000))
     }
 
@@ -178,8 +243,8 @@ Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
 
     return NextResponse.json({ agent: agent.name, content: cleaned, agentId: agent.id })
   } catch (error) {
-    console.error("[DailySpeak Error]", error)
-    return NextResponse.json({ error: "Failed to generate speech" }, { status: 500 })
+    console.error("[DailySpeak Error]", error instanceof Error ? error.message : error, error instanceof Error ? error.stack?.substring(0,300) : '')
+    return NextResponse.json({ error: "Failed to generate speech: " + (error instanceof Error ? error.message : String(error)) }, { status: 500 })
   }
 }
 
