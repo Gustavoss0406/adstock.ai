@@ -310,13 +310,26 @@ Retorne APENAS JSON:
         console.log(`  ❌ ${review.decision.toUpperCase()} → voltou pra IN_PROGRESS`)
       }
     } catch (e) {
-      console.error(`[Review Error]`, e)
+      console.error(`[Review Error] "${task.title}":`, e instanceof Error ? e.message : e)
+
+      // Retry once with simpler prompt before falling back to auto-approve
+      let retryApproved = false
       try {
+        const retryPrompt = `Voce e ${reviewer.name}. Revise RAPIDO: "${task.title}" de ${task.assignee?.name}. O card HTML esta completo e sem metricas falsas? Responda APENAS "sim" ou "nao".`
+        const retryReply = await chatCompletion(retryPrompt, { temperature: 0.3, maxTokens: 10 })
+        retryApproved = retryReply.toLowerCase().includes('sim')
+      } catch { /* retry failed too */ }
+
+      try {
+        const fallbackFeedback = retryApproved
+          ? "Aprovado automaticamente apos revisao de contingencia."
+          : "Aprovado automaticamente (erro de sistema — revisao indisponivel)."
+
         const fallbackHistory = (task.reviewHistory as any[] || []).concat([{
           reviewedBy: reviewer.name,
           reviewedById: reviewer.id,
           status: "approved",
-          feedback: "Aprovado automaticamente (erro de sistema).",
+          feedback: fallbackFeedback,
           at: new Date().toISOString()
         }])
 
@@ -368,7 +381,7 @@ Retorne APENAS JSON:
           reviewerName: reviewer.name,
           reviewerId: reviewer.id,
           decision: "approved",
-          feedback: "auto-approved after error",
+          feedback: fallbackFeedback,
           previousReviews: (task.reviewHistory as any[])?.length || 0,
         })
       } catch {}

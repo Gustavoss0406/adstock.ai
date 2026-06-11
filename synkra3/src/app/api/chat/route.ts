@@ -5,6 +5,8 @@ import { chatCompletion } from "@/lib/ai/client"
 import { requestTurn, releaseTurn, calculateResponseDelay, calculateTypingTime, getPersonality } from "@/lib/orchestrator/turns"
 import { detectConflict } from "@/lib/orchestrator/conflict"
 import { postWithTurn } from "@/lib/orchestrator/executor"
+import { canOrganizationCreateTask } from "@/lib/agents/daily-limit"
+import { canTransitionStatus } from "@/lib/orchestrator/quality-control"
 
 const AGENT_ROLES: Record<string, { name: string; specialty: string; style: string; color: string }> = {
   STRATEGIST: { name: "Maya Ferreira", specialty: "estrategia de conteudo e growth", style: "visionaria, entusiasmada, lider", color: "#000000" },
@@ -25,6 +27,12 @@ function buildTaskContext(tasks: any[]): string {
 }
 
 async function handleCreateTask(agentId: string, organizationId: string, title: string, description: string, priority: string, platform?: string) {
+  // Check organization daily limit
+  const canCreate = await canOrganizationCreateTask(organizationId)
+  if (!canCreate.allowed) {
+    return null
+  }
+  
   return prisma.task.create({
     data: { organizationId, title, description: description || "", priority: (priority || "MEDIUM") as any, platform, assignedTo: agentId },
   })
@@ -45,7 +53,16 @@ async function handleUpdateTaskStatus(organizationId: string, taskTitle: string,
   const status = statusMap[newStatus.toLowerCase()] || newStatus.toUpperCase()
   const task = await prisma.task.findFirst({ where: { organizationId, title: { contains: taskTitle, mode: "insensitive" }, status: { not: "DONE" } } })
   if (task) {
-    await prisma.task.update({ where: { id: task.id }, data: { status: status as any } })
+    if (status === "DONE") {
+      const check = await canTransitionStatus(task.id, "DONE")
+      if (!check.allowed) {
+        return { task: task.title, status: task.status, error: check.reason }
+      }
+    }
+    await prisma.task.update({
+      where: { id: task.id },
+      data: { status: status as any, ...(status === "DONE" ? { completedAt: new Date() } : {}) },
+    })
     return { task: task.title, status }
   }
   return null
@@ -61,7 +78,7 @@ export async function POST(request: NextRequest) {
 
     const org = await prisma.organization.findFirst({
       where: { agents: { some: { id: agentId || undefined } } },
-      include: { agents: { where: { status: { not: "FIRED" } } }, officeSettings: true },
+      include: { agents: { where: { status: { not: "FIRED" } } }, officeSettings: true, onboarding: { select: { industry: true, whatYouSell: true, targetAudience: true, brandVoice: true, goals: true, website: true } } },
     })
 
     const agents = org?.agents || []
@@ -75,7 +92,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Save user message
-    await prisma.message.create({ data: { content: message, channelId: resolvedChannelId, userId: session.user.id } })
+    const userMessage = await prisma.message.create({ data: { content: message, channelId: resolvedChannelId, userId: session.user.id } })
 
     // Load real tasks
     const tasks = await prisma.task.findMany({
@@ -100,8 +117,13 @@ export async function POST(request: NextRequest) {
       const desc = message.replace(createMatch[0], "").trim().slice(0, 200)
       const priority = message.toLowerCase().includes("urgente") || message.toLowerCase().includes("critic") ? "CRITICAL" : message.toLowerCase().includes("alta") ? "HIGH" : "MEDIUM"
       const task = await handleCreateTask(agentId, org!.id, title, desc, priority)
-      actionResult = { type: "task_created", title: task.title, id: task.id }
-      actionContext = `TAREFA CRIADA AGORA: "${title}". Confirme isso na sua resposta.`
+      if (task) {
+        actionResult = { type: "task_created", title: task.title, id: task.id }
+        actionContext = `TAREFA CRIADA AGORA: "${title}". Confirme isso na sua resposta.`
+      } else {
+        actionResult = { type: "task_limit_reached", title }
+        actionContext = `LIMITE ATINGIDO: Nao foi possivel criar a tarefa "${title}". A agencia ja criou 10 tarefas hoje. Todos devem focar em executar as existentes no Kanban.`
+      }
     } else if (assignMatch) {
       const result = await handleAssignTask(org!.id, assignMatch[1], assignMatch[2])
       if (result) { actionResult = { type: "task_assigned", ...result }; actionContext = `TAREFA ATRIBUIDA: "${result.task}" para ${result.agent}.` }
@@ -109,6 +131,17 @@ export async function POST(request: NextRequest) {
       const result = await handleUpdateTaskStatus(org!.id, statusMatch[1], statusMatch[2])
       if (result) { actionResult = { type: "task_updated", ...result }; actionContext = `TAREFA ATUALIZADA: "${result.task}" movida para ${result.status}.` }
     }
+
+    // Load brand insights from metadata
+    const orgMeta = await prisma.organization.findUnique({
+      where: { id: org!.id },
+      select: { metadata: true },
+    })
+    const metadata = (orgMeta?.metadata as Record<string, any>) || {}
+    const brandInsights = (metadata.brandInsights || []) as Array<{ question: string; answer: string; timestamp: string }>
+    const insightsContext = brandInsights.length > 0
+      ? `\nO QUE O CEO JA REVELOU SOBRE A MARCA:\n${brandInsights.map(i => `- "${i.question}": ${i.answer}`).join("\n")}\n`
+      : ""
 
     // Build system prompt with task awareness
     const agentList = agents.map(a => {
@@ -118,10 +151,13 @@ export async function POST(request: NextRequest) {
 
     const systemPrompt = `Voce gerencia uma agencia de marketing real.
 
+EMPRESA:
+${org?.onboarding?.industry ? `Setor: ${org.onboarding.industry}. ` : ""}${org?.onboarding?.whatYouSell ? `O QUE VENDE: ${org.onboarding.whatYouSell}. ` : ""}${org?.onboarding?.targetAudience ? `Publico: ${org.onboarding.targetAudience}. ` : ""}${org?.onboarding?.brandVoice ? `Tom: ${org.onboarding.brandVoice}. ` : ""}${org?.onboarding?.website ? `Site: ${org.onboarding.website}.` : ""}
+
 AGENTES:
 ${agentList}
 
-${taskContext}
+${insightsContext}${taskContext}
 ${actionContext}
 
 REGRAS DE COMUNICACAO:
@@ -147,7 +183,7 @@ FALA: [Texto]`
       const agent = agents.find(a => a.id === agentId)
       if (agent) {
         const ri = AGENT_ROLES[agent.role] || { name: agent.name, specialty: "marketing", style: "profissional" }
-        const directSystem = `VOCE E ${ri.name}. Especialista em ${ri.specialty}. ${ri.style}.\n\nREGRAS DE COMUNICACAO:\n- So fale se for acionavel (completou, bloqueou, precisa de aprovacao, alerta)\n- NUNCA responda "ok", "legal", "valeu", "boa" ou confirmacoes vazias\n- Se nao tem nada util pra dizer, seja breve e direto(a)\n\nTAREFAS REAIS DO SISTEMA:\n${taskContext}\n${actionContext}\n\nREGRA: Voce CONHECE essas tarefas. Responda com base nelas. JAMAIS invente. Mencione colegas naturalmente.`
+        const directSystem = `VOCE E ${ri.name}. Especialista em ${ri.specialty}. ${ri.style}.\n\nEMPRESA: ${org?.onboarding?.industry ? `Setor: ${org.onboarding.industry}. ` : ""}${org?.onboarding?.whatYouSell ? `O QUE VENDE: ${org.onboarding.whatYouSell}. ` : ""}${org?.onboarding?.targetAudience ? `Publico: ${org.onboarding.targetAudience}. ` : ""}${org?.onboarding?.brandVoice ? `Tom: ${org.onboarding.brandVoice}. ` : ""}${org?.onboarding?.website ? `Site: ${org.onboarding.website}.` : ""}\n\n${insightsContext}REGRAS DE COMUNICACAO:\n- So fale se for acionavel (completou, bloqueou, precisa de aprovacao, alerta)\n- NUNCA responda "ok", "legal", "valeu", "boa" ou confirmacoes vazias\n- Se nao tem nada util pra dizer, seja breve e direto(a)\n\nTAREFAS REAIS DO SISTEMA:\n${taskContext}\n${actionContext}\n\nREGRA: Voce CONHECE essas tarefas. Responda com base nelas. JAMAIS invente. Mencione colegas naturalmente.`
         const directReply = await chatCompletion(`${directSystem}\n\n${message}`, { temperature: 0.7, maxTokens: 1500 })
         const cleaned = directReply.replace(/^(Claro|Certo|Com certeza|OK|Ok)[,!.]?\s*/i, "").trim()
 
@@ -192,7 +228,7 @@ FALA: [Texto]`
         }
 
         return NextResponse.json({
-          reply: cleaned, messageId: saved.id, agentId: agent.id, agentName: agent.name,
+          reply: cleaned, messageId: saved.id, userMessageId: userMessage.id, agentId: agent.id, agentName: agent.name,
           followUp, actionResult, conflict,
           turn: { delay: 0, typingTime, speaker: agent.name, personality },
         })
@@ -254,7 +290,7 @@ FALA: [Texto]`
     }
 
     return NextResponse.json({
-      reply: cleaned, messageId: saved.id,
+      reply: cleaned, messageId: saved.id, userMessageId: userMessage.id,
       agentId: respondingAgent?.id || agents[0]?.id, agentName: respondingAgent?.name || agentName,
       followUp, actionResult, conflict,
       turn: { delay: 0, typingTime, speaker: respondingAgent?.name || agentName, personality },
