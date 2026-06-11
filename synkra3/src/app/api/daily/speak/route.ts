@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import { chatCompletionDaily } from "@/lib/ai/client"
+import { chatCompletion } from "@/lib/ai/client"
 import { getUpcomingEvents, getDayContext, extractTasksFromSpeeches } from "@/lib/agents/daily"
 import { fetchAllMetrics, buildMetricsPrompt } from "@/lib/autonomous/metrics-fetcher"
 import { getCompanyProfile, buildContextPrompt } from "@/lib/autonomous/company-profile"
@@ -214,7 +214,7 @@ Fale em 1a pessoa. 2-3 frases. Apenas FALE.`
     const maxTokens = isFirst && isFirstDaily ? 500 : 300
     let cleaned = ""
     for (let attempt = 0; attempt < 2; attempt++) {
-      const raw = await chatCompletionDaily(prompt, { temperature: 0.85, maxTokens })
+      const raw = await chatCompletion(prompt, { temperature: 0.85, maxTokens })
       cleaned = raw?.replace(/^(Claro|Certo|Com certeza|OK|Ok|Entendido|Beleza)[,!.]?\s*/i, "")?.trim() || ""
       if (cleaned && cleaned.length > 20 && !/dificuldades|nao consegui/i.test(cleaned)) break
       if (attempt === 0) await new Promise(r => setTimeout(r, 1000))
