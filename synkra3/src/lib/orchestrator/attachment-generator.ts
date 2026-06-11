@@ -321,8 +321,10 @@ function renderDeliverableCard(input: AttachmentGeneratorInput, content: string,
   const summary = strategy || `Entrega desenvolvida para ${input.organizationName}, atuante no setor ${input.industry}, com foco no público ${input.targetAudience}.`
 
   const objectiveLines: string[] = []
-  if (goals) {
+  if (goals && typeof goals === 'string') {
     for (const g of goals.split('\n').filter(Boolean)) objectiveLines.push(`  <li>${esc(g)}</li>`)
+  } else if (Array.isArray(goals)) {
+    for (const g of goals) objectiveLines.push(`  <li>${esc(String(g))}</li>`)
   } else {
     objectiveLines.push(`  <li>Fortalecer o posicionamento da marca no setor ${esc(input.industry)}</li>`)
     objectiveLines.push(`  <li>Aumentar o alcance digital junto ao público ${esc(input.targetAudience)}</li>`)
@@ -330,8 +332,10 @@ function renderDeliverableCard(input: AttachmentGeneratorInput, content: string,
   }
 
   const nextStepLines: string[] = []
-  if (nextSteps) {
+  if (nextSteps && typeof nextSteps === 'string') {
     for (const ns of nextSteps.split('\n').filter(Boolean)) nextStepLines.push(`  <li>${esc(ns)}</li>`)
+  } else if (Array.isArray(nextSteps)) {
+    for (const ns of nextSteps) nextStepLines.push(`  <li>${esc(String(ns))}</li>`)
   } else {
     nextStepLines.push('  <li>Acompanhamento de métricas de performance</li>')
     nextStepLines.push('  <li>Otimização contínua com base nos resultados</li>')
