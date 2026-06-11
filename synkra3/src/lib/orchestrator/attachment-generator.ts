@@ -1,5 +1,6 @@
 import { generateInstagramPostPNG, generateCarouselPNGs } from './png-generator'
 import { prisma } from '@/lib/prisma'
+import { canTransitionStatus } from '@/lib/orchestrator/quality-control'
 
 export interface AttachmentGeneratorInput {
   taskId: string
@@ -133,6 +134,12 @@ export async function generateArtworkExport(
     if (!isVisualRole && !isVisualType) {
       console.log(`[Artwork Export] Non-visual task → skipping artwork`)
 
+      const transitionCheck = await canTransitionStatus(input.taskId, "DONE")
+      if (!transitionCheck.allowed) {
+        console.log(`[Artwork Export] Blocked: ${transitionCheck.reason}`)
+        return result
+      }
+
       await prisma.task.update({
         where: { id: input.taskId },
         data: {
@@ -182,6 +189,12 @@ export async function generateArtworkExport(
     }
 
     const currentOutput = (await prisma.task.findUnique({ where: { id: input.taskId }, select: { output: true } }))?.output as any || {}
+
+    const transitionCheck = await canTransitionStatus(input.taskId, "DONE")
+    if (!transitionCheck.allowed) {
+      console.log(`[Artwork Export] Blocked: ${transitionCheck.reason}`)
+      return result
+    }
 
     await prisma.task.update({
       where: { id: input.taskId },
