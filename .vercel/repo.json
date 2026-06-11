@@ -1,0 +1,17 @@
+{
+  "remoteName": "origin",
+  "projects": [
+    {
+      "id": "prj_9dz8kU04rzCfowAekmgvHAf2EjZs",
+      "name": "synkra",
+      "directory": ".",
+      "orgId": "team_2ca5l8mfrxNuvIbDlYmqkkCg"
+    },
+    {
+      "id": "prj_GbXeZ3yAo5MZovPmZcJz6V06r77m",
+      "name": "synkra3",
+      "directory": ".",
+      "orgId": "team_2ca5l8mfrxNuvIbDlYmqkkCg"
+    }
+  ]
+}

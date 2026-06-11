@@ -3,5 +3,8 @@
   "private": true,
   "scripts": {
     "vercel-build": "cd synkra3 && npm install && npx prisma generate && npx next build"
+  },
+  "dependencies": {
+    "next": "latest"
   }
 }
