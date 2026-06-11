@@ -34,6 +34,7 @@ import { shouldAgentSpeak, getVerbosityLevel, transitionToWorking, transitionToT
 import { detectAndHandleSpam } from "@/lib/orchestrator/spam-detection"
 import { selectBestChannel, getMessageTypeForAction } from "@/lib/channels/channel-selector"
 import { ensureChannelExists } from "@/lib/channels/channel-validator"
+import { canTransitionStatus } from "@/lib/orchestrator/quality-control"
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -930,6 +931,14 @@ async function executeMoveTask(
   }
 
   const status = statusMap[toColumn.toLowerCase()] || toColumn.toUpperCase()
+
+  // Guard: prevent moving to DONE without approval
+  if (status === "DONE") {
+    const check = await canTransitionStatus(taskId, status)
+    if (!check.allowed) {
+      return { success: false, action: "move_task", error: check.reason }
+    }
+  }
 
   await prisma.task.update({
     where: { id: taskId },
