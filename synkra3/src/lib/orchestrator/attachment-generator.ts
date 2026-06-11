@@ -190,6 +190,14 @@ export async function generateArtworkExport(
 
     const currentOutput = (await prisma.task.findUnique({ where: { id: input.taskId }, select: { output: true } }))?.output as any || {}
 
+    // Clear artworkPending before guard check (this IS the artwork export)
+    if (currentOutput.artworkPending && result.artworkUrl) {
+      await prisma.task.update({
+        where: { id: input.taskId },
+        data: { output: { ...currentOutput, artworkPending: false } as any },
+      })
+    }
+
     const transitionCheck = await canTransitionStatus(input.taskId, "DONE")
     if (!transitionCheck.allowed) {
       console.log(`[Artwork Export] Blocked: ${transitionCheck.reason}`)
