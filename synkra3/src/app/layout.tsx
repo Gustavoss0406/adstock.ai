@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import { Inter, Cormorant_Garamond } from "next/font/google"
 import "./globals.css"
+export const dynamic = "force-dynamic"
+
 import { Providers } from "@/components/providers"
 
 const inter = Inter({

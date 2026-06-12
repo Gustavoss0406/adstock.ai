@@ -32,6 +32,7 @@ interface BoardTask {
   assignee?: Agent; blocked?: boolean; blockedReason?: string; blockedById?: string
   comments?: Array<{ author: string; text: string; time: string }>
   output?: any
+  attachments?: Array<{ id: string; fileName: string; fileUrl: string; fileType: string; fileSize: number }>
 }
 
 interface KanbanBoardProps {
@@ -173,6 +174,11 @@ function SortableCard({ task, onOpen }: { task: BoardTask; onOpen: (t: BoardTask
               )}
               {task.output?.deliverableImage && (
                 <Image className="w-2.5 h-2.5 text-editor-muted" />
+              )}
+              {task.attachments && task.attachments.length > 0 && (
+                <span className="flex items-center gap-0.5 text-[9px] text-editor-muted">
+                  <Paperclip className="w-2.5 h-2.5" />{task.attachments.length}
+                </span>
               )}
               {task.dueDate && (
                 <span className={cn("text-[8px]", isOverdue ? "text-warning/80" : "text-editor-muted")}>
@@ -518,6 +524,38 @@ export function KanbanBoard({ tasks, agents, onMoveTask, onCreateTask }: KanbanB
                     </button>
                   </div>
                 </div>
+
+                {/* Attachments */}
+                {((detailTask.attachments && detailTask.attachments.length > 0) || detailTask.output?.artworkUrl || detailTask.output?.htmlDocument) && (
+                  <div>
+                    <h3 className="text-[10px] font-semibold text-editor-muted uppercase tracking-wider mb-2">
+                      <span className="flex items-center gap-1.5"><Paperclip className="w-3 h-3" />Anexos</span>
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {detailTask.attachments && detailTask.attachments.map(att => (
+                        <a key={att.id} href={att.fileUrl} target="_blank" rel="noopener"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.15] text-[10px] text-white/60 hover:text-white/80 transition-all">
+                          {att.fileType === 'png' ? '🖼️' : '📄'} {att.fileName || (att.fileType === 'png' ? 'Arte (PNG)' : 'Documentação')} ({Math.round(att.fileSize / 1024)}KB)
+                        </a>
+                      ))}
+                      {detailTask.output?.artworkUrl && !detailTask.attachments?.some(a => a.fileType === 'png') && (
+                        <a href={detailTask.output.artworkUrl} target="_blank" rel="noopener"
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.15] text-[10px] text-white/60 hover:text-white/80 transition-all">
+                          🖼️ Arte (PNG)
+                        </a>
+                      )}
+                      {detailTask.output?.htmlDocument && !detailTask.attachments?.some(a => a.fileType === 'html') && (
+                        <button onClick={() => {
+                          const blob = new Blob([detailTask.output.htmlDocument], { type: 'text/html' })
+                          window.open(URL.createObjectURL(blob), '_blank')
+                        }}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.06] hover:border-white/[0.15] text-[10px] text-white/60 hover:text-white/80 transition-all cursor-pointer">
+                          📄 Documentação
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex gap-1.5 pt-2 border-t border-editor-border">
