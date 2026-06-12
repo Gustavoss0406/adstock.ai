@@ -9,6 +9,7 @@
 
 import { prisma } from "@/lib/prisma"
 import { chatCompletion } from "@/lib/ai/client"
+import { generateDeliverableCard } from "@/lib/orchestrator/attachment-generator"
 import {
   requestTurn,
   releaseTurn,
@@ -25,13 +26,15 @@ import {
   getTaskDurationMinutes,
 } from "@/lib/orchestrator/config"
 import { resumeActionsOnUnblock } from "@/lib/orchestrator/conflict"
-import { writeBridgeWorkActivity, getToolForTask, writeAgentEvent } from "@/lib/orchestrator/bridgeWork"
+import { getToolForTask } from "@/lib/orchestrator/bridgeWork"
 import { notifyTaskChain } from "@/lib/orchestrator/conversation"
 import { executeFullCascade } from "@/lib/autonomous/agent-engine"
+import { canOrganizationCreateTask } from "@/lib/agents/daily-limit"
 import { shouldAgentSpeak, getVerbosityLevel, transitionToWorking, transitionToTaskCompleted, transitionToMentioned } from "@/lib/orchestrator/communication-rules"
 import { detectAndHandleSpam } from "@/lib/orchestrator/spam-detection"
 import { selectBestChannel, getMessageTypeForAction } from "@/lib/channels/channel-selector"
 import { ensureChannelExists } from "@/lib/channels/channel-validator"
+import { canTransitionStatus } from "@/lib/orchestrator/quality-control"
 
 // ─────────────────────────────────────────────────────────────
 // Types
@@ -448,6 +451,11 @@ async function executeStartTask(
     return { success: false, action: "start_task", error: "Task not found" }
   }
 
+  // CRITICAL: Prevent regression - never move DONE tasks back to IN_PROGRESS
+  if (task.status === "DONE") {
+    return { success: false, action: "start_task", error: "Task already completed (DONE). Cannot regress to IN_PROGRESS." }
+  }
+
   // 1. Update task
   await prisma.task.update({
     where: { id: taskId },
@@ -495,24 +503,24 @@ async function executeStartTask(
     priority: task.priority,
   })
 
-  // Bridge: pixel office shows real work
-  writeBridgeWorkActivity(
-    ctx.agent.id,
-    ctx.agent.name,
-    task.title,
-    getToolForTask(task.type || "content"),
-    `Comecando: ${task.title}`,
-  )
+  // Bridge: pixel office shows real work - DISABLED to prevent duplication
+  // writeBridgeWorkActivity(
+  //   ctx.agent.id,
+  //   ctx.agent.name,
+  //   task.title,
+  //   getToolForTask(task.type || "content"),
+  //   `Comecando: ${task.title}`,
+  // )
 
-  // Rich event: agent started working
-  writeAgentEvent({
-    agentId: ctx.agent.id,
-    agentName: ctx.agent.name,
-    eventType: "task_started",
-    taskTitle: task.title,
-    emote: task.type === "analysis" ? "🔍" : task.type === "content" ? "✍️" : task.type === "technical" ? "🔧" : "📋",
-    tool: getToolForTask(task.type || "content"),
-  })
+  // Rich event: agent started working - DISABLED to prevent duplication
+  // writeAgentEvent({
+  //   agentId: ctx.agent.id,
+  //   agentName: ctx.agent.name,
+  //   eventType: "task_started",
+  //   taskTitle: task.title,
+  //   emote: task.type === "analysis" ? "🔍" : task.type === "content" ? "✍️" : task.type === "technical" ? "🔧" : "📋",
+  //   tool: getToolForTask(task.type || "content"),
+  // })
 
   return { success: true, action: "start_task", taskId }
 }
@@ -528,7 +536,11 @@ async function executeCompleteTask(
 
   // 1. Update task — DONE directly (auto-approved)
   const currentTask = await prisma.task.findUnique({ where: { id: taskId } })
-  const existingOutput = currentTask?.output as any
+  if (!currentTask) {
+    return { success: false, action: "complete_task", error: "Task not found" }
+  }
+
+  const existingOutput = currentTask.output as any
 
   // Generate real AI content if output is empty
   let outputData = existingOutput || {}
@@ -536,9 +548,9 @@ async function executeCompleteTask(
     try {
       const gen = await generateDeliverableContent(
         {
-          title: currentTask?.title || "",
-          description: currentTask?.description,
-          type: currentTask?.type || "content",
+          title: currentTask.title || "",
+          description: currentTask.description,
+          type: currentTask.type || "content",
         },
         { name: ctx.agent.name, role: ctx.agent.role },
         ctx.organizationId,
@@ -547,25 +559,30 @@ async function executeCompleteTask(
       if (gen.content && !gen.content.includes("Nao consegui processar") && gen.content.length > 10) {
         outputData = { ...outputData, ...gen }
       } else {
-        outputData.content = currentTask?.description || currentTask?.title || ""
+        outputData.content = currentTask.description || currentTask.title || ""
       }
     } catch {
-      outputData.content = currentTask?.description || currentTask?.title || ""
+      outputData.content = currentTask.description || currentTask.title || ""
     }
-    if (currentTask?.type === "content" || currentTask?.type === "campaign") {
+    if (currentTask.type === "content" || currentTask.type === "campaign") {
       outputData.deliverableImage = null
       outputData.imageDescription = "Imagem do entregavel gerada pelo agente."
     }
   }
 
+  const isDesigner = ctx.agent.role === "DESIGNER"
+
   await prisma.task.update({
     where: { id: taskId },
     data: {
-      status: "DONE",
+      status: "IN_REVIEW",
       completedAt: new Date(),
       lastCommunicatedAt: new Date(),
       progress: 100,
-      output: outputData,
+      output: {
+        ...outputData,
+        artworkPending: isDesigner,
+      } as any,
     },
   })
 
@@ -578,6 +595,38 @@ async function executeCompleteTask(
       performance: { increment: 0.5 },
     },
   })
+
+  // 2.5. Generate HTML deliverable card (not PNG — that comes after Maya approves)
+  try {
+    const org = await prisma.organization.findUnique({
+      where: { id: ctx.organizationId },
+      select: {
+        name: true,
+        onboarding: { select: { industry: true, targetAudience: true } },
+        brandIdentity: true,
+      },
+    })
+
+    const brandIdentity = org?.brandIdentity as any
+    await generateDeliverableCard({
+      taskId: taskId,
+      taskTitle: currentTask.title || "",
+      taskDescription: currentTask.description || "",
+      taskType: currentTask.type || "content",
+      agentName: ctx.agent.name,
+      agentRole: ctx.agent.role,
+      organizationName: org?.name || "Empresa",
+      industry: org?.onboarding?.industry || "Não especificado",
+      targetAudience: org?.onboarding?.targetAudience || "Público geral",
+      output: outputData,
+      brandColors: {
+        primary: brandIdentity?.primaryColor || "#6366F1",
+        secondary: brandIdentity?.secondaryColor || "#e05c2a",
+      },
+    })
+  } catch (cardErr) {
+    console.error("[Executor] Failed to generate deliverable card:", cardErr)
+  }
 
   // 3. Auto-unblock dependent tasks
   const blockedTasks = await prisma.task.findMany({
@@ -613,7 +662,11 @@ async function executeCompleteTask(
       channelId: targetChannelId,
     })
     if (speakCheck.allowed) {
-      await postWithTurn(ctx, targetChannelId, `Conclui: "${title}".`, action.priority, undefined, {
+      const isDesigner = ctx.agent.role === "DESIGNER"
+      const msg = isDesigner
+        ? `Terminei: "${title}". Preview pronto — aguardando revisão da Maya para exportar PNG.`
+        : `Concluí: "${title}". Aguardando revisão.`
+      await postWithTurn(ctx, targetChannelId, msg, action.priority, undefined, {
         messageType: "task_completed",
         taskType: currentTask?.type || undefined,
         needsApproval: true,
@@ -626,26 +679,26 @@ async function executeCompleteTask(
     title: action.context.taskTitle,
   })
 
-  // Bridge: pixel office shows completion
-  const task = await prisma.task.findUnique({ where: { id: taskId }, select: { title: true, type: true } })
-  if (task) {
-    writeBridgeWorkActivity(
-      ctx.agent.id,
-      ctx.agent.name,
-      task.title,
-      "bash",
-      `Concluido: ${task.title}`,
-    )
+  // Bridge: pixel office shows completion - DISABLED to prevent duplication
+  // const task = await prisma.task.findUnique({ where: { id: taskId }, select: { title: true, type: true } })
+  // if (task) {
+  //   writeBridgeWorkActivity(
+  //     ctx.agent.id,
+  //     ctx.agent.name,
+  //     task.title,
+  //     "bash",
+  //     `Concluido: ${task.title}`,
+  //   )
 
-    // Rich event: agent celebrating
-    writeAgentEvent({
-      agentId: ctx.agent.id,
-      agentName: ctx.agent.name,
-      eventType: "task_completed",
-      taskTitle: task.title,
-      speechBubble: `Terminei! ✅`,
-    })
-  }
+  //   // Rich event: agent celebrating
+  //   writeAgentEvent({
+  //     agentId: ctx.agent.id,
+  //     agentName: ctx.agent.name,
+  //     eventType: "task_completed",
+  //     taskTitle: task.title,
+  //     speechBubble: `Terminei! ✅`,
+  //   })
+  // }
 
   // ── Post-completion: generate follow-up tasks ──────────
   // DISABLED: was creating too many garbage tasks in a feedback loop
@@ -708,6 +761,13 @@ Retorne APENAS JSON array: [{"title":"...", "assignTo":"${agent.name}"}]`
         if (matched) assigneeId = matched.id
       }
 
+      // Check limit before creating follow-up task
+      const canCreate = await canOrganizationCreateTask(organizationId)
+      if (!canCreate.allowed) {
+        console.log(`[Executor] Limite diário atingido. Follow-up "${t.title}" não criado.`)
+        break
+      }
+
       // Use role-appropriate type and duration
       const matchedTypes = ROLE_TASK_MATCH[agent.role] || ["content"]
       const taskType = matchedTypes[0]
@@ -753,14 +813,14 @@ async function executeReportProgress(
     })
   }
 
-  // Bridge: pixel office shows progress
-  writeBridgeWorkActivity(
-    ctx.agent.id,
-    ctx.agent.name,
-    title,
-    "edit",
-    `Progresso: ${title}`,
-  )
+  // Bridge: pixel office shows progress - DISABLED to prevent duplication
+  // writeBridgeWorkActivity(
+  //   ctx.agent.id,
+  //   ctx.agent.name,
+  //   title,
+  //   "edit",
+  //   `Progresso: ${title}`,
+  // )
 
   // Keep agent in WORKING_SILENT state
   await prisma.agent.update({
@@ -798,6 +858,11 @@ async function executePickNextTask(
   })
 
   if (!task) {
+    return { success: true, action: "pick_next_task", taskId: undefined }
+  }
+
+  // CRITICAL: Prevent regression - never move DONE tasks back to IN_PROGRESS
+  if (task.status === "DONE") {
     return { success: true, action: "pick_next_task", taskId: undefined }
   }
 
@@ -866,6 +931,14 @@ async function executeMoveTask(
   }
 
   const status = statusMap[toColumn.toLowerCase()] || toColumn.toUpperCase()
+
+  // Guard: prevent moving to DONE without approval
+  if (status === "DONE") {
+    const check = await canTransitionStatus(taskId, status)
+    if (!check.allowed) {
+      return { success: false, action: "move_task", error: check.reason }
+    }
+  }
 
   await prisma.task.update({
     where: { id: taskId },
@@ -1133,20 +1206,50 @@ async function generateDeliverableContent(
 ): Promise<{ content: string; title?: string }> {
   const typeLabel = task.type || "content"
 
+  // Buscar contexto completo do negócio
+  const [org, onboarding, integrations] = await Promise.all([
+    prisma.organization.findUnique({ where: { id: orgId } }),
+    prisma.onboarding.findUnique({ where: { organizationId: orgId } }),
+    prisma.integration.findMany({ where: { organizationId: orgId, status: "connected" } }),
+  ])
+
+  const industry = onboarding?.industry || "não especificado"
+  const targetAudience = onboarding?.targetAudience || "não especificado"
+  const brandVoice = onboarding?.brandVoice || "profissional"
+  const goals = onboarding?.goals?.join(", ") || "crescimento"
+  const website = onboarding?.website || "não informado"
+  const connectedPlatforms = integrations.map(i => i.platform).join(", ") || "nenhuma"
+
   const prompt = `Voce e ${agent.name} (${agent.role}) em uma agencia de marketing digital.
 Acabou de concluir uma tarefa e precisa registrar o entregavel produzido.
+
+CONTEXTO DA EMPRESA:
+- Nome: ${org?.name || "Empresa"}
+- Setor/Industria: ${industry}
+- Publico-alvo: ${targetAudience}
+- Tom da marca: ${brandVoice}
+- Objetivos: ${goals}
+- Website: ${website}
+- Plataformas conectadas: ${connectedPlatforms}
 
 TITULO DA TAREFA: ${task.title}
 DESCRICAO: ${task.description || "N/A"}
 TIPO: ${typeLabel}
 
+REGRAS CRITICAS:
+1. O conteudo DEVE ser especifico para o setor "${industry}" e publico "${targetAudience}"
+2. NUNCA invente dados, metricas, numeros ou estatisticas que nao foram fornecidos
+3. Se nao houver dados reais, indique claramente "Dados nao disponiveis" ou use placeholders como "[INSERIR DADOS]"
+4. Use o tom da marca: ${brandVoice}
+5. Seja especifico, realista e profissional. Escreva em portugues.
+6. Nao se apresente — va direto ao conteudo produzido.
+
 Gere o conteudo do entregavel que voce produziu para esta tarefa.
-Seja especifico, realista e profissional. Escreva em portugues.
-Nao se apresente — va direto ao conteudo produzido.
 
 Retorne APENAS um JSON object com:
-- "content": o texto completo do entregavel (minimo 3 frases especificas)
-- "title": um titulo opcional para o entregavel`
+- "content": o texto completo do entregavel (minimo 3 frases especificas e contextualizadas)
+- "title": um titulo opcional para o entregavel
+- "deliveryNote": uma nota INFORMAL de entrega em 1a pessoa, como se o agente estivesse falando com o CEO. Ex: "Foi tranquilo! Consultei a Maya sobre o tom e revisei tudo antes de finalizar."`
 
   const reply = await chatCompletion(prompt, { temperature: 0.7, maxTokens: 2000 })
 
