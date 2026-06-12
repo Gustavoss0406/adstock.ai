@@ -1,5 +1,5 @@
 {
   "framework": "nextjs",
-  "installCommand": "npm install 2>&1",
-  "buildCommand": "next build 2>&1"
+  "installCommand": "npm install 2>&1 || (echo 'INSTALL FAILED' && exit 1)",
+  "buildCommand": "ls node_modules/.prisma 2>&1 && npx next build 2>&1 || (echo 'BUILD ERROR' && exit 1)"
 }
